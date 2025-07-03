@@ -1,0 +1,17 @@
+---
+description: How functions will be created in this app
+globs: 
+alwaysApply: false
+---
+-do not try to change existing database or create migration files to change the database structure. 
+-When conflict in database structure, do not change the database, instead change the Controller, Views and Models to match the existing database structure 
+-when creating view files use the following naming conventions. the folder name should be prefix for naming all the view files eg. if folder name is workplan_report, the view file name will be workplan_report_create.php etc...  
+-use simple codeigniter 4 CRUD operation, straight forward. 
+-use the standard codeigniter 4 RESTful approach when creating methods. do not write both get and put inside the same method 
+-Use these existing models. do not create any new models or new tables      
+-view the other view file interfaces to maintain consistency in the interface design and layout  
+-when addressing errors, you will forcus mainly on the Models, View and Controller files and 
+[Routes.php](mdc:app/Routes.php)  file. Do not edit any other files without permission or only edit when requested
+-Do not use AJAX form submissions, use the standard codeigniter 4 form submission 
+
+-make the code simple and straight forward. 
