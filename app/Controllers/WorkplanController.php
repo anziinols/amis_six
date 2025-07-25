@@ -52,7 +52,7 @@ class WorkplanController extends BaseController
             'title' => 'Create New Workplan',
             'validation' => \Config\Services::validation(), // Pass validation object
             'branches' => $this->branchModel->findAll(), // Fetch all branches
-            'supervisors' => $this->userModel->where('role','supervisor')->findAll(), // Fetch all supervisors
+            'supervisors' => $this->userModel->getUsersBySupervisorCapability(), // Fetch all supervisors
         ];
 
         return view('workplans/workplan_new', $data);
@@ -164,7 +164,7 @@ class WorkplanController extends BaseController
             'workplan' => $workplan,
             'validation' => \Config\Services::validation(),
             'branches' => $this->branchModel->findAll(),
-            'supervisors' => $this->userModel->where('role','supervisor')->findAll(),
+            'supervisors' => $this->userModel->getUsersBySupervisorCapability(),
         ];
 
         return view('workplans/workplan_edit', $data);

@@ -108,10 +108,23 @@ class DakoiiController extends ResourceController
             return redirect()->back()->withInput()->with('errors', $this->validator->getErrors());
         }
 
+        $password = $this->request->getPost('password');
+
+        // Hash password explicitly to ensure it's properly hashed
+        if (!empty($password)) {
+            // Check if password is already hashed to avoid double hashing
+            if (strlen($password) !== 60 || !preg_match('/^\$2[ayb]\$/', $password)) {
+                $password = password_hash($password, PASSWORD_DEFAULT);
+                log_message('debug', 'Password hashed in DakoiiController storeUser method');
+            } else {
+                log_message('debug', 'Password already hashed in DakoiiController storeUser method');
+            }
+        }
+
         $data = [
             'name' => $this->request->getPost('name'),
             'username' => $this->request->getPost('username'),
-            'password' => $this->request->getPost('password'),
+            'password' => $password,
             'orgcode' => $this->request->getPost('orgcode'),
             'role' => $this->request->getPost('role'),
             'dakoii_user_status' => 1,
@@ -183,9 +196,17 @@ class DakoiiController extends ResourceController
             'role' => $this->request->getPost('role')
         ];
 
-        // Only update password if provided
+        // Only update password if provided and hash it
         if ($this->request->getPost('password')) {
-            $data['password'] = $this->request->getPost('password');
+            $password = $this->request->getPost('password');
+            // Check if password is already hashed to avoid double hashing
+            if (strlen($password) !== 60 || !preg_match('/^\$2[ayb]\$/', $password)) {
+                $data['password'] = password_hash($password, PASSWORD_DEFAULT);
+                log_message('debug', 'Password hashed in DakoiiController updateUser method');
+            } else {
+                $data['password'] = $password;
+                log_message('debug', 'Password already hashed in DakoiiController updateUser method');
+            }
         }
 
         try {

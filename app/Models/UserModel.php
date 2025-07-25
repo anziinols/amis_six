@@ -40,7 +40,7 @@ class UserModel extends Model
         'grade',
         'report_to_id',
         'is_evaluator',
-        // 'is_supervisor', // Commented out as requested
+        'is_supervisor',
         'commodity_id',
         'role',
         'joined_date',
@@ -71,7 +71,7 @@ class UserModel extends Model
         'grade' => 'permit_empty|max_length[100]',
         'report_to_id' => 'permit_empty|integer',
         'is_evaluator' => 'permit_empty|in_list[0,1]',
-        // 'is_supervisor' => 'permit_empty|in_list[0,1]', // Commented out as requested
+        'is_supervisor' => 'permit_empty|in_list[0,1]',
         'commodity_id' => 'permit_empty|integer',
         'role' => 'required|in_list[admin,supervisor,user,guest,commodity]',
         'joined_date' => 'permit_empty|valid_date',
@@ -222,6 +222,17 @@ class UserModel extends Model
     }
 
     /**
+     * Get users by supervisor capability
+     * Returns all users who have supervisor role (role = 'supervisor')
+     */
+    public function getUsersBySupervisorCapability()
+    {
+        return $this->where('role', 'supervisor')
+                   ->where('user_status', 1)
+                   ->findAll();
+    }
+
+    /**
      * Get subordinates (users reporting to a specific user)
      */
     public function getSubordinates($userId)
@@ -256,6 +267,23 @@ class UserModel extends Model
         }
 
         return null;
+    }
+
+    /**
+     * Get all users with branch information
+     */
+    public function getAllUsersWithBranches()
+    {
+        $builder = $this->db->table($this->table . ' as u');
+        $builder->select([
+            'u.*',
+            'b.name as branch_name'
+        ]);
+        $builder->join('branches as b', 'b.id = u.branch_id', 'left');
+        $builder->where('u.user_status', 1);
+        $builder->orderBy('u.fname', 'ASC');
+
+        return $builder->get()->getResultArray() ?? [];
     }
 
     /**

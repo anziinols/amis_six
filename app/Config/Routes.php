@@ -21,6 +21,7 @@ use App\Controllers\MTDReportsController;
 use App\Controllers\NASPReportsController;
 use App\Controllers\WorkplanReportsController;
 use App\Controllers\ActivityMapsReportsController;
+use App\Controllers\HRReportsController;
 
 /**
  * @var RouteCollection $routes
@@ -73,15 +74,16 @@ $routes->group('dashboard', ['filter' => 'auth'], static function ($routes) {
 
 // Admin routes
 $routes->group('admin', ['filter' => 'auth'], static function ($routes) {
-    // Users Management
-    $routes->get('users', [UsersController::class, 'index']);
-    $routes->get('users/create', [UsersController::class, 'create']);
-    $routes->post('users/create', [UsersController::class, 'create']);
-    $routes->post('users/store', [UsersController::class, 'store']);
-    $routes->get('users/edit/(:num)', [UsersController::class, 'edit/$1']);
-    $routes->post('users/update/(:num)', [UsersController::class, 'update/$1']);
-    $routes->get('users/toggle-status/(:num)', [UsersController::class, 'toggleStatus/$1']);
-    $routes->post('users/toggle-status/(:num)', [UsersController::class, 'toggleStatus/$1']);
+    // Users Management - RESTful Routes
+    $routes->get('users', [UsersController::class, 'index']);                    // GET /admin/users - list users
+    $routes->get('users/create', [UsersController::class, 'create']);            // GET /admin/users/create - show create form
+    $routes->post('users', [UsersController::class, 'store']);                   // POST /admin/users - store new user
+    $routes->get('users/(:num)', [UsersController::class, 'show/$1']);           // GET /admin/users/{id} - show user
+    $routes->get('users/(:num)/edit', [UsersController::class, 'edit/$1']);      // GET /admin/users/{id}/edit - show edit form
+    $routes->put('users/(:num)', [UsersController::class, 'update/$1']);         // PUT /admin/users/{id} - update user
+    $routes->patch('users/(:num)', [UsersController::class, 'update/$1']);       // PATCH /admin/users/{id} - update user
+    $routes->get('users/(:num)/toggle-status', [UsersController::class, 'toggleStatus/$1']);  // GET toggle status
+    $routes->post('users/(:num)/toggle-status', [UsersController::class, 'toggleStatus/$1']); // POST toggle status
 
     // --- Government Structure RESTful Routes ---
     $routes->group('gov-structure', static function ($routes) {
@@ -614,10 +616,12 @@ $routes->group('proposals', ['filter' => 'auth'], function($routes) {
 });
 
 // MTDP Reports routes
-$routes->get('reports/mtdp', 'MTDReportsController::index');
+$routes->get('reports/mtdp', [MTDReportsController::class, 'index']);
 
 // NASP Reports routes
-$routes->get('reports/nasp', 'NASPReportsController::index');
+$routes->get('reports/nasp', [NASPReportsController::class, 'index']);
+$routes->get('reports/nasp/filter-data', [NASPReportsController::class, 'getFilterData']);
+$routes->get('reports/nasp/filtered-data', [NASPReportsController::class, 'getFilteredData']);
 
 // Workplan Reports routes
 $routes->get('reports/workplan', 'WorkplanReportsController::index');
@@ -627,6 +631,9 @@ $routes->get('reports/activities-map', 'ActivityMapsReportsController::index');
 
 // Commodity Reports routes
 $routes->get('reports/commodity', 'CommodityReportsController::index');
+
+// HR Reports routes
+$routes->get('reports/hr', 'HRReportsController::index');
 
 // Test JavaScript PDF generation
 $routes->get('test-pdf-js', 'TestPdfJsController::index');

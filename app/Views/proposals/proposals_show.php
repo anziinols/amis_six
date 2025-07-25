@@ -24,7 +24,7 @@
                         <?php endif; ?>
                         <?php if ($proposal['status'] === 'approved' && session()->get('is_evaluator') == 1): ?>
                             <a href="<?= base_url('proposals/rate/' . $proposal['id']) ?>" class="btn btn-success">
-                                <i class="fas fa-star me-1"></i> Rate
+                                <i class="fas fa-star me-1"></i> M&E Rate
                             </a>
                         <?php endif; ?>
                         <a href="<?= base_url('proposals') ?>" class="btn btn-secondary">

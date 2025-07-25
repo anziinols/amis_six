@@ -1,0 +1,201 @@
+@startuml AMIS_Simple_Process_Flow
+!theme plain
+title AMIS Process Flow: Workplan to M&E Rating
+
+!define RECTANGLE class
+
+package "Level 1: Planning & Approval" {
+    start
+    :User Creates Workplan;
+    :User Creates Activity;
+    :User Creates Proposal;
+    :User Submits to Supervisor;
+    
+    if (Supervisor Reviews?) then (Approve)
+        :Supervisor Assigns Action Officer;
+    else (Reject)
+        :User Submits to Supervisor;
+        stop
+    endif
+}
+
+package "Level 2: Implementation & Evaluation" {
+    :Officer Implements Activity;
+    :Supervisor Verifies Implementation;
+    :Send to M&E Evaluator;
+    :M&E Reviews Activity;
+    :M&E Rates Performance;
+    :Activity Complete;
+    stop
+}
+
+' Alternative swimlane version
+@enduml
+
+@startuml AMIS_Simple_Process_Flow_Swimlanes
+!theme plain
+title AMIS Process Flow: Workplan to M&E Rating (Swimlanes)
+
+|User|
+start
+:Create Workplan;
+:Create Activity;
+:Create Proposal;
+:Submit to Supervisor;
+
+|Supervisor|
+if (Review Proposal?) then (Approve)
+    :Assign Action Officer;
+else (Reject)
+    |User|
+    :Submit to Supervisor;
+    stop
+endif
+
+|Action Officer|
+:Implement Activity;
+
+|Supervisor|
+:Verify Implementation;
+:Send to M&E Evaluator;
+
+|M&E Evaluator|
+:Review Activity;
+:Rate Performance;
+:Mark Activity Complete;
+
+stop
+
+@enduml
+
+@startuml AMIS_Simple_Process_Flow_Horizontal
+!theme plain
+title AMIS Process Flow: Workplan to M&E Rating (Horizontal Layout)
+
+start
+
+partition "Planning Phase" {
+    :User Creates\nWorkplan;
+    :User Creates\nActivity;
+    :User Creates\nProposal;
+    :User Submits\nto Supervisor;
+}
+
+partition "Approval Phase" {
+    if (Supervisor\nReviews?) then (Approve)
+        :Supervisor Assigns\nAction Officer;
+    else (Reject)
+        :User Submits\nto Supervisor;
+        stop
+    endif
+}
+
+partition "Implementation Phase" {
+    :Officer Implements\nActivity;
+    :Supervisor Verifies\nImplementation;
+    :Send to M&E\nEvaluator;
+}
+
+partition "Evaluation Phase" {
+    :M&E Reviews\nActivity;
+    :M&E Rates\nPerformance;
+    :Activity\nComplete;
+}
+
+stop
+
+@enduml
+
+@startuml AMIS_Simple_Process_Flow_Detailed
+!theme plain
+title AMIS Detailed Process Flow: Workplan to M&E Rating
+
+|#LightBlue|User|
+start
+:Create Workplan;
+note right
+    - Fill workplan details
+    - Set objectives
+    - Define timeline
+end note
+
+:Create Activity;
+note right
+    - Select activity type
+    - Add GPS coordinates
+    - Upload documents
+end note
+
+:Create Proposal;
+note right
+    - Link to strategic plans
+    - Add implementation details
+    - Set budget requirements
+end note
+
+:Submit to Supervisor;
+
+|#LightCoral|Supervisor|
+if (Review Proposal?) then (Approve)
+    :Assign Action Officer;
+    note right
+        - Select qualified officer
+        - Send email notification
+        - Set implementation timeline
+    end note
+else (Reject)
+    :Request Changes;
+    note right
+        - Provide feedback
+        - Specify required changes
+        - Return to user
+    end note
+    |#LightBlue|User|
+    :Revise and Resubmit;
+    |#LightCoral|Supervisor|
+endif
+
+|#LightGreen|Action Officer|
+:Implement Activity;
+note right
+    - Execute planned activities
+    - Collect evidence
+    - Record GPS coordinates
+    - Upload photos/documents
+end note
+
+|#LightCoral|Supervisor|
+:Verify Implementation;
+note right
+    - Review evidence
+    - Check compliance
+    - Validate completion
+end note
+
+:Send to M&E Evaluator;
+
+|#Plum|M&E Evaluator|
+:Review Activity;
+note right
+    - Assess implementation quality
+    - Review documentation
+    - Check objectives achievement
+end note
+
+:Rate Performance;
+note right
+    - Assign performance score
+    - Add evaluation comments
+    - Document lessons learned
+end note
+
+:Mark Activity Complete;
+note right
+    - Update activity status
+    - Notify stakeholders
+    - Archive documentation
+end note
+
+stop
+
+@enduml

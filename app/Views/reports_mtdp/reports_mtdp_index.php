@@ -17,34 +17,70 @@
  */
 ?>
 <?= $this->extend('templates/system_template') ?>
+
+<?= $this->section('head') ?>
+<!-- DataTables Buttons CSS -->
+<link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.2/css/buttons.bootstrap5.min.css">
+<?= $this->endSection() ?>
+
 <?= $this->section('content') ?>
 <div class="container-fluid">
     <div class="row mb-4">
         <div class="col-12">
             <div class="card bg-primary text-white">
                 <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <h4 class="card-title">MTDP Plans Report</h4>
-                            <p class="card-text mb-0">This report displays all MTDP plans and their related entities with visual charts and graphs.</p>
-                        </div>
-                        <div>
-                            <button onclick="AMISPdf.generateMTDPReportPDF()" class="btn btn-light">
-                                <i class="fas fa-file-pdf me-1"></i> Export PDF
-                            </button>
-                        </div>
+                    <div>
+                        <h4 class="card-title">MTDP Plans Report</h4>
+                        <p class="card-text mb-0">This report displays all MTDP plans and their related entities with visual charts and graphs.</p>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Charts Section -->
+    <!-- Date Filter Form -->
     <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header"><strong>Filter by Date Range</strong></div>
+                <div class="card-body">
+                    <form method="GET" action="<?= base_url('reports/mtdp') ?>" class="row g-3">
+                        <div class="col-md-4">
+                            <label for="date_from" class="form-label">Date From</label>
+                            <input type="date" class="form-control" id="date_from" name="date_from" value="<?= esc($dateFrom ?? '') ?>">
+                        </div>
+                        <div class="col-md-4">
+                            <label for="date_to" class="form-label">Date To</label>
+                            <input type="date" class="form-control" id="date_to" name="date_to" value="<?= esc($dateTo ?? '') ?>">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">&nbsp;</label>
+                            <div class="d-flex gap-2">
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-filter me-1"></i> Filter
+                                </button>
+                                <a href="<?= base_url('reports/mtdp') ?>" class="btn btn-secondary">
+                                    <i class="fas fa-refresh me-1"></i> Reset
+                                </a>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts Section -->
+    <div class="row mb-4" id="chartsSection">
         <!-- Yearly Investment Chart -->
         <div class="col-md-6 mb-4">
             <div class="card">
-                <div class="card-header"><strong>Yearly Investment Distribution</strong></div>
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <strong>Yearly Investment Distribution</strong>
+                    <button class="btn btn-sm btn-outline-primary" onclick="copyChartAsImage('yearlyInvestmentChart')" title="Copy Chart as Image">
+                        <i class="fas fa-copy"></i>
+                    </button>
+                </div>
                 <div class="card-body">
                     <canvas id="yearlyInvestmentChart" width="400" height="300"></canvas>
                 </div>
@@ -54,7 +90,12 @@
         <!-- Status Distribution Chart -->
         <div class="col-md-6 mb-4">
             <div class="card">
-                <div class="card-header"><strong>Status Distribution</strong></div>
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <strong>Status Distribution</strong>
+                    <button class="btn btn-sm btn-outline-primary" onclick="copyChartAsImage('statusDistributionChart')" title="Copy Chart as Image">
+                        <i class="fas fa-copy"></i>
+                    </button>
+                </div>
                 <div class="card-body">
                     <canvas id="statusDistributionChart" width="400" height="300"></canvas>
                 </div>
@@ -64,7 +105,12 @@
         <!-- DIP Investment Chart -->
         <div class="col-md-6 mb-4">
             <div class="card">
-                <div class="card-header"><strong>Investment by DIP</strong></div>
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <strong>Investment by DIP</strong>
+                    <button class="btn btn-sm btn-outline-primary" onclick="copyChartAsImage('dipInvestmentChart')" title="Copy Chart as Image">
+                        <i class="fas fa-copy"></i>
+                    </button>
+                </div>
                 <div class="card-body">
                     <canvas id="dipInvestmentChart" width="400" height="300"></canvas>
                 </div>
@@ -74,7 +120,12 @@
         <!-- Entities by Plan Chart -->
         <div class="col-md-6 mb-4">
             <div class="card">
-                <div class="card-header"><strong>Entities by MTDP Plan</strong></div>
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <strong>Entities by MTDP Plan</strong>
+                    <button class="btn btn-sm btn-outline-primary" onclick="copyChartAsImage('entitiesByPlanChart')" title="Copy Chart as Image">
+                        <i class="fas fa-copy"></i>
+                    </button>
+                </div>
                 <div class="card-body">
                     <canvas id="entitiesByPlanChart" width="400" height="300"></canvas>
                 </div>
@@ -86,9 +137,11 @@
     <div class="row mb-4">
         <div class="col-12">
             <div class="card">
-                <div class="card-header"><strong>MTDP Plans</strong></div>
-                <div class="card-body table-responsive">
-                    <table class="table table-bordered table-striped table-sm">
+                <div class="card-header">
+                    <strong>MTDP Plans</strong>
+                </div>
+                <div class="card-body table-responsive" style="overflow-x: auto;">
+                    <table id="mtdpPlansTable" class="table table-bordered table-striped table-sm" style="white-space: nowrap; min-width: 100%;">
                         <thead>
                             <tr>
                                 <th>#</th>
@@ -97,6 +150,7 @@
                                 <th>Date From</th>
                                 <th>Date To</th>
                                 <th>Status</th>
+                                <th>Activities</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -109,6 +163,7 @@
                                 <td><?= esc($plan['date_from']) ?></td>
                                 <td><?= esc($plan['date_to']) ?></td>
                                 <td><?= esc($plan['mtdp_status']) == 1 ? 'Active' : 'Inactive' ?></td>
+                                <td><?= isset($workplanCounts['mtdp_plans'][$plan['id']]) ? $workplanCounts['mtdp_plans'][$plan['id']] : 0 ?></td>
                             </tr>
                         <?php endforeach; ?>
                         </tbody>
@@ -122,9 +177,11 @@
     <div class="row mb-4">
         <div class="col-12">
             <div class="card">
-                <div class="card-header"><strong>Strategic Priority Areas (SPAs)</strong></div>
-                <div class="card-body table-responsive">
-                    <table class="table table-bordered table-striped table-sm">
+                <div class="card-header">
+                    <strong>Strategic Priority Areas (SPAs)</strong>
+                </div>
+                <div class="card-body table-responsive" style="overflow-x: auto;">
+                    <table id="spasTable" class="table table-bordered table-striped table-sm" style="white-space: nowrap; min-width: 100%;">
                         <thead>
                             <tr>
                                 <th>#</th>
@@ -132,6 +189,7 @@
                                 <th>Code</th>
                                 <th>Title</th>
                                 <th>Status</th>
+                                <th>Activities</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -152,6 +210,7 @@
                                 <td><?= esc($spa['code']) ?></td>
                                 <td><?= esc($spa['title']) ?></td>
                                 <td><?= esc($spa['spa_status']) == 1 ? 'Active' : 'Inactive' ?></td>
+                                <td><?= isset($workplanCounts['spas'][$spa['id']]) ? $workplanCounts['spas'][$spa['id']] : 0 ?></td>
                             </tr>
                         <?php endforeach; ?>
                         </tbody>
@@ -165,9 +224,11 @@
     <div class="row mb-4">
         <div class="col-12">
             <div class="card">
-                <div class="card-header"><strong>Development Investment Plans (DIPs)</strong></div>
-                <div class="card-body table-responsive">
-                    <table class="table table-bordered table-striped table-sm">
+                <div class="card-header">
+                    <strong>Development Investment Plans (DIPs)</strong>
+                </div>
+                <div class="card-body table-responsive" style="overflow-x: auto;">
+                    <table id="dipsTable" class="table table-bordered table-striped table-sm" style="white-space: nowrap; min-width: 100%;">
                         <thead>
                             <tr>
                                 <th>#</th>
@@ -176,6 +237,7 @@
                                 <th>Code</th>
                                 <th>Title</th>
                                 <th>Status</th>
+                                <th>Activities</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -206,69 +268,7 @@
                                 <td><?= esc($dip['dip_code']) ?></td>
                                 <td><?= esc($dip['dip_title']) ?></td>
                                 <td><?= esc($dip['dip_status']) == 1 ? 'Active' : 'Inactive' ?></td>
-                            </tr>
-                        <?php endforeach; ?>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- KRAs Table -->
-    <div class="row mb-4">
-        <div class="col-12">
-            <div class="card">
-                <div class="card-header"><strong>Key Result Areas (KRAs)</strong></div>
-                <div class="card-body table-responsive">
-                    <table class="table table-bordered table-striped table-sm">
-                        <thead>
-                            <tr>
-                                <th>#</th>
-                                <th>MTDP</th>
-                                <th>SPA</th>
-                                <th>DIP</th>
-                                <th>KPI</th>
-                                <th>Status</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                        <?php $counter = 1; ?>
-                        <?php foreach ($kras as $kra): ?>
-                            <tr>
-                                <td><?= $counter++ ?></td>
-                                <td>
-                                    <?php
-                                    foreach ($plans as $plan) {
-                                        if ($plan['id'] == $kra['mtdp_id']) {
-                                            echo esc($plan['abbrev']);
-                                            break;
-                                        }
-                                    }
-                                    ?>
-                                </td>
-                                <td>
-                                    <?php
-                                    foreach ($spas as $spa) {
-                                        if ($spa['id'] == $kra['spa_id']) {
-                                            echo esc($spa['code']);
-                                            break;
-                                        }
-                                    }
-                                    ?>
-                                </td>
-                                <td>
-                                    <?php
-                                    foreach ($dips as $dip) {
-                                        if ($dip['id'] == $kra['dip_id']) {
-                                            echo esc($dip['dip_code']);
-                                            break;
-                                        }
-                                    }
-                                    ?>
-                                </td>
-                                <td><?= esc($kra['kpi']) ?></td>
-                                <td><?= esc($kra['kra_status']) == 1 ? 'Active' : 'Inactive' ?></td>
+                                <td><?= isset($workplanCounts['dips'][$dip['id']]) ? $workplanCounts['dips'][$dip['id']] : 0 ?></td>
                             </tr>
                         <?php endforeach; ?>
                         </tbody>
@@ -282,9 +282,11 @@
     <div class="row mb-4">
         <div class="col-12">
             <div class="card">
-                <div class="card-header"><strong>Specific Areas</strong></div>
-                <div class="card-body table-responsive">
-                    <table class="table table-bordered table-striped table-sm">
+                <div class="card-header">
+                    <strong>Specific Areas</strong>
+                </div>
+                <div class="card-body table-responsive" style="overflow-x: auto;">
+                    <table id="specificAreasTable" class="table table-bordered table-striped table-sm" style="white-space: nowrap; min-width: 100%;">
                         <thead>
                             <tr>
                                 <th>#</th>
@@ -294,6 +296,7 @@
                                 <th>Code</th>
                                 <th>Title</th>
                                 <th>Status</th>
+                                <th>Activities</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -334,6 +337,7 @@
                                 <td><?= esc($sa['sa_code']) ?></td>
                                 <td><?= esc($sa['sa_title']) ?></td>
                                 <td><?= esc($sa['sa_status']) == 1 ? 'Active' : 'Inactive' ?></td>
+                                <td><?= isset($workplanCounts['specific_areas'][$sa['id']]) ? $workplanCounts['specific_areas'][$sa['id']] : 0 ?></td>
                             </tr>
                         <?php endforeach; ?>
                         </tbody>
@@ -343,22 +347,33 @@
         </div>
     </div>
 
+
     <!-- Investments Table -->
     <div class="row mb-4">
         <div class="col-12">
             <div class="card">
-                <div class="card-header"><strong>Investments</strong></div>
-                <div class="card-body table-responsive">
-                    <table class="table table-bordered table-striped table-sm">
+                <div class="card-header">
+                    <strong>Investments</strong>
+                </div>
+                <div class="card-body table-responsive" style="overflow-x: auto;">
+                    <table id="investmentsTable" class="table table-bordered table-striped table-sm" style="white-space: nowrap; min-width: 100%;">
                         <thead>
                             <tr>
                                 <th>#</th>
                                 <th>MTDP</th>
                                 <th>SPA</th>
                                 <th>DIP</th>
+                                <th>Specific Area</th>
                                 <th>Investment</th>
+                                <th>Year 1</th>
+                                <th>Year 2</th>
+                                <th>Year 3</th>
+                                <th>Year 4</th>
+                                <th>Year 5</th>
                                 <th>Total Amount</th>
+                                <th>Funding Sources</th>
                                 <th>Status</th>
+                                <th>Activities</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -396,7 +411,22 @@
                                     }
                                     ?>
                                 </td>
+                                <td>
+                                    <?php
+                                    foreach ($specific_areas as $sa) {
+                                        if ($sa['id'] == $inv['sa_id']) {
+                                            echo esc($sa['sa_code']);
+                                            break;
+                                        }
+                                    }
+                                    ?>
+                                </td>
                                 <td><?= esc($inv['investment']) ?></td>
+                                <td><?= number_format((float)($inv['year_one'] ?? 0), 2) ?></td>
+                                <td><?= number_format((float)($inv['year_two'] ?? 0), 2) ?></td>
+                                <td><?= number_format((float)($inv['year_three'] ?? 0), 2) ?></td>
+                                <td><?= number_format((float)($inv['year_four'] ?? 0), 2) ?></td>
+                                <td><?= number_format((float)($inv['year_five'] ?? 0), 2) ?></td>
                                 <td>
                                     <?php
                                     $total = (float)($inv['year_one'] ?? 0) +
@@ -407,7 +437,110 @@
                                     echo number_format($total, 2);
                                     ?>
                                 </td>
+                                <td><?= esc($inv['funding_sources'] ?? '-') ?></td>
                                 <td><?= esc($inv['investment_status']) == 1 ? 'Active' : 'Inactive' ?></td>
+                                <td><?= isset($workplanCounts['investments'][$inv['id']]) ? $workplanCounts['investments'][$inv['id']] : 0 ?></td>
+                            </tr>
+                        <?php endforeach; ?>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- KRAs Table -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <strong>Key Result Areas (KRAs)</strong>
+                </div>
+                <div class="card-body table-responsive" style="overflow-x: auto;">
+                    <table id="krasTable" class="table table-bordered table-striped table-sm" style="white-space: nowrap; min-width: 100%;">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>MTDP</th>
+                                <th>SPA</th>
+                                <th>DIP</th>
+                                <th>Specific Area</th>
+                                <th>Investment</th>
+                                <th>KPI</th>
+                                <th>Year 1</th>
+                                <th>Year 2</th>
+                                <th>Year 3</th>
+                                <th>Year 4</th>
+                                <th>Year 5</th>
+                                <th>Responsible Agencies</th>
+                                <th>Status</th>
+                                <th>Activities</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        <?php $counter = 1; ?>
+                        <?php foreach ($kras as $kra): ?>
+                            <tr>
+                                <td><?= $counter++ ?></td>
+                                <td>
+                                    <?php
+                                    foreach ($plans as $plan) {
+                                        if ($plan['id'] == $kra['mtdp_id']) {
+                                            echo esc($plan['abbrev']);
+                                            break;
+                                        }
+                                    }
+                                    ?>
+                                </td>
+                                <td>
+                                    <?php
+                                    foreach ($spas as $spa) {
+                                        if ($spa['id'] == $kra['spa_id']) {
+                                            echo esc($spa['code']);
+                                            break;
+                                        }
+                                    }
+                                    ?>
+                                </td>
+                                <td>
+                                    <?php
+                                    foreach ($dips as $dip) {
+                                        if ($dip['id'] == $kra['dip_id']) {
+                                            echo esc($dip['dip_code']);
+                                            break;
+                                        }
+                                    }
+                                    ?>
+                                </td>
+                                <td>
+                                    <?php
+                                    foreach ($specific_areas as $sa) {
+                                        if ($sa['id'] == $kra['sa_id']) {
+                                            echo esc($sa['sa_code']);
+                                            break;
+                                        }
+                                    }
+                                    ?>
+                                </td>
+                                <td>
+                                    <?php
+                                    foreach ($investments as $inv) {
+                                        if ($inv['id'] == $kra['investment_id']) {
+                                            echo esc($inv['investment']);
+                                            break;
+                                        }
+                                    }
+                                    ?>
+                                </td>
+                                <td><?= esc($kra['kpi']) ?></td>
+                                <td><?= esc($kra['year_one'] ?? '-') ?></td>
+                                <td><?= esc($kra['year_two'] ?? '-') ?></td>
+                                <td><?= esc($kra['year_three'] ?? '-') ?></td>
+                                <td><?= esc($kra['year_four'] ?? '-') ?></td>
+                                <td><?= esc($kra['year_five'] ?? '-') ?></td>
+                                <td><?= esc($kra['responsible_agencies'] ?? '-') ?></td>
+                                <td><?= esc($kra['kra_status']) == 1 ? 'Active' : 'Inactive' ?></td>
+                                <td><?= isset($workplanCounts['kras'][$kra['id']]) ? $workplanCounts['kras'][$kra['id']] : 0 ?></td>
                             </tr>
                         <?php endforeach; ?>
                         </tbody>
@@ -421,18 +554,23 @@
     <div class="row mb-4">
         <div class="col-12">
             <div class="card">
-                <div class="card-header"><strong>Strategies</strong></div>
-                <div class="card-body table-responsive">
-                    <table class="table table-bordered table-striped table-sm">
+                <div class="card-header">
+                    <strong>Strategies</strong>
+                </div>
+                <div class="card-body table-responsive" style="overflow-x: auto;">
+                    <table id="strategiesTable" class="table table-bordered table-striped table-sm" style="white-space: nowrap; min-width: 100%;">
                         <thead>
                             <tr>
                                 <th>#</th>
                                 <th>MTDP</th>
                                 <th>SPA</th>
                                 <th>DIP</th>
+                                <th>Specific Area</th>
+                                <th>Investment</th>
                                 <th>KRA</th>
                                 <th>Strategy</th>
                                 <th>Status</th>
+                                <th>Activities</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -472,11 +610,29 @@
                                 </td>
                                 <td>
                                     <?php
+                                    foreach ($specific_areas as $sa) {
+                                        if ($sa['id'] == $strategy['sa_id']) {
+                                            echo esc($sa['sa_code']);
+                                            break;
+                                        }
+                                    }
+                                    ?>
+                                </td>
+                                <td>
+                                    <?php
+                                    foreach ($investments as $inv) {
+                                        if ($inv['id'] == $strategy['investment_id']) {
+                                            echo esc($inv['investment']);
+                                            break;
+                                        }
+                                    }
+                                    ?>
+                                </td>
+                                <td>
+                                    <?php
                                     foreach ($kras as $kra) {
                                         if ($kra['id'] == $strategy['kra_id']) {
-                                            // Display a shortened version of the KPI if it's too long
-                                            $kpi = $kra['kpi'];
-                                            echo strlen($kpi) > 30 ? substr($kpi, 0, 30) . '...' : $kpi;
+                                            echo esc($kra['kpi']);
                                             break;
                                         }
                                     }
@@ -484,6 +640,7 @@
                                 </td>
                                 <td><?= esc($strategy['strategy']) ?></td>
                                 <td><?= esc($strategy['strategies_status']) == 1 ? 'Active' : 'Inactive' ?></td>
+                                <td><?= isset($workplanCounts['strategies'][$strategy['id']]) ? $workplanCounts['strategies'][$strategy['id']] : 0 ?></td>
                             </tr>
                         <?php endforeach; ?>
                         </tbody>
@@ -497,18 +654,29 @@
     <div class="row mb-4">
         <div class="col-12">
             <div class="card">
-                <div class="card-header"><strong>Indicators</strong></div>
-                <div class="card-body table-responsive">
-                    <table class="table table-bordered table-striped table-sm">
+                <div class="card-header">
+                    <strong>Indicators</strong>
+                </div>
+                <div class="card-body table-responsive" style="overflow-x: auto;">
+                    <table id="indicatorsTable" class="table table-bordered table-striped table-sm" style="white-space: nowrap; min-width: 100%;">
                         <thead>
                             <tr>
                                 <th>#</th>
                                 <th>MTDP</th>
                                 <th>SPA</th>
                                 <th>DIP</th>
+                                <th>Specific Area</th>
+                                <th>Investment</th>
                                 <th>KRA</th>
+                                <th>Strategy</th>
                                 <th>Indicator</th>
+                                <th>Source</th>
                                 <th>Baseline</th>
+                                <th>Year 1</th>
+                                <th>Year 2</th>
+                                <th>Year 3</th>
+                                <th>Year 4</th>
+                                <th>Year 5</th>
                                 <th>Status</th>
                             </tr>
                         </thead>
@@ -549,12 +717,44 @@
                                 </td>
                                 <td>
                                     <?php
+                                    foreach ($specific_areas as $sa) {
+                                        if ($sa['id'] == $indicator['sa_id']) {
+                                            echo esc($sa['sa_code']);
+                                            break;
+                                        }
+                                    }
+                                    ?>
+                                </td>
+                                <td>
+                                    <?php
+                                    foreach ($investments as $inv) {
+                                        if ($inv['id'] == $indicator['investment_id']) {
+                                            echo esc($inv['investment']);
+                                            break;
+                                        }
+                                    }
+                                    ?>
+                                </td>
+                                <td>
+                                    <?php
                                     if (!empty($indicator['kra_id'])) {
                                         foreach ($kras as $kra) {
                                             if ($kra['id'] == $indicator['kra_id']) {
-                                                // Display a shortened version of the KPI if it's too long
-                                                $kpi = $kra['kpi'];
-                                                echo strlen($kpi) > 30 ? substr($kpi, 0, 30) . '...' : $kpi;
+                                                echo esc($kra['kpi']);
+                                                break;
+                                            }
+                                        }
+                                    } else {
+                                        echo '-';
+                                    }
+                                    ?>
+                                </td>
+                                <td>
+                                    <?php
+                                    if (!empty($indicator['strategies_id'])) {
+                                        foreach ($strategies as $strategy) {
+                                            if ($strategy['id'] == $indicator['strategies_id']) {
+                                                echo esc($strategy['strategy']);
                                                 break;
                                             }
                                         }
@@ -564,7 +764,13 @@
                                     ?>
                                 </td>
                                 <td><?= esc($indicator['indicator']) ?></td>
+                                <td><?= esc($indicator['source'] ?? '-') ?></td>
                                 <td><?= esc($indicator['baseline'] ?? '-') ?></td>
+                                <td><?= esc($indicator['year_one'] ?? '-') ?></td>
+                                <td><?= esc($indicator['year_two'] ?? '-') ?></td>
+                                <td><?= esc($indicator['year_three'] ?? '-') ?></td>
+                                <td><?= esc($indicator['year_four'] ?? '-') ?></td>
+                                <td><?= esc($indicator['year_five'] ?? '-') ?></td>
                                 <td><?= esc($indicator['indicators_status']) == 1 ? 'Active' : 'Inactive' ?></td>
                             </tr>
                         <?php endforeach; ?>
@@ -594,24 +800,36 @@
                                                     <li>
                                                         <strong>DIP:</strong> <?= esc($dip['dip_title']) ?>
                                                         <ul>
-                                                            <?php foreach ($kras as $kra): if ($kra['dip_id'] == $dip['id']): ?>
+                                                            <?php foreach ($specific_areas as $sa): if ($sa['dip_id'] == $dip['id']): ?>
                                                                 <li>
-                                                                    <strong>KRA:</strong> <?= esc($kra['kpi']) ?>
+                                                                    <strong>Specific Area:</strong> <?= esc($sa['sa_title']) ?>
                                                                     <ul>
-                                                                        <?php foreach ($strategies as $strategy): if ($strategy['kra_id'] == $kra['id']): ?>
-                                                                            <li><strong>Strategy:</strong> <?= esc($strategy['strategy']) ?></li>
-                                                                        <?php endif; endforeach; ?>
-                                                                        <?php foreach ($indicators as $indicator): if (($indicator['kra_id'] ?? null) == $kra['id']): ?>
-                                                                            <li><strong>Indicator:</strong> <?= esc($indicator['indicator']) ?></li>
+                                                                        <?php foreach ($investments as $inv): if ($inv['sa_id'] == $sa['id']): ?>
+                                                                            <li>
+                                                                                <strong>Investment:</strong> <?= esc($inv['investment']) ?>
+                                                                                <ul>
+                                                                                    <?php foreach ($kras as $kra): if ($kra['investment_id'] == $inv['id']): ?>
+                                                                                        <li>
+                                                                                            <strong>KRA:</strong> <?= esc($kra['kpi']) ?>
+                                                                                            <ul>
+                                                                                                <?php foreach ($strategies as $strategy): if ($strategy['kra_id'] == $kra['id']): ?>
+                                                                                                    <li>
+                                                                                                        <strong>Strategy:</strong> <?= esc($strategy['strategy']) ?>
+                                                                                                        <ul>
+                                                                                                            <?php foreach ($indicators as $indicator): if (($indicator['strategies_id'] ?? null) == $strategy['id']): ?>
+                                                                                                                <li><strong>Indicator:</strong> <?= esc($indicator['indicator']) ?></li>
+                                                                                                            <?php endif; endforeach; ?>
+                                                                                                        </ul>
+                                                                                                    </li>
+                                                                                                <?php endif; endforeach; ?>
+                                                                                            </ul>
+                                                                                        </li>
+                                                                                    <?php endif; endforeach; ?>
+                                                                                </ul>
+                                                                            </li>
                                                                         <?php endif; endforeach; ?>
                                                                     </ul>
                                                                 </li>
-                                                            <?php endif; endforeach; ?>
-                                                            <?php foreach ($specific_areas as $sa): if ($sa['dip_id'] == $dip['id']): ?>
-                                                                <li><strong>Specific Area:</strong> <?= esc($sa['sa_title']) ?></li>
-                                                            <?php endif; endforeach; ?>
-                                                            <?php foreach ($investments as $inv): if ($inv['dip_id'] == $dip['id']): ?>
-                                                                <li><strong>Investment:</strong> <?= esc($inv['investment']) ?></li>
                                                             <?php endif; endforeach; ?>
                                                         </ul>
                                                     </li>
@@ -633,6 +851,7 @@
 <?= $this->section('scripts') ?>
 <!-- Chart.js Library -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+
 
 <script>
     $(document).ready(function() {
@@ -889,6 +1108,172 @@
                 }
             }
         });
+
+        // Chart copy functionality
+        window.copyChartAsImage = function(chartId) {
+            const canvas = document.getElementById(chartId);
+            if (!canvas) {
+                console.error('Chart canvas not found:', chartId);
+                return;
+            }
+
+            // Convert canvas to blob
+            canvas.toBlob(function(blob) {
+                if (navigator.clipboard && window.ClipboardItem) {
+                    // Modern browsers with Clipboard API
+                    const item = new ClipboardItem({ 'image/png': blob });
+                    navigator.clipboard.write([item]).then(function() {
+                        // Show success message
+                        showToast('Chart copied to clipboard successfully!', 'success');
+                    }).catch(function(err) {
+                        console.error('Failed to copy chart:', err);
+                        // Fallback to download
+                        downloadChartAsImage(canvas, chartId);
+                    });
+                } else {
+                    // Fallback for older browsers - download the image
+                    downloadChartAsImage(canvas, chartId);
+                }
+            }, 'image/png');
+        };
+
+        // Fallback function to download chart as image
+        function downloadChartAsImage(canvas, chartId) {
+            const link = document.createElement('a');
+            link.download = chartId + '_chart.png';
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+            showToast('Chart downloaded as image!', 'info');
+        }
+
+        // Initialize DataTables with PDF export for all tables
+        $(document).ready(function() {
+            // DataTables configuration with PDF export
+            const dataTableConfig = {
+                dom: 'Bfrtip',
+                buttons: [
+                    {
+                        extend: 'pdfHtml5',
+                        text: '<i class="fas fa-file-pdf"></i> Export PDF',
+                        className: 'btn btn-danger btn-sm',
+                        orientation: 'landscape',
+                        pageSize: 'A4',
+                        exportOptions: {
+                            columns: ':visible'
+                        },
+                        customize: function(doc) {
+                            // Add title to PDF
+                            doc.content.splice(0, 0, {
+                                text: doc.defaultStyle.fontSize = 10,
+                                margin: [0, 0, 0, 12]
+                            });
+
+                            // Style the table
+                            doc.styles.tableHeader = {
+                                bold: true,
+                                fontSize: 9,
+                                color: 'black',
+                                fillColor: '#f0f0f0'
+                            };
+
+                            doc.defaultStyle.fontSize = 8;
+                        }
+                    }
+                ],
+                responsive: true,
+                paging: false,
+                info: false,
+                language: {
+                    search: "Search:"
+                }
+            };
+
+            // Initialize DataTables for each table
+            $('#mtdpPlansTable').DataTable({
+                ...dataTableConfig,
+                buttons: [{
+                    ...dataTableConfig.buttons[0],
+                    title: 'MTDP Plans Report'
+                }]
+            });
+
+            $('#spasTable').DataTable({
+                ...dataTableConfig,
+                buttons: [{
+                    ...dataTableConfig.buttons[0],
+                    title: 'Strategic Priority Areas (SPAs) Report'
+                }]
+            });
+
+            $('#dipsTable').DataTable({
+                ...dataTableConfig,
+                buttons: [{
+                    ...dataTableConfig.buttons[0],
+                    title: 'Development Investment Plans (DIPs) Report'
+                }]
+            });
+
+            $('#krasTable').DataTable({
+                ...dataTableConfig,
+                buttons: [{
+                    ...dataTableConfig.buttons[0],
+                    title: 'Key Result Areas (KRAs) Report'
+                }]
+            });
+
+            $('#specificAreasTable').DataTable({
+                ...dataTableConfig,
+                buttons: [{
+                    ...dataTableConfig.buttons[0],
+                    title: 'Specific Areas Report'
+                }]
+            });
+
+            $('#investmentsTable').DataTable({
+                ...dataTableConfig,
+                buttons: [{
+                    ...dataTableConfig.buttons[0],
+                    title: 'Investments Report'
+                }]
+            });
+
+            $('#strategiesTable').DataTable({
+                ...dataTableConfig,
+                buttons: [{
+                    ...dataTableConfig.buttons[0],
+                    title: 'Strategies Report'
+                }]
+            });
+
+            $('#indicatorsTable').DataTable({
+                ...dataTableConfig,
+                buttons: [{
+                    ...dataTableConfig.buttons[0],
+                    title: 'Indicators Report'
+                }]
+            });
+        });
+
+        // Toast notification function
+        function showToast(message, type = 'info') {
+            // Check if toastr is available
+            if (typeof toastr !== 'undefined') {
+                toastr[type](message);
+            } else {
+                // Fallback to alert
+                alert(message);
+            }
+        }
     });
 </script>
+
+<!-- DataTables Buttons JS Libraries -->
+<script src="https://cdn.datatables.net/buttons/2.4.2/js/dataTables.buttons.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.bootstrap5.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/pdfmake.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/vfs_fonts.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.html5.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.print.min.js"></script>
+
 <?= $this->endSection() ?>

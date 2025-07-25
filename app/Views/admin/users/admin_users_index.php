@@ -32,7 +32,9 @@
                             <th>ID</th>
                             <th>Name</th>
                             <th>Email</th>
+                            <th>Branch</th>
                             <th>Role</th>
+                            <th>Is M&E</th>
                             <th>Status</th>
                             <th>Actions</th>
                         </tr>
@@ -43,7 +45,17 @@
                                 <td><?= $user['id'] ?></td>
                                 <td><?= $user['fname'] . ' ' . $user['lname'] ?></td>
                                 <td><?= $user['email'] ?></td>
+                                <td><?= $user['branch_name'] ?? '<span class="text-muted">No Branch</span>' ?></td>
                                 <td><?= ucfirst($user['role']) ?></td>
+                                <td>
+                                    <?php if ($user['is_evaluator'] == 1): ?>
+                                        <span class="badge bg-info">
+                                            <i class="fas fa-chart-line me-1"></i>M&E
+                                        </span>
+                                    <?php else: ?>
+                                        <span class="text-muted">-</span>
+                                    <?php endif; ?>
+                                </td>
                                 <td>
                                     <span class="badge bg-<?= $user['user_status'] ? 'success' : 'danger' ?>">
                                         <?= $user['user_status'] ? 'Active' : 'Inactive' ?>

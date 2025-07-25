@@ -99,17 +99,18 @@ class DocumentsController extends BaseController
             $folderPath = $this->folderModel->getFolderPath($parentFolderId);
         }
 
-        // Get branches for dropdown
-        $db = \Config\Database::connect();
-        $branchesModel = $db->table('branches');
-        $branches = $branchesModel->get()->getResultArray();
+        // Get user's branch_id from session and database
+        $userId = session()->get('user_id');
+        $userModel = new \App\Models\UserModel();
+        $userData = $userModel->find($userId);
+        $userBranchId = $userData['branch_id'] ?? null;
 
         $data = [
             'title' => 'Create New Folder',
             'current_folder' => $currentFolder,
             'folder_path' => $folderPath,
             'parent_id' => $parentFolderId,
-            'branches' => $branches,
+            'user_branch_id' => $userBranchId,
             'validation' => \Config\Services::validation()
         ];
 
@@ -125,7 +126,6 @@ class DocumentsController extends BaseController
         $validation = \Config\Services::validation();
         $validation->setRules([
             'name' => 'required|min_length[3]|max_length[255]',
-            'branch_id' => 'required|integer',
             'description' => 'permit_empty',
             'access' => 'required|in_list[private,internal,public]'
         ]);
@@ -134,9 +134,15 @@ class DocumentsController extends BaseController
             return redirect()->back()->withInput()->with('errors', $validation->getErrors());
         }
 
+        // Get user's branch_id from session and database
+        $userId = session()->get('user_id');
+        $userModel = new \App\Models\UserModel();
+        $userData = $userModel->find($userId);
+        $userBranchId = $userData['branch_id'] ?? null;
+
         // Prepare folder data
         $data = [
-            'branch_id' => $this->request->getPost('branch_id'),
+            'branch_id' => $userBranchId,
             'parent_folder_id' => $this->request->getPost('parent_id') ?: null,
             'name' => $this->request->getPost('name'),
             'description' => $this->request->getPost('description'),
@@ -170,16 +176,17 @@ class DocumentsController extends BaseController
         // Get folder path for breadcrumbs
         $folderPath = $this->folderModel->getFolderPath($id);
 
-        // Get branches for dropdown
-        $db = \Config\Database::connect();
-        $branchesModel = $db->table('branches');
-        $branches = $branchesModel->get()->getResultArray();
+        // Get user's branch_id from session and database
+        $userId = session()->get('user_id');
+        $userModel = new \App\Models\UserModel();
+        $userData = $userModel->find($userId);
+        $userBranchId = $userData['branch_id'] ?? null;
 
         $data = [
             'title' => 'Edit Folder',
             'folder' => $folder,
             'folder_path' => $folderPath,
-            'branches' => $branches,
+            'user_branch_id' => $userBranchId,
             'validation' => \Config\Services::validation()
         ];
 
@@ -201,7 +208,6 @@ class DocumentsController extends BaseController
         $validation = \Config\Services::validation();
         $validation->setRules([
             'name' => 'required|min_length[3]|max_length[255]',
-            'branch_id' => 'required|integer',
             'description' => 'permit_empty',
             'access' => 'required|in_list[private,internal,public]'
         ]);
@@ -210,9 +216,15 @@ class DocumentsController extends BaseController
             return redirect()->back()->withInput()->with('errors', $validation->getErrors());
         }
 
+        // Get user's branch_id from session and database
+        $userId = session()->get('user_id');
+        $userModel = new \App\Models\UserModel();
+        $userData = $userModel->find($userId);
+        $userBranchId = $userData['branch_id'] ?? null;
+
         // Prepare folder data
         $data = [
-            'branch_id' => $this->request->getPost('branch_id'),
+            'branch_id' => $userBranchId,
             'name' => $this->request->getPost('name'),
             'description' => $this->request->getPost('description'),
             'access' => $this->request->getPost('access'),
@@ -280,16 +292,17 @@ class DocumentsController extends BaseController
         // Get folder path for breadcrumbs
         $folderPath = $this->folderModel->getFolderPath($folderId);
 
-        // Get branches for dropdown
-        $db = \Config\Database::connect();
-        $branchesModel = $db->table('branches');
-        $branches = $branchesModel->get()->getResultArray();
+        // Get user's branch_id from session and database
+        $userId = session()->get('user_id');
+        $userModel = new \App\Models\UserModel();
+        $userData = $userModel->find($userId);
+        $userBranchId = $userData['branch_id'] ?? null;
 
         $data = [
             'title' => 'Upload Document',
             'folder' => $folder,
             'folder_path' => $folderPath,
-            'branches' => $branches,
+            'user_branch_id' => $userBranchId,
             'validation' => \Config\Services::validation()
         ];
 
@@ -312,7 +325,6 @@ class DocumentsController extends BaseController
         $validation = \Config\Services::validation();
         $validation->setRules([
             'title' => 'required|min_length[3]|max_length[255]',
-            'branch_id' => 'required|integer',
             'classification' => 'required|in_list[private,internal,public]',
             'doc_date' => 'permit_empty|valid_date[Y-m-d]',
             'authors' => 'permit_empty',
@@ -342,9 +354,15 @@ class DocumentsController extends BaseController
         // Move file to upload directory
         $file->move($uploadDir, $newName);
 
+        // Get user's branch_id from session and database
+        $userId = session()->get('user_id');
+        $userModel = new \App\Models\UserModel();
+        $userData = $userModel->find($userId);
+        $userBranchId = $userData['branch_id'] ?? null;
+
         // Prepare document data
         $data = [
-            'branch_id' => $this->request->getPost('branch_id'),
+            'branch_id' => $userBranchId,
             'folder_id' => $folderId, // Add folder_id to the data array
             'classification' => $this->request->getPost('classification'),
             'title' => $this->request->getPost('title'),

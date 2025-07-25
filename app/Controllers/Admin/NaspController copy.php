@@ -169,7 +169,7 @@ class NaspController extends BaseController
             'title' => 'KRAs for ' . $plan['title'],
             'plan' => $plan,
             'kras' => $this->naspModel->where('parent_id', $planId)
-                                     ->where('type', 'kras')
+                                     ->where('type', 'apas')
                                      ->findAll()
         ];
         
@@ -184,7 +184,7 @@ class NaspController extends BaseController
             
             $data = [
                 'parent_id' => $planId,
-                'type' => 'kras',
+                'type' => 'apas',
                 'code' => $this->request->getPost('code'),
                 'title' => $this->request->getPost('title'),
                 'remarks' => $this->request->getPost('remarks'),

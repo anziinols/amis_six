@@ -236,7 +236,7 @@ class NaspController extends BaseController
             'title' => 'APAs for ' . $plan['title'],
             'plan' => $plan,
             'apas' => $this->naspModel->where('parent_id', $planId)
-                                    ->where('type', 'kras')
+                                    ->where('type', 'apas')
                                     ->findAll()
         ]);
     }
@@ -273,7 +273,7 @@ class NaspController extends BaseController
 
         $data = [
             'parent_id' => $planId,
-            'type' => 'kras',
+            'type' => 'apas',
             'code' => $this->request->getPost('code'),
             'title' => $this->request->getPost('title'),
             'remarks' => $this->request->getPost('remarks'),
@@ -445,7 +445,7 @@ class NaspController extends BaseController
             'apa' => $apa,
             'plan' => $plan,
             'dips' => $this->naspModel->where('parent_id', $apaId)
-                                    ->where('type', 'objectives')
+                                    ->where('type', 'dips')
                                     ->findAll()
         ]);
     }
@@ -482,7 +482,7 @@ class NaspController extends BaseController
 
         $data = [
             'parent_id' => $apaId,
-            'type' => 'objectives',
+            'type' => 'dips',
             'code' => $this->request->getPost('code'),
             'title' => $this->request->getPost('title'),
             'remarks' => $this->request->getPost('remarks'),
@@ -659,7 +659,7 @@ class NaspController extends BaseController
             'apa' => $apa,
             'plan' => $plan,
             'specificAreas' => $this->naspModel->where('parent_id', $dipId)
-                                            ->where('type', 'specific_area')
+                                            ->where('type', 'specific_areas')
                                             ->findAll()
         ]);
     }
@@ -701,7 +701,7 @@ class NaspController extends BaseController
 
         $data = [
             'parent_id' => $dipId,
-            'type' => 'specific_area',
+            'type' => 'specific_areas',
             'code' => $this->request->getPost('code'),
             'title' => $this->request->getPost('title'),
             'remarks' => $this->request->getPost('remarks'),

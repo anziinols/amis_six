@@ -165,7 +165,7 @@ class AjaxController extends Controller
         try {
             $apas = $this->naspModel
                 ->where('parent_id', $naspId)
-                ->where('type', 'kras')
+                ->where('type', 'apas')
                 ->where('nasp_status', 1)
                 ->where('deleted_at IS NULL')
                 ->findAll();
@@ -200,7 +200,7 @@ class AjaxController extends Controller
         try {
             $dips = $this->naspModel
                 ->where('parent_id', $apaId)
-                ->where('type', 'objectives')
+                ->where('type', 'dips')
                 ->where('nasp_status', 1)
                 ->where('deleted_at IS NULL')
                 ->findAll();
@@ -235,7 +235,7 @@ class AjaxController extends Controller
         try {
             $specificAreas = $this->naspModel
                 ->where('parent_id', $dipId)
-                ->where('type', 'specific_area')
+                ->where('type', 'specific_areas')
                 ->where('nasp_status', 1)
                 ->where('deleted_at IS NULL')
                 ->findAll();

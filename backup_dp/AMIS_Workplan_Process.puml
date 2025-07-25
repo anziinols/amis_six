@@ -1,0 +1,110 @@
+@startuml AMIS_Workplan_Process
+!theme plain
+title AMIS Five - Workplan and Activity Process Flow
+
+|User|
+start
+:User Initiates Workplan;
+:Create Workplan Form;
+
+if (Validate Workplan Data?) then (Valid)
+    :Save Workplan to Database;
+    :Assign Supervisor;
+    
+    |Email System|
+    :Notify Supervisor via Email;
+    
+    |User|
+    :Workplan Created Successfully;
+    
+    :User Creates Activity;
+    :Select Workplan;
+    :Create Activity Form;
+    
+    if (Select Activity Type?) then (Training)
+        :Training Activity Details;
+    elseif (Infrastructure) then
+        :Infrastructure Activity Details;
+    elseif (Inputs) then
+        :Input Activity Details;
+    elseif (Output) then
+        :Output Activity Details;
+    endif
+    
+    :Fill Activity Details;
+    :Add GPS Coordinates;
+    :Upload Documents;
+    
+    if (Validate Activity?) then (Valid)
+        :Save Activity;
+        
+        :Link to Strategic Plans;
+        
+        if (Link to NASP?) then (Yes)
+            :Link NASP Plans;
+        endif
+        
+        if (Link to MTDP?) then (Yes)
+            :Link MTDP Plans;
+        endif
+        
+        if (Link to Corporate Plan?) then (Yes)
+            :Link Corporate Plans;
+        endif
+        
+        if (Link to Others?) then (Yes)
+            :Link Other Plans;
+        endif
+        
+        :Create Proposal;
+        :Auto-assign Supervisor;
+        :Submit Proposal;
+        
+        |Email System|
+        :Notify Supervisor;
+        
+        |Supervisor|
+        if (Supervisor Review?) then (Approve)
+            :Assign Action Officer;
+            
+            |Email System|
+            :Notify Action Officer;
+            
+            |Supervisor|
+            :Approve Proposal;
+            
+            |Action Officer|
+            :Officer Implements Activity;
+            :Upload Implementation Evidence;
+            :Submit for Supervision;
+            
+            |Supervisor|
+            if (Supervisor Verification?) then (Approved)
+                :Send to M&E for Rating;
+                
+                |M&E Evaluator|
+                :M&E Evaluator Review;
+                :Rate Activity Performance;
+                :Mark Activity Complete;
+                
+                stop
+                
+            else (Needs Work)
+                |Action Officer|
+                :Officer Implements Activity;
+            endif
+            
+        else (Request Changes)
+            |User|
+            :Submit Proposal;
+        endif
+        
+    else (Invalid)
+        :Fill Activity Details;
+    endif
+    
+else (Invalid)
+    :Create Workplan Form;
+endif
+
+@enduml

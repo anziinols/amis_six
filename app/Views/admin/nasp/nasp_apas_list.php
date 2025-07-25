@@ -4,13 +4,9 @@
 <div class="container-fluid">
     <div class="row mb-2">
         <div class="col-12">
-            <nav aria-label="breadcrumb">
-                <ol class="breadcrumb">
-                    <li class="breadcrumb-item"><a href="<?= base_url('admin') ?>">Home</a></li>
-                    <li class="breadcrumb-item"><a href="<?= base_url('admin/nasp-plans') ?>">NASP Plans</a></li>
-                    <li class="breadcrumb-item active" aria-current="page">APAs in <?= esc($plan['title']) ?></li>
-                </ol>
-            </nav>
+            <a href="<?= base_url('admin/nasp-plans') ?>" class="btn btn-sm btn-outline-secondary me-2">
+                <i class="fas fa-arrow-left"></i> Back to NASP Plans
+            </a>
         </div>
     </div>
 

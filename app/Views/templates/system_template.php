@@ -315,6 +315,12 @@
         </div>
         <div class="p-2 mt-2">
             <ul class="nav flex-column">
+                <?php
+                $userRole = session()->get('role');
+                $allowedMenus = getNavigationMenus($userRole);
+                ?>
+
+                <!-- Dashboard - Available to all roles -->
                 <li class="nav-item">
                     <a class="nav-link <?= current_url() == base_url('dashboard') ? 'active' : '' ?>" href="<?= base_url('dashboard') ?>">
                         <i class="fas fa-tachometer-alt"></i>
@@ -322,7 +328,8 @@
                     </a>
                 </li>
 
-                <!-- Admin Panel Menu -->
+                <!-- Admin Panel Menu - Only for Admin -->
+                <?php if (canAccessMenu('admin_panel', $userRole)): ?>
                 <li class="nav-item">
                     <a class="nav-link <?= strpos(current_url(), 'admin') !== false ? 'active' : '' ?>" href="#adminSubmenu" data-bs-toggle="collapse">
                         <i class="fas fa-cog"></i>
@@ -388,41 +395,50 @@
                         </ul>
                     </div>
                 </li>
+                <?php endif; ?>
 
-                <!-- New Menu Items -->
+                <!-- SMEs Menu - Only for Admin -->
+                <?php if (canAccessMenu('smes', $userRole)): ?>
                 <li class="nav-item">
                     <a class="nav-link <?= strpos(current_url(), 'smes') !== false ? 'active' : '' ?>" href="<?= base_url('smes') ?>">
                         <i class="fas fa-store"></i>
                         <span class="nav-text">SMEs</span>
                     </a>
                 </li>
+                <?php endif; ?>
 
-
-
+                <!-- Commodity Boards Menu - For Admin and Commodity Users -->
+                <?php if (canAccessMenu('commodity_boards', $userRole)): ?>
                 <li class="nav-item">
                     <a class="nav-link <?= strpos(current_url(), 'commodity-boards') !== false ? 'active' : '' ?>" href="<?= base_url('commodity-boards') ?>">
                         <i class="fas fa-boxes"></i>
                         <span class="nav-text">Commodity Boards</span>
                     </a>
                 </li>
+                <?php endif; ?>
 
-                <!-- Workplans, Activities, Reports -->
+                <!-- Workplans Menu - For Admin and Supervisor -->
+                <?php if (canAccessMenu('workplans', $userRole)): ?>
                 <li class="nav-item">
                     <a class="nav-link <?= strpos(current_url(), 'workplans') !== false ? 'active' : '' ?>" href="<?= base_url('workplans') ?>">
                         <i class="fas fa-tasks"></i>
                         <span class="nav-text">Workplans</span>
                     </a>
                 </li>
+                <?php endif; ?>
 
-                <!-- Proposal Menu Item -->
+                <!-- Proposal Menu - For Admin and Supervisor -->
+                <?php if (canAccessMenu('proposals', $userRole)): ?>
                 <li class="nav-item">
                     <a class="nav-link <?= strpos(current_url(), 'proposals') !== false ? 'active' : '' ?>" href="<?= base_url('proposals') ?>">
                         <i class="fas fa-lightbulb"></i>
                         <span class="nav-text">Proposal</span>
                     </a>
                 </li>
-                <!-- End Proposal Menu Item -->
+                <?php endif; ?>
 
+                <!-- Activities Menu - For Admin, Supervisor, and User -->
+                <?php if (canAccessMenu('activities', $userRole)): ?>
                 <li class="nav-item">
                     <a class="nav-link <?= ((current_url() == base_url('activities') || strpos(current_url(), base_url('activities/')) !== false) || strpos(current_url(), 'documents') !== false || strpos(current_url(), 'meetings') !== false || strpos(current_url(), 'agreements') !== false) ? 'active' : '' ?>" href="#activitiesSubmenu" data-bs-toggle="collapse">
                         <i class="fas fa-clipboard-list"></i>
@@ -458,13 +474,16 @@
                         </ul>
                     </div>
                 </li>
+                <?php endif; ?>
+                <!-- Reports Menu - For All Roles -->
+                <?php if (canAccessMenu('reports', $userRole)): ?>
                 <li class="nav-item">
-                    <a class="nav-link <?= (strpos(current_url(), 'reports/mtdp') !== false || strpos(current_url(), 'reports/nasp') !== false || strpos(current_url(), 'reports/workplan') !== false || strpos(current_url(), 'reports/activities-map') !== false || strpos(current_url(), 'reports/commodity') !== false) ? 'active' : '' ?>" href="#reportsSubmenu" data-bs-toggle="collapse">
+                    <a class="nav-link <?= (strpos(current_url(), 'reports/mtdp') !== false || strpos(current_url(), 'reports/nasp') !== false || strpos(current_url(), 'reports/workplan') !== false || strpos(current_url(), 'reports/activities-map') !== false || strpos(current_url(), 'reports/commodity') !== false || strpos(current_url(), 'reports/hr') !== false) ? 'active' : '' ?>" href="#reportsSubmenu" data-bs-toggle="collapse">
                         <i class="fas fa-chart-bar"></i>
                         <span class="nav-text">Reports</span>
                         <i class="fas fa-chevron-down ms-auto"></i>
                     </a>
-                    <div class="collapse <?= (strpos(current_url(), 'reports/mtdp') !== false || strpos(current_url(), 'reports/nasp') !== false || strpos(current_url(), 'reports/workplan') !== false || strpos(current_url(), 'reports/activities-map') !== false || strpos(current_url(), 'reports/commodity') !== false) ? 'show' : '' ?>" id="reportsSubmenu">
+                    <div class="collapse <?= (strpos(current_url(), 'reports/mtdp') !== false || strpos(current_url(), 'reports/nasp') !== false || strpos(current_url(), 'reports/workplan') !== false || strpos(current_url(), 'reports/activities-map') !== false || strpos(current_url(), 'reports/commodity') !== false || strpos(current_url(), 'reports/hr') !== false) ? 'show' : '' ?>" id="reportsSubmenu">
                         <ul class="nav flex-column ms-3">
                             <li class="nav-item">
                                 <a class="nav-link <?= strpos(current_url(), 'reports/mtdp') !== false ? 'active' : '' ?>" href="<?= base_url('reports/mtdp') ?>">
@@ -496,17 +515,26 @@
                                     <span class="nav-text">Commodity Reports</span>
                                 </a>
                             </li>
+                            <li class="nav-item">
+                                <a class="nav-link <?= strpos(current_url(), 'reports/hr') !== false ? 'active' : '' ?>" href="<?= base_url('reports/hr') ?>">
+                                    <i class="fas fa-users"></i>
+                                    <span class="nav-text">HR Reports</span>
+                                </a>
+                            </li>
                         </ul>
                     </div>
                 </li>
-                <!-- End Workplans, Activities, Reports -->
+                <?php endif; ?>
 
+                <!-- Profile Menu - For All Roles -->
+                <?php if (canAccessMenu('profile', $userRole)): ?>
                 <li class="nav-item">
                     <a class="nav-link <?= current_url() == base_url('dashboard/profile') ? 'active' : '' ?>" href="<?= base_url('dashboard/profile') ?>">
                         <i class="fas fa-user"></i>
                         <span class="nav-text">Profile</span>
                     </a>
                 </li>
+                <?php endif; ?>
 
 
 
@@ -583,6 +611,14 @@
 
     <!-- AMIS PDF Generator -->
     <script src="<?= base_url('public/assets/js/pdf-generator.js') ?>"></script>
+
+
+
+    <!-- Global JavaScript Variables -->
+    <script>
+        // Define global base URL for JavaScript files
+        window.AMIS_BASE_URL = '<?= base_url() ?>';
+    </script>
 
     <!-- Initialize Toastr settings -->
     <script>

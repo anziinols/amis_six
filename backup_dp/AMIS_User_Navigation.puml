@@ -1,0 +1,143 @@
+@startuml AMIS_User_Navigation
+!theme plain
+title AMIS Five - User Navigation Diagram
+
+start
+
+:User Access AMIS;
+:Login Page;
+
+if (Authentication?) then (Success)
+    if (User Role?) then (Admin)
+        :Admin Dashboard;
+        split
+            :User Management;
+        split again
+            :Government Structure;
+        split again
+            :Branches Management;
+        split again
+            :NASP Management;
+        split again
+            :MTDP Management;
+        split again
+            :Corporate Plans;
+        split again
+            :Regions Management;
+        split again
+            :Commodities Management;
+        end split
+        
+    elseif (Supervisor) then
+        :Supervisor Dashboard;
+        split
+            :My Workplans;
+            split
+                :View Workplans;
+            split again
+                :Workplan Activities;
+            end split
+        split again
+            :Supervised Activities;
+        split again
+            :Proposal Approvals;
+            split
+                :Supervise Proposal;
+            split again
+                :Approve Proposal;
+            end split
+        split again
+            :Supervisor Reports;
+            split
+                :Workplan Reports;
+            split again
+                :Activity Reports;
+            split again
+                :MTDP Reports;
+            split again
+                :NASP Reports;
+            split again
+                :HR Reports;
+            split again
+                :Activity Maps;
+            end split
+        end split
+        
+    elseif (User) then
+        :User Dashboard;
+        split
+            :My Workplans;
+            split
+                :Create Workplan;
+            split again
+                :View Workplans;
+            split again
+                :Edit Workplan;
+            split again
+                :Workplan Activities;
+            end split
+        split again
+            :My Activities;
+            split
+                :Create Activity;
+            split again
+                :View Activities;
+            split again
+                :Implement Activity;
+            split again
+                :Activity Plans;
+            split again
+                :Link to Plans;
+            end split
+        split again
+            :My Proposals;
+            split
+                :Create Proposal;
+            split again
+                :View Proposals;
+            end split
+        split again
+            :Documents;
+        split again
+            :Meetings;
+        split again
+            :Agreements;
+        end split
+        
+    elseif (M&E Evaluator) then
+        :M&E Dashboard;
+        split
+            :Activities for Rating;
+        split again
+            :M&E Reports;
+        split again
+            :Activity Evaluation;
+        end split
+        
+    elseif (Commodity) then
+        :Commodity Dashboard;
+        split
+            :Commodity Production;
+        split again
+            :Commodity Reports;
+        split again
+            :Price Trends;
+        end split
+        
+    else (Guest)
+        :Guest Dashboard;
+        :Read-only Access;
+    endif
+    
+    :Profile Management;
+    :Settings;
+    :Logout;
+    
+else (Failure)
+    :Login Page;
+    stop
+endif
+
+stop
+
+@enduml

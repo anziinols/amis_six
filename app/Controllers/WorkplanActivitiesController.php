@@ -118,7 +118,7 @@ class WorkplanActivitiesController extends BaseController
             'workplan' => $workplan,
             'validation' => \Config\Services::validation(),
             'branches' => $this->branchModel->findAll(),
-            'supervisors' => $this->userModel->where('role', 'supervisor')->findAll(),
+            'supervisors' => $this->userModel->getUsersBySupervisorCapability(),
             'activityTypes' => [
                 'training' => 'Training',
                 'inputs' => 'Inputs',
@@ -492,7 +492,7 @@ class WorkplanActivitiesController extends BaseController
             'activity' => $activity,
             'validation' => \Config\Services::validation(),
             'branches' => $this->branchModel->findAll(),
-            'supervisors' => $this->userModel->where('role', 'supervisor')->findAll(),
+            'supervisors' => $this->userModel->getUsersBySupervisorCapability(),
             'activityTypes' => [
                 'training' => 'Training',
                 'inputs' => 'Inputs',

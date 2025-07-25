@@ -25,6 +25,7 @@
                                         <th>#</th>
                                         <th>Workplan</th>
                                         <th>Activity</th>
+                                        <th>Action Officer</th>
                                         <th>Location</th>
                                         <th>Date Range</th>
                                         <th>Cost</th>
@@ -41,6 +42,9 @@
                                             <td>
                                                 <?= esc($proposal['activity_title']) ?>
                                                 <span class="badge bg-info"><?= ucfirst($proposal['activity_type']) ?></span>
+                                            </td>
+                                            <td>
+                                                <?= !empty($proposal['action_officer_name']) ? esc($proposal['action_officer_name']) : '<span class="text-muted">Not Assigned</span>' ?>
                                             </td>
                                             <td>
                                                 <?= esc($proposal['location']) ?><br>
@@ -115,7 +119,7 @@
             "order": [[0, 'asc']],
             "pageLength": 25,
             "columnDefs": [
-                { "orderable": false, "targets": [7] }
+                { "orderable": false, "targets": [8] }
             ]
         });
     });

@@ -23,16 +23,9 @@
         <div class="col-12">
             <div class="card bg-primary text-white">
                 <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <h4 class="card-title">Workplan Reports</h4>
-                            <p class="card-text mb-0">This report displays all workplans and their activities with visual charts and graphs.</p>
-                        </div>
-                        <div>
-                            <button onclick="AMISPdf.generateWorkplanReportPDF()" class="btn btn-light">
-                                <i class="fas fa-file-pdf me-1"></i> Export PDF
-                            </button>
-                        </div>
+                    <div>
+                        <h4 class="card-title">Workplan Reports</h4>
+                        <p class="card-text mb-0">This report displays all workplans and their activities with visual charts and graphs.</p>
                     </div>
                 </div>
             </div>
@@ -78,7 +71,12 @@
         <!-- Workplan Status Chart -->
         <div class="col-md-6 mb-4">
             <div class="card">
-                <div class="card-header"><strong>Workplan Status Distribution</strong></div>
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <strong>Workplan Status Distribution</strong>
+                    <button type="button" class="btn btn-sm btn-outline-primary" onclick="copyChartAsImage('workplanStatusChart')">
+                        <i class="fas fa-copy"></i> Copy Chart
+                    </button>
+                </div>
                 <div class="card-body">
                     <canvas id="workplanStatusChart" width="400" height="300"></canvas>
                 </div>
@@ -88,27 +86,29 @@
         <!-- Activity Status Chart -->
         <div class="col-md-6 mb-4">
             <div class="card">
-                <div class="card-header"><strong>Activity Status Distribution</strong></div>
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <strong>Proposal Status Distribution</strong>
+                    <button type="button" class="btn btn-sm btn-outline-primary" onclick="copyChartAsImage('activityStatusChart')">
+                        <i class="fas fa-copy"></i> Copy Chart
+                    </button>
+                </div>
                 <div class="card-body">
                     <canvas id="activityStatusChart" width="400" height="300"></canvas>
                 </div>
             </div>
         </div>
         
-        <!-- Proposal Status Chart - New -->
-        <div class="col-md-6 mb-4">
-            <div class="card">
-                <div class="card-header"><strong>Proposal Status Distribution</strong></div>
-                <div class="card-body">
-                    <canvas id="proposalStatusChart" width="400" height="300"></canvas>
-                </div>
-            </div>
-        </div>
+
         
         <!-- Activity Type Chart -->
         <div class="col-md-6 mb-4">
             <div class="card">
-                <div class="card-header"><strong>Activity Type Distribution</strong></div>
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <strong>Activity Type Distribution</strong>
+                    <button type="button" class="btn btn-sm btn-outline-primary" onclick="copyChartAsImage('activityTypeChart')">
+                        <i class="fas fa-copy"></i> Copy Chart
+                    </button>
+                </div>
                 <div class="card-body">
                     <canvas id="activityTypeChart" width="400" height="300"></canvas>
                 </div>
@@ -118,7 +118,12 @@
         <!-- Costs by Province Chart - New -->
         <div class="col-md-6 mb-4">
             <div class="card">
-                <div class="card-header"><strong>Costs by Province</strong></div>
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <strong>Costs by Province</strong>
+                    <button type="button" class="btn btn-sm btn-outline-primary" onclick="copyChartAsImage('costsByProvinceChart')">
+                        <i class="fas fa-copy"></i> Copy Chart
+                    </button>
+                </div>
                 <div class="card-body">
                     <canvas id="costsByProvinceChart" width="400" height="300"></canvas>
                 </div>
@@ -128,7 +133,12 @@
         <!-- Costs by Activity Type Chart - New -->
         <div class="col-md-6 mb-4">
             <div class="card">
-                <div class="card-header"><strong>Costs by Activity Type</strong></div>
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <strong>Costs by Activity Type</strong>
+                    <button type="button" class="btn btn-sm btn-outline-primary" onclick="copyChartAsImage('costsByActivityTypeChart')">
+                        <i class="fas fa-copy"></i> Copy Chart
+                    </button>
+                </div>
                 <div class="card-body">
                     <canvas id="costsByActivityTypeChart" width="400" height="300"></canvas>
                 </div>
@@ -138,7 +148,12 @@
         <!-- Workplans by Branch Chart -->
         <div class="col-md-6 mb-4">
             <div class="card">
-                <div class="card-header"><strong>Workplans by Branch</strong></div>
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <strong>Workplans by Branch</strong>
+                    <button type="button" class="btn btn-sm btn-outline-primary" onclick="copyChartAsImage('workplansByBranchChart')">
+                        <i class="fas fa-copy"></i> Copy Chart
+                    </button>
+                </div>
                 <div class="card-body">
                     <canvas id="workplansByBranchChart" width="400" height="300"></canvas>
                 </div>
@@ -148,7 +163,12 @@
         <!-- Activities by Plan Type Chart -->
         <div class="col-md-6 mb-4">
             <div class="card">
-                <div class="card-header"><strong>Activities by Plan Type</strong></div>
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <strong>Activities by Plan Type</strong>
+                    <button type="button" class="btn btn-sm btn-outline-primary" onclick="copyChartAsImage('activitiesByPlanTypeChart')">
+                        <i class="fas fa-copy"></i> Copy Chart
+                    </button>
+                </div>
                 <div class="card-body">
                     <canvas id="activitiesByPlanTypeChart" width="400" height="300"></canvas>
                 </div>
@@ -158,7 +178,12 @@
         <!-- Monthly Activity Chart -->
         <div class="col-md-6 mb-4">
             <div class="card">
-                <div class="card-header"><strong>Monthly Activity Distribution (<?= date('Y') ?>)</strong></div>
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <strong>Monthly Activity Distribution (<?= date('Y') ?>)</strong>
+                    <button type="button" class="btn btn-sm btn-outline-primary" onclick="copyChartAsImage('monthlyActivityChart')">
+                        <i class="fas fa-copy"></i> Copy Chart
+                    </button>
+                </div>
                 <div class="card-body">
                     <canvas id="monthlyActivityChart" width="400" height="300"></canvas>
                 </div>
@@ -171,8 +196,8 @@
         <div class="col-12">
             <div class="card">
                 <div class="card-header"><strong>Workplans</strong></div>
-                <div class="card-body table-responsive">
-                    <table class="table table-bordered table-striped table-sm">
+                <div class="card-body" style="overflow-x: auto;">
+                    <table id="workplansTable" class="table table-bordered table-striped table-sm" style="white-space: nowrap; min-width: 100%;">
                         <thead>
                             <tr>
                                 <th>#</th>
@@ -181,7 +206,6 @@
                                 <th>Supervisor</th>
                                 <th>Start Date</th>
                                 <th>End Date</th>
-                                <th>Status</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -214,13 +238,8 @@
                                     }
                                     ?>
                                 </td>
-                                <td><?= esc($workplan['start_date']) ?></td>
-                                <td><?= esc($workplan['end_date']) ?></td>
-                                <td>
-                                    <span class="badge <?= getStatusBadgeClass($workplan['status']) ?>">
-                                        <?= ucfirst(str_replace('_', ' ', $workplan['status'])) ?>
-                                    </span>
-                                </td>
+                                <td><?= date('d/m/Y', strtotime($workplan['start_date'])) ?></td>
+                                <td><?= date('d/m/Y', strtotime($workplan['end_date'])) ?></td>
                             </tr>
                         <?php endforeach; ?>
                         </tbody>
@@ -235,17 +254,15 @@
         <div class="col-12">
             <div class="card">
                 <div class="card-header"><strong>Activities</strong></div>
-                <div class="card-body table-responsive">
-                    <table class="table table-bordered table-striped table-sm">
+                <div class="card-body" style="overflow-x: auto;">
+                    <table id="activitiesTable" class="table table-bordered table-striped table-sm" style="white-space: nowrap; min-width: 100%;">
                         <thead>
                             <tr>
                                 <th>#</th>
                                 <th>Workplan</th>
                                 <th>Title</th>
                                 <th>Type</th>
-                                <th>Location</th>
                                 <th>Supervisor</th>
-                                <th>Status</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -265,7 +282,6 @@
                                 </td>
                                 <td><?= esc($activity['title']) ?></td>
                                 <td><?= isset($activity['activity_type']) ? ucfirst($activity['activity_type']) : 'Not specified' ?></td>
-                                <td><?= isset($activity['location']) ? esc($activity['location']) : 'Not specified' ?></td>
                                 <td>
                                     <?php 
                                     if (!empty($activity['supervisor_id'])) {
@@ -279,17 +295,6 @@
                                         echo 'Not assigned';
                                     }
                                     ?>
-                                </td>
-                                <td>
-                                    <?php if (isset($activity['status']) && !empty($activity['status'])): ?>
-                                        <span class="badge <?= getActivityStatusBadgeClass($activity['status']) ?>">
-                                            <?= ucfirst($activity['status']) ?>
-                                        </span>
-                                    <?php else: ?>
-                                        <span class="badge bg-secondary">
-                                            Pending
-                                        </span>
-                                    <?php endif; ?>
                                 </td>
                             </tr>
                         <?php endforeach; ?>
@@ -305,8 +310,8 @@
         <div class="col-12">
             <div class="card">
                 <div class="card-header"><strong>Proposals</strong></div>
-                <div class="card-body table-responsive">
-                    <table class="table table-bordered table-striped table-sm">
+                <div class="card-body" style="overflow-x: auto;">
+                    <table id="proposalsTable" class="table table-bordered table-striped table-sm" style="white-space: nowrap; min-width: 100%;">
                         <thead>
                             <tr>
                                 <th>#</th>
@@ -497,48 +502,11 @@ function getProposalStatusBadgeClass($status) {
             }
         });
 
-        // 2. Activity Status Chart
+        // 2. Proposal Status Chart
         const activityStatusCtx = document.getElementById('activityStatusChart').getContext('2d');
-        const activityStatusData = <?= json_encode($chartData['activityStatusCounts'] ?? []) ?>;
-        
-        new Chart(activityStatusCtx, {
-            type: 'pie',
-            data: {
-                labels: ['Pending', 'Submitted', 'Approved', 'Rated', 'Other'],
-                datasets: [{
-                    data: [
-                        activityStatusData.pending || 0,
-                        activityStatusData.submitted || 0,
-                        activityStatusData.approved || 0,
-                        activityStatusData.rated || 0,
-                        activityStatusData.other || 0
-                    ],
-                    backgroundColor: [
-                        colors.warning,
-                        colors.info,
-                        colors.success,
-                        colors.primary,
-                        colors.secondary
-                    ],
-                    borderWidth: 1
-                }]
-            },
-            options: {
-                responsive: true,
-                plugins: {
-                    title: {
-                        display: true,
-                        text: 'Activity Status Distribution'
-                    }
-                }
-            }
-        });
-        
-        // 2.1 Proposal Status Chart (New)
-        const proposalStatusCtx = document.getElementById('proposalStatusChart').getContext('2d');
         const proposalStatusData = <?= json_encode($chartData['proposalStatusCounts'] ?? []) ?>;
-        
-        new Chart(proposalStatusCtx, {
+
+        new Chart(activityStatusCtx, {
             type: 'pie',
             data: {
                 labels: ['Pending', 'Submitted', 'Approved', 'Rated', 'Other'],
@@ -570,6 +538,7 @@ function getProposalStatusBadgeClass($status) {
                 }
             }
         });
+
 
         // 3. Activity Type Chart
         const activityTypeCtx = document.getElementById('activityTypeChart').getContext('2d');
@@ -811,6 +780,96 @@ function getProposalStatusBadgeClass($status) {
             }
         });
     });
+
+    // Function to copy chart as image
+    function copyChartAsImage(chartId) {
+        const canvas = document.getElementById(chartId);
+        if (canvas) {
+            canvas.toBlob(function(blob) {
+                const item = new ClipboardItem({ "image/png": blob });
+                navigator.clipboard.write([item]).then(function() {
+                    // Show success message using toastr if available
+                    if (typeof toastr !== 'undefined') {
+                        toastr.success('Chart copied to clipboard!');
+                    } else {
+                        alert('Chart copied to clipboard!');
+                    }
+                }).catch(function(error) {
+                    console.error('Failed to copy chart: ', error);
+                    if (typeof toastr !== 'undefined') {
+                        toastr.error('Failed to copy chart to clipboard');
+                    } else {
+                        alert('Failed to copy chart to clipboard');
+                    }
+                });
+            });
+        }
+    }
+
+    // Initialize DataTables with PDF export for all tables
+    $(document).ready(function() {
+        // DataTables configuration with PDF export
+        const dataTableConfig = {
+            dom: 'Bfrtip',
+            buttons: [
+                {
+                    extend: 'pdfHtml5',
+                    text: '<i class="fas fa-file-pdf"></i> Export PDF',
+                    className: 'btn btn-danger btn-sm',
+                    orientation: 'landscape',
+                    pageSize: 'A4',
+                    exportOptions: {
+                        columns: ':visible'
+                    },
+                    customize: function(doc) {
+                        // Style the table
+                        doc.styles.tableHeader = {
+                            bold: true,
+                            fontSize: 9,
+                            color: 'black',
+                            fillColor: '#f0f0f0'
+                        };
+                        doc.defaultStyle.fontSize = 8;
+                    }
+                }
+            ],
+            responsive: true,
+            paging: false,
+            searching: true,
+            ordering: true,
+            info: false,
+            scrollX: true,
+            language: {
+                search: "Search:",
+                zeroRecords: "No matching records found"
+            }
+        };
+
+        // Initialize DataTables for each table
+        $('#workplansTable').DataTable({
+            ...dataTableConfig,
+            buttons: [{
+                ...dataTableConfig.buttons[0],
+                title: 'Workplans Report'
+            }]
+        });
+
+        $('#activitiesTable').DataTable({
+            ...dataTableConfig,
+            buttons: [{
+                ...dataTableConfig.buttons[0],
+                title: 'Activities Report'
+            }]
+        });
+
+        $('#proposalsTable').DataTable({
+            ...dataTableConfig,
+            buttons: [{
+                ...dataTableConfig.buttons[0],
+                title: 'Proposals Report'
+            }]
+        });
+    });
 </script>
 
 <style>
@@ -819,4 +878,14 @@ function getProposalStatusBadgeClass($status) {
         color: #ffc107;
     }
 </style>
+
+<!-- DataTables Buttons JS Libraries -->
+<script src="https://cdn.datatables.net/buttons/2.4.2/js/dataTables.buttons.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.bootstrap5.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/pdfmake.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/vfs_fonts.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.html5.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.print.min.js"></script>
+
 <?= $this->endSection() ?>

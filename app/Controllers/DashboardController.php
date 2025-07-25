@@ -40,6 +40,7 @@ class DashboardController extends BaseController
 
         // Get workplans related to the user
         $myWorkplans = [];
+        $user = $this->userModel->find($userId);
         if ($userRole == 'admin' || $userRole == 'supervisor') {
             // For admin/supervisor: get workplans they supervise
             $myWorkplans = $this->workplanModel

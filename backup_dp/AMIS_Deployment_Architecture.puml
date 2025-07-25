@@ -1,0 +1,194 @@
+@startuml AMIS_Deployment_Architecture
+!theme plain
+title AMIS Five - Deployment Architecture Diagram
+
+!define RECTANGLE class
+
+package "Development Environment" {
+    node "XAMPP Stack" {
+        component [Apache Web Server\nPort 80/443] as DevApache
+        component [MySQL Database\nPort 3306] as DevMySQL
+        component [PHP 8+\nRuntime] as DevPHP
+        component [phpMyAdmin\nDatabase Admin] as DevPhpMyAdmin
+    }
+    
+    folder "Application Files" {
+        folder "c:/xampp/htdocs/amis_five/" as DevAppRoot {
+            folder "app/" as DevApp {
+                folder "Controllers/" as DevControllers
+                folder "Models/" as DevModels
+                folder "Views/" as DevViews
+                folder "Config/" as DevConfig
+                folder "Filters/" as DevFilters
+            }
+            folder "public/" as DevPublic {
+                folder "assets/" as DevAssets
+                folder "uploads/" as DevUploads
+                file "index.php" as DevIndex
+            }
+            folder "writable/" as DevWritable {
+                folder "cache/" as DevCache
+                folder "logs/" as DevLogs
+                folder "session/" as DevSession
+            }
+            folder "backup_dp/" as DevBackup
+            folder "memory_bank/" as DevMemory
+        }
+    }
+    
+    database "Development Database" {
+        [amis_db] as DevDB
+        [User Tables] as DevUserTables
+        [Workplan Tables] as DevWorkplanTables
+        [Strategic Plan Tables] as DevPlanTables
+        [Supporting Tables] as DevSupportTables
+    }
+}
+
+package "Production Environment" {
+    node "Web Server" {
+        component [Apache/Nginx\nLoad Balancer] as ProdLB
+        component [Apache Web Server\nSSL/TLS] as ProdApache
+        component [PHP-FPM\nProcess Manager] as ProdPHP
+    }
+    
+    node "Database Server" {
+        component [MySQL Server\nMaster] as ProdMySQL
+        component [MySQL Server\nSlave (Read Replica)] as ProdMySQLSlave
+        component [Database Backup\nScheduled] as ProdBackup
+    }
+    
+    node "File Storage" {
+        component [Static Files\nCDN/Storage] as ProdCDN
+        component [Upload Files\nSecure Storage] as ProdStorage
+        component [Log Files\nCentralized Logging] as ProdLogs
+    }
+    
+    node "Email Server" {
+        component [SMTP Server\ndakoiims.com:465] as ProdSMTP
+        component [Email Queue\nProcessor] as ProdEmailQueue
+    }
+    
+    node "Security Layer" {
+        component [Firewall\nWAF] as ProdFirewall
+        component [SSL Certificate\nLet's Encrypt] as ProdSSL
+        component [Intrusion Detection\nIDS/IPS] as ProdIDS
+    }
+    
+    node "Monitoring & Analytics" {
+        component [Application Monitoring\nAPM] as ProdAPM
+        component [Server Monitoring\nSystem Metrics] as ProdMonitoring
+        component [Log Analysis\nELK Stack] as ProdLogAnalysis
+    }
+}
+
+package "External Services" {
+    cloud "Third-party Services" {
+        [OpenStreetMap API] as OSMService
+        [Email Service Provider] as EmailProvider
+        [Backup Storage\nCloud] as CloudBackup
+        [CDN Provider] as CDNProvider
+    }
+}
+
+package "Client Access" {
+    actor "Admin Users" as AdminUsers
+    actor "Supervisor Users" as SupervisorUsers
+    actor "Standard Users" as StandardUsers
+    actor "M&E Evaluators" as MEUsers
+    actor "Commodity Users" as CommodityUsers
+    actor "Guest Users" as GuestUsers
+    
+    node "Client Devices" {
+        [Desktop Browsers] as DesktopBrowsers
+        [Mobile Browsers] as MobileBrowsers
+        [Tablet Browsers] as TabletBrowsers
+    }
+}
+
+' Development Environment Connections
+DevApache --> DevPHP
+DevPHP --> DevMySQL
+DevApache --> DevIndex
+DevIndex --> DevApp
+DevMySQL --> DevDB
+DevDB --> DevUserTables
+DevDB --> DevWorkplanTables
+DevDB --> DevPlanTables
+DevDB --> DevSupportTables
+
+' Production Environment Connections
+ProdLB --> ProdApache
+ProdApache --> ProdPHP
+ProdPHP --> ProdMySQL
+ProdMySQL --> ProdMySQLSlave
+ProdMySQL --> ProdBackup
+
+ProdApache --> ProdCDN
+ProdApache --> ProdStorage
+ProdApache --> ProdLogs
+
+ProdApache --> ProdSMTP
+ProdSMTP --> ProdEmailQueue
+
+ProdFirewall --> ProdLB
+ProdSSL --> ProdApache
+ProdIDS --> ProdFirewall
+
+ProdAPM --> ProdApache
+ProdMonitoring --> ProdApache
+ProdLogAnalysis --> ProdLogs
+
+' External Service Connections
+ProdApache --> OSMService
+ProdSMTP --> EmailProvider
+ProdBackup --> CloudBackup
+ProdCDN --> CDNProvider
+
+' Client Connections
+AdminUsers --> DesktopBrowsers
+SupervisorUsers --> DesktopBrowsers
+StandardUsers --> MobileBrowsers
+MEUsers --> TabletBrowsers
+CommodityUsers --> DesktopBrowsers
+GuestUsers --> MobileBrowsers
+
+DesktopBrowsers --> ProdLB
+MobileBrowsers --> ProdLB
+TabletBrowsers --> ProdLB
+
+' Development Access
+DesktopBrowsers --> DevApache
+
+note right of DevAppRoot
+  Development Configuration:
+  - Base URL: http://localhost/amis_five/
+  - Debug Mode: Enabled
+  - Error Reporting: Full
+  - Database Debug: Enabled
+  - CSRF Protection: Enabled
+  - Session Storage: File-based
+end note
+
+note right of ProdApache
+  Production Configuration:
+  - HTTPS Only (SSL/TLS)
+  - Debug Mode: Disabled
+  - Error Reporting: Disabled
+  - Performance Optimized
+  - Security Headers Enabled
+  - Rate Limiting Enabled
+  - Caching Enabled
+end note
+
+note right of ProdMySQL
+  Database Configuration:
+  - Master-Slave Replication
+  - Automated Backups
+  - Performance Tuning
+  - Connection Pooling
+  - Query Optimization
+  - Security Hardening
+end note
+
+@enduml

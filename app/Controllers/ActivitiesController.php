@@ -96,11 +96,17 @@ class ActivitiesController extends ResourceController
             ->join('users as supervisors', 'supervisors.id = proposal.supervisor_id', 'left')
             ->join('users as officers', 'officers.id = proposal.action_officer_id', 'left');
 
-        // If user is admin, show all activities; otherwise, show only assigned activities
+        // Filter activities based on user role
         if ($userRole === 'admin') {
+            // Admin can see all activities
             $proposals = $query->findAll();
             $title = 'All Activities';
+        } elseif ($userRole === 'supervisor') {
+            // Supervisors can see activities they supervise
+            $proposals = $query->where('proposal.supervisor_id', $userId)->findAll();
+            $title = 'Activities I Supervise';
         } else {
+            // Regular users can see only their assigned activities (as action officers)
             $proposals = $query->where('proposal.action_officer_id', $userId)->findAll();
             $title = 'My Assigned Activities';
         }
@@ -151,9 +157,11 @@ class ActivitiesController extends ResourceController
             return redirect()->to('/activities')->with('error', 'Activity not found.');
         }
 
-        // Check if the user is authorized to view this activity (admin can view all activities)
+        // Check if the user is authorized to view this activity
         $userRole = session()->get('role');
-        if ($userRole !== 'admin' && $proposal['action_officer_id'] != $userId) {
+        if ($userRole !== 'admin' &&
+            $proposal['action_officer_id'] != $userId &&
+            $proposal['supervisor_id'] != $userId) {
             return redirect()->to('/activities')->with('error', 'You are not authorized to view this activity.');
         }
 
@@ -255,7 +263,8 @@ class ActivitiesController extends ResourceController
             return redirect()->to('/activities')->with('error', 'Activity not found.');
         }
 
-        // Check if the user is authorized to implement this activity (admin can implement all activities)
+        // Check if the user is authorized to implement this activity
+        // Only action officers can implement activities (admin can implement all)
         $userRole = session()->get('role');
         if ($userRole !== 'admin' && $proposal['action_officer_id'] != $userId) {
             return redirect()->to('/activities')->with('error', 'You are not authorized to implement this activity.');
@@ -375,7 +384,8 @@ class ActivitiesController extends ResourceController
             return redirect()->to('/activities')->with('error', 'Activity not found.');
         }
 
-        // Check if the user is authorized to implement this activity (admin can implement all activities)
+        // Check if the user is authorized to implement this activity
+        // Only action officers can implement activities (admin can implement all)
         $userRole = session()->get('role');
         if ($userRole !== 'admin' && $proposal['action_officer_id'] != $userId) {
             return redirect()->to('/activities')->with('error', 'You are not authorized to implement this activity.');
@@ -891,7 +901,8 @@ class ActivitiesController extends ResourceController
             return redirect()->to('/activities')->with('error', 'Activity not found.');
         }
 
-        // Check if the user is authorized to submit this activity (admin can submit all activities)
+        // Check if the user is authorized to submit this activity
+        // Only action officers can submit activities (admin can submit all)
         $userRole = session()->get('role');
         if ($userRole !== 'admin' && $proposal['action_officer_id'] != $userId) {
             return redirect()->to('/activities')->with('error', 'You are not authorized to submit this activity.');
@@ -929,8 +940,10 @@ class ActivitiesController extends ResourceController
             return redirect()->to('/activities')->with('error', 'Activity not found.');
         }
 
-        // Check if the user is authorized to view this activity (admin can view all activities)
-        if ($userRole !== 'admin' && $proposal['action_officer_id'] != $userId) {
+        // Check if the user is authorized to view this activity
+        if ($userRole !== 'admin' &&
+            $proposal['action_officer_id'] != $userId &&
+            $proposal['supervisor_id'] != $userId) {
             return redirect()->to('/activities')->with('error', 'You are not authorized to export this activity.');
         }
 

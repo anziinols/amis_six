@@ -23,9 +23,15 @@ class UsersController extends BaseController
 
     public function index()
     {
+        // Get users with branch information
+        $users = $this->userModel
+            ->select('users.*, branches.name as branch_name')
+            ->join('branches', 'branches.id = users.branch_id', 'left')
+            ->findAll();
+
         $data = [
             'title' => 'Users Management',
-            'users' => $this->userModel->findAll()
+            'users' => $users
         ];
 
         return view('admin/users/admin_users_index', $data);
@@ -36,8 +42,8 @@ class UsersController extends BaseController
         // Get branches for dropdown
         $branches = $this->branchesModel->getBranchesForDropdown();
 
-        // Get supervisors for dropdown (users with role = supervisor)
-        $supervisors = $this->userModel->getUsersByRole('supervisor');
+        // Get supervisors for dropdown (users with is_supervisor capability)
+        $supervisors = $this->userModel->getUsersBySupervisorCapability();
 
         // Get commodities for dropdown
         $commodities = $this->commoditiesModel->getActiveCommodities();
@@ -48,100 +54,58 @@ class UsersController extends BaseController
             'supervisors' => $supervisors,
             'commodities' => $commodities
         ];
-
-        return view('admin/users/admin_users_create', $data);
-    }
-
-    public function create()
-    {
-        // Get branches for dropdown
-        $branches = $this->branchesModel->getBranchesForDropdown();
-
-        // Get supervisors for dropdown (users with role = supervisor)
-        $supervisors = $this->userModel->getUsersByRole('supervisor');
-
-        // Get commodities for dropdown
-        $commodities = $this->commoditiesModel->getActiveCommodities();
-
-        $data = [
-            'title' => 'Add New User',
-            'branches' => $branches,
-            'supervisors' => $supervisors,
-            'commodities' => $commodities
-        ];
-
-        if ($this->request->getMethod() === 'post') {
-            // Get POST data
-            $userData = $this->request->getPost();
-
-            // Explicitly set created_by and updated_by
-            if (empty($userData['created_by'])) {
-                $userData['created_by'] = session()->get('user_id') ?? 1;
-            }
-
-            if (empty($userData['updated_by'])) {
-                $userData['updated_by'] = session()->get('user_id') ?? 1;
-            }
-
-            // Use the setGlobals method to set the values so validation sees them
-            $_POST['created_by'] = $userData['created_by'];
-            $_POST['updated_by'] = $userData['updated_by'];
-
-            $rules = $this->userModel->getValidationRules();
-            $messages = $this->userModel->getValidationMessages();
-
-            if ($this->validate($rules, $messages)) {
-                // Generate a unique user code if not provided
-                if (empty($userData['ucode'])) {
-                    $userData['ucode'] = 'USR' . date('Ymd') . rand(1000, 9999);
-                }
-
-                // Handle checkbox fields - set to 0 if not checked
-                if (!isset($userData['is_evaluator'])) {
-                    $userData['is_evaluator'] = '0';
-                }
-
-                // Handle commodity_id based on role
-                if ($userData['role'] !== 'commodity') {
-                    // If role is not 'commodity', clear the commodity_id
-                    $userData['commodity_id'] = null;
-                } else {
-                    // If role is 'commodity', set to null if empty
-                    if (empty($userData['commodity_id'])) {
-                        $userData['commodity_id'] = null;
-                    }
-                }
-
-                // Password will be hashed in the model's beforeInsert callback
-                // No need to hash here to avoid double hashing
-                if (empty($userData['password'])) {
-                    unset($userData['password']); // Remove empty password field
-                }
-
-                if ($this->userModel->save($userData)) {
-                    // Get the ID of the newly created user
-                    $newUserId = $this->userModel->getInsertID();
-
-                    // If this is the logged-in user being created, update their session
-                    if (session()->get('user_id') == $newUserId) {
-                        $this->updateUserSession($userData);
-                    }
-
-                    // Send email notification to the new user
-                    $this->sendCreationNotificationEmail($newUserId, $userData);
-
-                    return redirect()->to('/admin/users')->with('success', 'User created successfully');
-                }
-            }
-
-            $data['validation'] = $this->validator;
-        }
 
         return view('admin/users/admin_users_create', $data);
     }
 
     /**
-     * Store a new user in the database
+     * Show the form for creating a new user (GET)
+     */
+    public function create()
+    {
+        // Get branches for dropdown
+        $branches = $this->branchesModel->getBranchesForDropdown();
+
+        // Get supervisors for dropdown (users with is_supervisor capability)
+        $supervisors = $this->userModel->getUsersBySupervisorCapability();
+
+        // Get commodities for dropdown
+        $commodities = $this->commoditiesModel->getActiveCommodities();
+
+        $data = [
+            'title' => 'Add New User',
+            'branches' => $branches,
+            'supervisors' => $supervisors,
+            'commodities' => $commodities
+        ];
+
+        return view('admin/users/admin_users_create', $data);
+    }
+
+    /**
+     * Display a specific user (GET)
+     */
+    public function show($id = null)
+    {
+        if ($id === null) {
+            return redirect()->to('/admin/users')->with('error', 'Invalid user ID');
+        }
+
+        $user = $this->userModel->find($id);
+        if (empty($user)) {
+            return redirect()->to('/admin/users')->with('error', 'User not found');
+        }
+
+        $data = [
+            'title' => 'User Details',
+            'user' => $user
+        ];
+
+        return view('admin/users/admin_users_show', $data);
+    }
+
+    /**
+     * Store a new user in the database (POST)
      */
     public function store()
     {
@@ -203,9 +167,16 @@ class UsersController extends BaseController
             }
         }
 
-        // Password will be hashed in the model's beforeInsert callback
-        // No need to hash here to avoid double hashing
-        if (empty($userData['password'])) {
+        // Hash password explicitly to ensure it's properly hashed
+        if (!empty($userData['password'])) {
+            // Check if password is already hashed to avoid double hashing
+            if (strlen($userData['password']) !== 60 || !preg_match('/^\$2[ayb]\$/', $userData['password'])) {
+                $userData['password'] = password_hash($userData['password'], PASSWORD_DEFAULT);
+                log_message('debug', 'Password hashed in controller store method');
+            } else {
+                log_message('debug', 'Password already hashed in controller store method');
+            }
+        } else {
             unset($userData['password']); // Remove empty password field
         }
 
@@ -240,8 +211,8 @@ class UsersController extends BaseController
         // Get branches for dropdown
         $branches = $this->branchesModel->getBranchesForDropdown();
 
-        // Get supervisors for dropdown (users with role = supervisor)
-        $supervisors = $this->userModel->getUsersByRole('supervisor');
+        // Get supervisors for dropdown (users with is_supervisor capability)
+        $supervisors = $this->userModel->getUsersBySupervisorCapability();
 
         // Get commodities for dropdown
         $commodities = $this->commoditiesModel->getActiveCommodities();
@@ -373,7 +344,7 @@ class UsersController extends BaseController
 
         // Get branches, supervisors, and commodities for the form if validation fails
         $branches = $this->branchesModel->getBranchesForDropdown();
-        $supervisors = $this->userModel->getUsersByRole('supervisor');
+        $supervisors = $this->userModel->getUsersBySupervisorCapability();
         $commodities = $this->commoditiesModel->getActiveCommodities();
 
         return view('admin/users/admin_users_edit', [

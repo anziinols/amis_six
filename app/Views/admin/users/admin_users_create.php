@@ -35,7 +35,7 @@
                         </div>
                     <?php endif; ?>
 
-                    <form action="<?= base_url('admin/users/store') ?>" method="post" class="needs-validation" novalidate>
+                    <form action="<?= base_url('admin/users') ?>" method="post" class="needs-validation" novalidate>
                         <?= csrf_field() ?>
                         <input type="hidden" name="created_by" value="<?= session()->get('user_id') ?? 1 ?>">
                         <input type="hidden" name="updated_by" value="<?= session()->get('user_id') ?? 1 ?>">

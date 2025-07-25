@@ -21,6 +21,9 @@ class NaspModel extends Model
         'created_by', 'updated_by', 'deleted_by'
     ];
 
+    //type = plans, apas,  dips, specific_areas, objectives, outputs, indicators
+
+
     // Dates
     protected $useTimestamps = true;
     protected $dateFormat    = 'datetime';

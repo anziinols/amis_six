@@ -4,7 +4,8 @@ namespace App\Controllers;
 
 use App\Models\CommodityProductionModel;
 use App\Models\CommoditiesModel;
-use App\Services\PdfService;
+use App\Models\CommodityPricesModel;
+use App\Helpers\PdfHelper;
 use CodeIgniter\Controller;
 
 /**
@@ -19,6 +20,7 @@ class CommodityReportsController extends Controller
 {
     protected $commodityProductionModel;
     protected $commoditiesModel;
+    protected $commodityPricesModel;
 
     /**
      * Constructor initializes models
@@ -27,6 +29,7 @@ class CommodityReportsController extends Controller
     {
         $this->commodityProductionModel = new CommodityProductionModel();
         $this->commoditiesModel = new CommoditiesModel();
+        $this->commodityPricesModel = new CommodityPricesModel();
     }
 
     /**
@@ -260,6 +263,284 @@ class CommodityReportsController extends Controller
         } catch (\Exception $e) {
             log_message('error', 'Commodity Report PDF Export Error: ' . $e->getMessage());
             return redirect()->to('/reports/commodity')->with('error', 'Failed to generate PDF report. Please try again.');
+        }
+    }
+
+    /**
+     * Display Price Trends Dashboard
+     */
+    public function priceTrends()
+    {
+        // Get all commodities for filtering
+        $commodities = $this->commoditiesModel->getAllCommodities();
+
+        // Get latest prices for all commodities
+        $latestPrices = $this->commodityPricesModel->getLatestPrices();
+
+        // Get average prices by market type (last 6 months)
+        $averagePrices = $this->commodityPricesModel->getAveragePricesByMarketType(6);
+
+        // Get price volatility analysis
+        $volatilityAnalysis = $this->commodityPricesModel->getPriceVolatilityAnalysis(null, 12);
+
+        // Get monthly price trends for charts
+        $monthlyTrends = $this->commodityPricesModel->getMonthlyPriceTrends(null, 12);
+
+        // Prepare chart data for price trends
+        $chartData = $this->preparePriceTrendsChartData($monthlyTrends, $volatilityAnalysis, $averagePrices);
+
+        $data = [
+            'title' => 'Commodity Price Trends & Market Analysis',
+            'commodities' => $commodities,
+            'latestPrices' => $latestPrices,
+            'averagePrices' => $averagePrices,
+            'volatilityAnalysis' => $volatilityAnalysis,
+            'monthlyTrends' => $monthlyTrends,
+            'chartData' => $chartData
+        ];
+
+        return view('reports_commodity/reports_commodity_price_trends', $data);
+    }
+
+    /**
+     * Get price trends for a specific commodity (AJAX)
+     */
+    public function getCommodityPriceTrends($commodityId)
+    {
+        try {
+            // Get price trends for the commodity
+            $priceTrends = $this->commodityPricesModel->getPriceTrendsByCommodity($commodityId, 12);
+
+            // Get market type comparison
+            $marketComparison = $this->commodityPricesModel->getMarketTypeComparison($commodityId, 6);
+
+            // Get price forecast
+            $forecastData = $this->commodityPricesModel->getPriceForecastData($commodityId, 'local', 12);
+
+            return $this->response->setJSON([
+                'success' => true,
+                'priceTrends' => $priceTrends,
+                'marketComparison' => $marketComparison,
+                'forecastData' => $forecastData
+            ]);
+
+        } catch (\Exception $e) {
+            log_message('error', 'Price Trends Error: ' . $e->getMessage());
+            return $this->response->setJSON([
+                'success' => false,
+                'message' => 'Failed to load price trends data'
+            ]);
+        }
+    }
+
+    /**
+     * Market Analysis Dashboard
+     */
+    public function marketAnalysis()
+    {
+        // Get all commodities
+        $commodities = $this->commoditiesModel->getAllCommodities();
+
+        // Get comprehensive volatility analysis
+        $volatilityAnalysis = $this->commodityPricesModel->getPriceVolatilityAnalysis(null, 12);
+
+        // Get market type comparisons for all commodities
+        $marketAnalysisData = [];
+        foreach ($commodities as $commodity) {
+            $marketComparison = $this->commodityPricesModel->getMarketTypeComparison($commodity['id'], 6);
+            if (!empty($marketComparison)) {
+                $marketAnalysisData[$commodity['id']] = [
+                    'commodity' => $commodity,
+                    'market_comparison' => $marketComparison
+                ];
+            }
+        }
+
+        // Get monthly trends for market intelligence
+        $monthlyTrends = $this->commodityPricesModel->getMonthlyPriceTrends(null, 12);
+
+        // Prepare market analysis chart data
+        $marketChartData = $this->prepareMarketAnalysisChartData($volatilityAnalysis, $marketAnalysisData, $monthlyTrends);
+
+        $data = [
+            'title' => 'Commodity Market Analysis & Intelligence',
+            'commodities' => $commodities,
+            'volatilityAnalysis' => $volatilityAnalysis,
+            'marketAnalysisData' => $marketAnalysisData,
+            'monthlyTrends' => $monthlyTrends,
+            'chartData' => $marketChartData
+        ];
+
+        return view('reports_commodity/reports_commodity_market_analysis', $data);
+    }
+
+    /**
+     * Prepare chart data for price trends
+     */
+    private function preparePriceTrendsChartData($monthlyTrends, $volatilityAnalysis, $averagePrices)
+    {
+        $chartData = [];
+
+        // Monthly price trends chart
+        $trendsByMarket = [];
+        foreach ($monthlyTrends as $trend) {
+            $key = $trend['commodity_name'] . ' - ' . ucfirst($trend['market_type']);
+            $monthKey = $trend['year'] . '-' . str_pad($trend['month'], 2, '0', STR_PAD_LEFT);
+
+            if (!isset($trendsByMarket[$key])) {
+                $trendsByMarket[$key] = [];
+            }
+            $trendsByMarket[$key][$monthKey] = floatval($trend['avg_price']);
+        }
+
+        $chartData['monthlyTrends'] = $trendsByMarket;
+
+        // Volatility analysis chart
+        $volatilityLabels = [];
+        $volatilityData = [];
+        foreach ($volatilityAnalysis as $analysis) {
+            $label = $analysis['commodity_name'] . ' (' . ucfirst($analysis['market_type']) . ')';
+            $volatilityLabels[] = $label;
+            $volatilityData[] = floatval($analysis['volatility_percent']);
+        }
+
+        $chartData['volatility'] = [
+            'labels' => $volatilityLabels,
+            'data' => $volatilityData
+        ];
+
+        // Average prices by market type
+        $marketTypeData = [];
+        foreach ($averagePrices as $price) {
+            $marketType = ucfirst($price['market_type']);
+            if (!isset($marketTypeData[$marketType])) {
+                $marketTypeData[$marketType] = [];
+            }
+            $marketTypeData[$marketType][] = [
+                'commodity' => $price['commodity_name'],
+                'price' => floatval($price['avg_price'])
+            ];
+        }
+
+        $chartData['marketTypes'] = $marketTypeData;
+
+        return $chartData;
+    }
+
+    /**
+     * Prepare chart data for market analysis
+     */
+    private function prepareMarketAnalysisChartData($volatilityAnalysis, $marketAnalysisData, $monthlyTrends)
+    {
+        $chartData = [];
+
+        // Price range analysis
+        $priceRangeLabels = [];
+        $priceRangeData = [];
+        foreach ($volatilityAnalysis as $analysis) {
+            $label = $analysis['commodity_name'];
+            $priceRangeLabels[] = $label;
+            $priceRangeData[] = floatval($analysis['price_range_percent']);
+        }
+
+        $chartData['priceRange'] = [
+            'labels' => $priceRangeLabels,
+            'data' => $priceRangeData
+        ];
+
+        // Market type comparison
+        $marketComparisonData = [];
+        foreach ($marketAnalysisData as $data) {
+            $commodity = $data['commodity']['commodity_name'];
+            foreach ($data['market_comparison'] as $market) {
+                $marketType = ucfirst($market['market_type']);
+                if (!isset($marketComparisonData[$marketType])) {
+                    $marketComparisonData[$marketType] = [];
+                }
+                $marketComparisonData[$marketType][] = [
+                    'commodity' => $commodity,
+                    'avg_price' => floatval($market['avg_price'])
+                ];
+            }
+        }
+
+        $chartData['marketComparison'] = $marketComparisonData;
+
+        return $chartData;
+    }
+
+    /**
+     * Export Price Trends report as PDF
+     */
+    public function exportPriceTrendsPdf()
+    {
+        try {
+            // Get all data for PDF
+            $latestPrices = $this->commodityPricesModel->getLatestPrices();
+            $averagePrices = $this->commodityPricesModel->getAveragePricesByMarketType(6);
+            $volatilityAnalysis = $this->commodityPricesModel->getPriceVolatilityAnalysis(null, 12);
+
+            $data = [
+                'title' => 'Commodity Price Trends Report',
+                'latestPrices' => $latestPrices,
+                'averagePrices' => $averagePrices,
+                'volatilityAnalysis' => $volatilityAnalysis,
+                'generated_at' => date('Y-m-d H:i:s'),
+                'generated_by' => session()->get('fname') . ' ' . session()->get('lname')
+            ];
+
+            // Generate PDF using PdfHelper
+            $pdfHelper = new PdfHelper('Commodity Price Trends Report', 'L');
+
+            // Add title
+            $pdfHelper->addTitle('Commodity Price Trends Report', 16);
+            $pdfHelper->addText('Generated on: ' . $data['generated_at']);
+            $pdfHelper->addText('Generated by: ' . $data['generated_by']);
+            $pdfHelper->addLineBreak(10);
+
+            // Add latest prices
+            $pdfHelper->addSubtitle('Latest Commodity Prices', 14);
+            if (!empty($latestPrices)) {
+                $priceHeaders = ['Commodity', 'Market Type', 'Price', 'Unit', 'Date'];
+                $priceTableData = [];
+                foreach ($latestPrices as $price) {
+                    $priceTableData[] = [
+                        $price['commodity_name'],
+                        ucfirst($price['market_type']),
+                        $price['currency'] . ' ' . number_format($price['price_per_unit'], 2),
+                        $price['unit_of_measurement'],
+                        date('Y-m-d', strtotime($price['price_date']))
+                    ];
+                }
+                $pdfHelper->addTable($priceHeaders, $priceTableData, [50, 30, 30, 25, 30]);
+            }
+
+            // Add volatility analysis
+            $pdfHelper->addSubtitle('Price Volatility Analysis', 14);
+            if (!empty($volatilityAnalysis)) {
+                $volatilityHeaders = ['Commodity', 'Market', 'Avg Price', 'Min Price', 'Max Price', 'Volatility %'];
+                $volatilityTableData = [];
+                foreach ($volatilityAnalysis as $analysis) {
+                    $volatilityTableData[] = [
+                        $analysis['commodity_name'],
+                        ucfirst($analysis['market_type']),
+                        $analysis['currency'] . ' ' . number_format($analysis['avg_price'], 2),
+                        $analysis['currency'] . ' ' . number_format($analysis['min_price'], 2),
+                        $analysis['currency'] . ' ' . number_format($analysis['max_price'], 2),
+                        $analysis['volatility_percent'] . '%'
+                    ];
+                }
+                $pdfHelper->addTable($volatilityHeaders, $volatilityTableData, [40, 25, 30, 30, 30, 25]);
+            }
+
+            // Output PDF
+            $filename = 'commodity_price_trends_' . date('Y-m-d_H-i-s') . '.pdf';
+            return $pdfHelper->output($filename, 'D');
+
+        } catch (\Exception $e) {
+            log_message('error', 'Price Trends PDF Export Error: ' . $e->getMessage());
+            session()->setFlashdata('error', 'Failed to generate PDF report: ' . $e->getMessage());
+            return redirect()->back();
         }
     }
 }

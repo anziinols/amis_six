@@ -72,8 +72,7 @@ class Filters extends BaseFilters
         'before' => [
             // 'honeypot',
             'csrf' => ['except' => [
-                'dashboard/update-profile-photo',
-                'admin/users/store'
+                'dashboard/update-profile-photo'
             ]],
             // 'invalidchars',
         ],

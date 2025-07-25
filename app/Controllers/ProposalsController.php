@@ -313,11 +313,7 @@ class ProposalsController extends BaseController
             ->findAll();
 
         // Get supervisors for dropdown
-        $supervisors = $this->userModel
-            ->select('id, CONCAT(fname, " ", lname) as full_name')
-            ->where('role', 'supervisor')
-            ->where('user_status', 1)
-            ->findAll();
+        $supervisors = $this->userModel->getUsersBySupervisorCapability();
 
         // Get action officers for dropdown
         $actionOfficers = $this->userModel
@@ -466,10 +462,20 @@ class ProposalsController extends BaseController
      */
     public function rate($id = null)
     {
+        // Check if user is an evaluator
+        if (session()->get('is_evaluator') != 1) {
+            return redirect()->to('/proposals')->with('error', 'Access denied. Only M&E evaluators can rate proposals.');
+        }
+
         $proposal = $this->proposalModel->getProposalWithDetails($id);
 
         if (!$proposal) {
             return redirect()->to('/proposals')->with('error', 'Proposal not found.');
+        }
+
+        // Check if proposal status is approved (ready for rating)
+        if ($proposal['status'] !== 'approved') {
+            return redirect()->to('/proposals')->with('error', 'Only approved proposals can be rated.');
         }
 
         $data = [
@@ -489,10 +495,20 @@ class ProposalsController extends BaseController
      */
     public function submitRating($id = null)
     {
+        // Check if user is an evaluator
+        if (session()->get('is_evaluator') != 1) {
+            return redirect()->to('/proposals')->with('error', 'Access denied. Only M&E evaluators can rate proposals.');
+        }
+
         $proposal = $this->proposalModel->find($id);
 
         if (!$proposal) {
             return redirect()->to('/proposals')->with('error', 'Proposal not found.');
+        }
+
+        // Check if proposal status is approved (ready for rating)
+        if ($proposal['status'] !== 'approved') {
+            return redirect()->to('/proposals')->with('error', 'Only approved proposals can be rated.');
         }
 
         // Validate input

@@ -1,0 +1,158 @@
+@startuml AMIS_Security_Process
+!theme plain
+title AMIS Five - Security and Authentication Process
+
+|User|
+start
+:User Accesses AMIS;
+
+|Security System|
+if (Session Exists?) then (Yes)
+    if (Session Valid?) then (Yes)
+        :Check User Role;
+        
+        if (User Role?) then (Admin)
+            :Grant Admin Access;
+        elseif (Supervisor) then
+            :Grant Supervisor Access;
+        elseif (User) then
+            :Grant Standard User Access;
+        elseif (M&E Evaluator) then
+            :Grant M&E Evaluator Access;
+        elseif (Commodity) then
+            :Grant Commodity User Access;
+        else (Guest)
+            :Grant Guest Access;
+        endif
+        
+    else (Invalid/Expired)
+        :Force Logout;
+        :Display Login Page;
+    endif
+else (No)
+    :Display Login Page;
+endif
+
+|User|
+:Submit Credentials;
+
+|Security System|
+if (Validate Input?) then (Valid)
+    :Hash Password;
+    :Authenticate User;
+    
+    if (Authentication Success?) then (Yes)
+        if (User Active?) then (Yes)
+            :Create User Session;
+            :Set Session Data;
+            
+            if (Remember Me?) then (Yes)
+                :Set Remember Cookie;
+            endif
+            
+            :Log Successful Login;
+            :Check User Role;
+            
+        else (Inactive)
+            :Log Failed Attempt;
+            :Access Denied;
+            :Display Error Message;
+        endif
+        
+    else (No)
+        :Log Failed Attempt;
+        :Increment Failed Attempts;
+        
+        if (Suspicious Activity?) then (Yes)
+            :Log Security Alert;
+            :Notify Security Team;
+        endif
+        
+        :Display Error Message;
+    endif
+    
+else (Invalid)
+    :Display Validation Error;
+endif
+
+|Request Processing|
+:Incoming Request;
+:Security Filter Chain;
+
+|Auth Filter|
+if (Protected Route?) then (Yes)
+    if (User Authenticated?) then (Yes)
+        :Continue to CSRF Filter;
+    else (No)
+        :Redirect to Login;
+        stop
+    endif
+else (Public Route)
+    :Continue to CSRF Filter;
+endif
+
+|CSRF Filter|
+if (POST/PUT/DELETE Request?) then (Yes)
+    if (Valid CSRF Token?) then (Yes)
+        :Continue to Input Validation;
+    else (No)
+        :Block Request;
+        :Log Security Violation;
+        stop
+    endif
+else (GET Request)
+    :Continue to Input Validation;
+endif
+
+|Input Validation|
+:Sanitize Input Data;
+:Validate Data Types;
+:Check for Malicious Content;
+
+if (Input Valid?) then (Yes)
+    :Continue to RBAC Check;
+else (Invalid)
+    :Block Request;
+    :Log Security Violation;
+    stop
+endif
+
+|RBAC System|
+if (Role-Based Access Check?) then (Authorized)
+    :Grant Permission;
+    :Continue to Controller;
+else (Unauthorized)
+    :Access Denied;
+    :Log Unauthorized Access;
+    stop
+endif
+
+|Controller|
+:Process Request;
+:Apply Data Security;
+
+|Data Security|
+:SQL Injection Protection;
+:XSS Protection;
+:File Upload Security;
+:Output Encoding;
+
+|Session Management|
+if (Session Timeout?) then (Expired)
+    :Force Logout;
+    :Clear Session Data;
+    :Redirect to Login;
+else (Valid)
+    :Refresh Session;
+    :Update Last Activity;
+endif
+
+|Security Monitoring|
+:Log All Security Events;
+:Monitor Failed Attempts;
+:Detect Suspicious Patterns;
+:Generate Security Reports;
+
+stop
+
+@enduml

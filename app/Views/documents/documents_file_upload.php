@@ -52,21 +52,23 @@
                                     <?php endif; ?>
                                 </div>
                                 
-                                <div class="mb-3">
-                                    <label for="branch_id" class="form-label">Branch <span class="text-danger">*</span></label>
-                                    <select class="form-select <?= (isset(session('errors')['branch_id'])) ? 'is-invalid' : '' ?>" 
-                                        id="branch_id" name="branch_id" required>
-                                        <option value="" selected disabled>Select Branch</option>
-                                        <?php foreach ($branches as $branch): ?>
-                                            <option value="<?= $branch['id'] ?>" <?= old('branch_id', $folder['branch_id']) == $branch['id'] ? 'selected' : '' ?>>
-                                                <?= esc($branch['name']) ?>
-                                            </option>
-                                        <?php endforeach; ?>
-                                    </select>
-                                    <?php if (isset(session('errors')['branch_id'])): ?>
-                                        <div class="invalid-feedback"><?= session('errors')['branch_id'] ?></div>
-                                    <?php endif; ?>
-                                </div>
+                                <?php if ($user_branch_id): ?>
+                                    <div class="mb-3">
+                                        <label class="form-label">Branch</label>
+                                        <div class="form-control-plaintext bg-light p-2 rounded">
+                                            <i class="fas fa-building me-2"></i>
+                                            <span class="text-muted">Automatically assigned to your branch</span>
+                                        </div>
+                                        <input type="hidden" name="branch_id" value="<?= $user_branch_id ?>">
+                                    </div>
+                                <?php else: ?>
+                                    <div class="mb-3">
+                                        <div class="alert alert-warning">
+                                            <i class="fas fa-exclamation-triangle me-2"></i>
+                                            No branch assigned to your account. Please contact administrator.
+                                        </div>
+                                    </div>
+                                <?php endif; ?>
                                 
                                 <div class="mb-3">
                                     <label for="doc_date" class="form-label">Document Date</label>

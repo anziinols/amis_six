@@ -151,8 +151,6 @@ class ProposalModel extends Model
             'wa.activity_type',
             'prov.name as province_name',
             'dist.name as district_name',
-            'llg.name as llg_name',
-            'ward.name as ward_name',
             'CONCAT(s.fname, " ", s.lname) as supervisor_name',
             'CONCAT(ao.fname, " ", ao.lname) as action_officer_name',
             'b.name as branch_name'
@@ -161,8 +159,6 @@ class ProposalModel extends Model
         $builder->join('workplan_activities as wa', 'wa.id = p.activity_id', 'left');
         $builder->join('gov_structure as prov', 'prov.id = p.province_id', 'left');
         $builder->join('gov_structure as dist', 'dist.id = p.district_id', 'left');
-        $builder->join('gov_structure as llg', 'llg.id = p.llg_id', 'left');
-        $builder->join('gov_structure as ward', 'ward.id = p.ward_id', 'left');
         $builder->join('users as s', 's.id = p.supervisor_id', 'left');
         $builder->join('users as ao', 'ao.id = p.action_officer_id', 'left');
         $builder->join('branches as b', 'b.id = wa.branch_id', 'left');
