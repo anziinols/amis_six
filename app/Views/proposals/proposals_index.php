@@ -55,7 +55,7 @@
                                                 <?= date('d M Y', strtotime($proposal['date_end'])) ?>
                                             </td>
                                             <td>
-                                                <?= !empty($proposal['total_cost']) ? number_format($proposal['total_cost'], 2) : 'N/A' ?>
+                                                <?= !empty($proposal['total_cost']) ? CURRENCY_SYMBOL . ' ' . number_format($proposal['total_cost'], 2) : 'N/A' ?>
                                             </td>
                                             <td>
                                                 <?php
@@ -91,11 +91,7 @@
                                                    Supervise <i class="fas fa-clipboard-check"></i>
                                                 </a>
                                                 <?php endif; ?>
-                                                <?php if ($proposal['status'] === 'approved' && session()->get('is_evaluator') == 1): ?>
-                                                    <a href="<?= base_url('proposals/rate/' . $proposal['id']) ?>" class="btn btn-success btn-sm" title="Rate Proposal">
-                                                      M&E  <i class="fas fa-star"></i>
-                                                    </a>
-                                                <?php endif; ?>
+
                                             </td>
                                         </tr>
                                     <?php endforeach; ?>

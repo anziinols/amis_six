@@ -22,9 +22,14 @@ $this->section('content');
                 <div class="card-header">
                     <h3 class="card-title"><?= $title ?></h3>
                     <div class="card-tools">
-                        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addSpaModal">
-                            <i class="fas fa-plus"></i> Add SPA
-                        </button>
+                        <div class="btn-group" role="group">
+                            <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#importSpaModal">
+                                <i class="fas fa-upload"></i> Import CSV
+                            </button>
+                            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addSpaModal">
+                                <i class="fas fa-plus"></i> Add SPA
+                            </button>
+                        </div>
                     </div>
                 </div>
                 <div class="card-body">
@@ -204,6 +209,52 @@ $this->section('content');
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                     <button type="submit" id="toggle_status_button" class="btn btn-primary">Confirm</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Import SPA CSV Modal -->
+<div class="modal fade" id="importSpaModal" tabindex="-1" aria-labelledby="importSpaModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form id="importSpaForm" action="<?= base_url('admin/mtdp-plans/' . $plan['id'] . '/spas/csv-import') ?>" method="post" enctype="multipart/form-data">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="importSpaModalLabel">Import SPAs from CSV</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <?= csrf_field() ?>
+                    <div class="alert alert-info">
+                        <h6><i class="fas fa-info-circle"></i> CSV Import Instructions</h6>
+                        <ul class="mb-0">
+                            <li>Download the template file to see the required format</li>
+                            <li>Required columns: <strong>code</strong>, <strong>title</strong></li>
+                            <li>Optional columns: <strong>remarks</strong></li>
+                            <li>Make sure your CSV file uses UTF-8 encoding</li>
+                            <li>Do not include duplicate codes</li>
+                        </ul>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="csv_file" class="form-label">Select CSV File</label>
+                        <input type="file" class="form-control" id="csv_file" name="csv_file" accept=".csv" required>
+                        <div class="form-text">Only CSV files are allowed</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <a href="<?= base_url('admin/mtdp-plans/' . $plan['id'] . '/spas/csv-template') ?>"
+                           class="btn btn-outline-primary btn-sm">
+                            <i class="fas fa-download"></i> Download Template
+                        </a>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-success">
+                        <i class="fas fa-upload"></i> Import SPAs
+                    </button>
                 </div>
             </form>
         </div>
@@ -558,6 +609,33 @@ $(document).ready(function() {
 
         // Show error notification
         toastr.error(errorMessage);
+    });
+
+    // Handle CSV import form submission
+    $('#importSpaForm').on('submit', function(e) {
+        const fileInput = $('#csv_file')[0];
+        const file = fileInput.files[0];
+
+        if (!file) {
+            e.preventDefault();
+            toastr.error('Please select a CSV file to import');
+            return false;
+        }
+
+        if (file.type !== 'text/csv' && !file.name.toLowerCase().endsWith('.csv')) {
+            e.preventDefault();
+            toastr.error('Please select a valid CSV file');
+            return false;
+        }
+
+        // Show loading indication
+        const submitBtn = $(this).find('button[type="submit"]');
+        const originalText = submitBtn.html();
+        submitBtn.html('<i class="fas fa-spinner fa-spin"></i> Importing...');
+        submitBtn.prop('disabled', true);
+
+        // Form will submit normally since we're uploading a file
+        toastr.info('Processing CSV import. Please wait...');
     });
 });
 </script>

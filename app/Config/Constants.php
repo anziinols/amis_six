@@ -43,6 +43,17 @@ defined('YEAR')   || define('YEAR', 31_536_000);
 defined('DECADE') || define('DECADE', 315_360_000);
 
 /*
+ |--------------------------------------------------------------------------
+ | Currency Constants
+ |--------------------------------------------------------------------------
+ |
+ | Application currency settings for Papua New Guinea Kina (PGK)
+ */
+defined('CURRENCY_SYMBOL') || define('CURRENCY_SYMBOL', 'PGK');
+defined('CURRENCY_CODE') || define('CURRENCY_CODE', 'PGK');
+defined('CURRENCY_NAME') || define('CURRENCY_NAME', 'Papua New Guinea Kina');
+
+/*
  | --------------------------------------------------------------------------
  | Exit Status Codes
  | --------------------------------------------------------------------------

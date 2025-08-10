@@ -447,6 +447,110 @@ class MtdpPlanController extends BaseController
     }
 
     /**
+     * Download CSV template for SPA import
+     *
+     * @param int $mtdpId The MTDP plan ID
+     * @return \CodeIgniter\HTTP\Response
+     */
+    public function downloadSpaTemplate($mtdpId)
+    {
+        // Get the MTDP plan
+        $plan = $this->mtdpModel->find($mtdpId);
+
+        if (!$plan) {
+            return redirect()->to('admin/mtdp-plans')->with('error', 'MTDP Plan not found');
+        }
+
+        // Create CSV content
+        $csvContent = "code,title,remarks\n";
+        $csvContent .= "SPA001,\"Sample Strategic Priority Area 1\",\"This is a sample SPA for demonstration\"\n";
+        $csvContent .= "SPA002,\"Sample Strategic Priority Area 2\",\"Another sample SPA with remarks\"\n";
+
+        // Set headers for file download
+        $filename = 'spa_import_template_' . $plan['abbrev'] . '_' . date('Y-m-d') . '.csv';
+
+        return $this->response
+            ->setHeader('Content-Type', 'text/csv')
+            ->setHeader('Content-Disposition', 'attachment; filename="' . $filename . '"')
+            ->setBody($csvContent);
+    }
+
+    /**
+     * Import SPAs from CSV file
+     *
+     * @param int $mtdpId The MTDP plan ID
+     * @return \CodeIgniter\HTTP\Response
+     */
+    public function importSpas($mtdpId)
+    {
+        // Get the MTDP plan
+        $plan = $this->mtdpModel->find($mtdpId);
+
+        if (!$plan) {
+            return redirect()->to('admin/mtdp-plans')->with('error', 'MTDP Plan not found');
+        }
+
+        // Validate file upload
+        $file = $this->request->getFile('csv_file');
+
+        if (!$file || !$file->isValid()) {
+            return redirect()->back()->with('error', 'Please select a valid CSV file');
+        }
+
+        if ($file->getExtension() !== 'csv') {
+            return redirect()->back()->with('error', 'Please upload a CSV file');
+        }
+
+        $csvData = array_map('str_getcsv', file($file->getTempName()));
+        $header = array_shift($csvData);
+
+        // Validate header
+        if (!in_array('code', $header) || !in_array('title', $header)) {
+            return redirect()->back()->with('error', 'CSV must contain "code" and "title" columns');
+        }
+
+        $codeIndex = array_search('code', $header);
+        $titleIndex = array_search('title', $header);
+        $remarksIndex = array_search('remarks', $header);
+
+        $imported = 0;
+        $errors = [];
+
+        foreach ($csvData as $rowIndex => $row) {
+            if (empty($row[$codeIndex]) || empty($row[$titleIndex])) {
+                $errors[] = "Row " . ($rowIndex + 2) . ": Code and title are required";
+                continue;
+            }
+
+            $data = [
+                'mtdp_id' => $mtdpId,
+                'code' => $row[$codeIndex],
+                'title' => $row[$titleIndex],
+                'remarks' => $remarksIndex !== false ? ($row[$remarksIndex] ?? '') : '',
+                'spa_status' => 1,
+                'spa_status_by' => session()->get('user_id'),
+                'spa_status_at' => date('Y-m-d H:i:s'),
+                'spa_status_remarks' => '',
+                'created_by' => session()->get('user_id'),
+                'updated_by' => session()->get('user_id'),
+            ];
+
+            if ($this->mtdpSpaModel->insert($data)) {
+                $imported++;
+            } else {
+                $errors[] = "Row " . ($rowIndex + 2) . ": Failed to import " . $row[$titleIndex];
+            }
+        }
+
+        $message = "Import completed. $imported SPAs imported successfully.";
+        if (!empty($errors)) {
+            $message .= " Errors: " . implode(', ', $errors);
+        }
+
+        return redirect()->to('admin/mtdp-plans/' . $mtdpId . '/spas')->with('success', $message);
+    }
+
+    /**
      * Display the form to create a new SPA
      *
      * @param int $mtdpId The MTDP plan ID
@@ -1346,5 +1450,122 @@ class MtdpPlanController extends BaseController
 
         json_decode($string);
         return (json_last_error() == JSON_ERROR_NONE);
+    }
+
+    /**
+     * Download CSV template for DIP import
+     *
+     * @param int $spaId The SPA ID
+     * @return \CodeIgniter\HTTP\Response
+     */
+    public function downloadDipTemplate($spaId)
+    {
+        // Get the SPA with related data
+        $spa = $this->mtdpSpaModel->getSpaWithMtdp($spaId);
+
+        if (!$spa) {
+            return redirect()->to('admin/mtdp-plans')->with('error', 'SPA not found');
+        }
+
+        // Create CSV content
+        $csvContent = "dip_code,dip_title,dip_remarks,total_investment,funding_source,implementing_agency,implementation_period\n";
+        $csvContent .= "\"DIP001\",\"Agricultural Development Program\",\"Focus on smallholder farmers\",\"1000000\",\"Government Budget\",\"Ministry of Agriculture\",\"2024-2028\"\n";
+        $csvContent .= "\"DIP002\",\"Rural Infrastructure Development\",\"Road and market infrastructure\",\"2000000\",\"World Bank\",\"Ministry of Infrastructure\",\"2024-2027\"\n";
+
+        // Set headers for file download
+        $filename = 'dips_import_template_spa_' . $spaId . '_' . date('Y-m-d') . '.csv';
+
+        return $this->response
+            ->setHeader('Content-Type', 'text/csv')
+            ->setHeader('Content-Disposition', 'attachment; filename="' . $filename . '"')
+            ->setBody($csvContent);
+    }
+
+    /**
+     * Import DIPs from CSV file
+     *
+     * @param int $spaId The SPA ID
+     * @return \CodeIgniter\HTTP\Response
+     */
+    public function importDips($spaId)
+    {
+        // Get the SPA with related data
+        $spa = $this->mtdpSpaModel->getSpaWithMtdp($spaId);
+
+        if (!$spa) {
+            return redirect()->to('admin/mtdp-plans')->with('error', 'SPA not found');
+        }
+
+        // Validate file upload
+        $file = $this->request->getFile('csv_file');
+
+        if (!$file || !$file->isValid()) {
+            return redirect()->back()->with('error', 'Please select a valid CSV file');
+        }
+
+        if ($file->getExtension() !== 'csv') {
+            return redirect()->back()->with('error', 'Please upload a CSV file');
+        }
+
+        $csvData = array_map('str_getcsv', file($file->getTempName()));
+        $header = array_shift($csvData);
+
+        // Validate header
+        if (!in_array('dip_code', $header) || !in_array('dip_title', $header)) {
+            return redirect()->back()->with('error', 'CSV must contain "dip_code" and "dip_title" columns');
+        }
+
+        $codeIndex = array_search('dip_code', $header);
+        $titleIndex = array_search('dip_title', $header);
+        $remarksIndex = array_search('dip_remarks', $header);
+        $investmentIndex = array_search('total_investment', $header);
+        $fundingIndex = array_search('funding_source', $header);
+        $agencyIndex = array_search('implementing_agency', $header);
+        $periodIndex = array_search('implementation_period', $header);
+
+        $imported = 0;
+        $errors = [];
+
+        foreach ($csvData as $rowIndex => $row) {
+            if (empty($row[$codeIndex]) || empty($row[$titleIndex])) {
+                $errors[] = "Row " . ($rowIndex + 2) . ": Code and title are required";
+                continue;
+            }
+
+            $data = [
+                'mtdp_id' => $spa['mtdp_id'],
+                'spa_id' => $spaId,
+                'dip_code' => $row[$codeIndex],
+                'dip_title' => $row[$titleIndex],
+                'dip_remarks' => $remarksIndex !== false ? ($row[$remarksIndex] ?? '') : '',
+                'total_investment' => $investmentIndex !== false ? ($row[$investmentIndex] ?? '') : '',
+                'funding_source' => $fundingIndex !== false ? ($row[$fundingIndex] ?? '') : '',
+                'implementing_agency' => $agencyIndex !== false ? ($row[$agencyIndex] ?? '') : '',
+                'implementation_period' => $periodIndex !== false ? ($row[$periodIndex] ?? '') : '',
+                'investments' => json_encode([]),
+                'kras' => json_encode([]),
+                'strategies' => json_encode([]),
+                'indicators' => json_encode([]),
+                'dip_status' => 1,
+                'dip_status_by' => session()->get('user_id'),
+                'dip_status_at' => date('Y-m-d H:i:s'),
+                'dip_status_remarks' => '',
+                'created_by' => session()->get('user_id'),
+                'updated_by' => session()->get('user_id'),
+            ];
+
+            if ($this->mtdpDipModel->insert($data)) {
+                $imported++;
+            } else {
+                $errors[] = "Row " . ($rowIndex + 2) . ": Failed to import " . $row[$titleIndex];
+            }
+        }
+
+        $message = "Import completed. $imported DIPs imported successfully.";
+        if (!empty($errors)) {
+            $message .= " Errors: " . implode(', ', $errors);
+        }
+
+        return redirect()->to('admin/mtdp-plans/spas/' . $spaId . '/dips')->with('success', $message);
     }
 }

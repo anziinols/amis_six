@@ -427,4 +427,111 @@ class MTDPInvestmentsController extends BaseController
                 ->with('error', 'Failed to update Investment status');
         }
     }
+
+    /**
+     * Download CSV template for Investment import
+     *
+     * @param int $dipId The DIP ID
+     * @param int $saId The Specific Area ID
+     * @return \CodeIgniter\HTTP\Response
+     */
+    public function downloadInvestmentTemplate($dipId, $saId)
+    {
+        // Get the specific area with related data
+        $specificArea = $this->mtdpSpecificAreaModel->getSpecificAreas($saId);
+
+        if (!$specificArea) {
+            return redirect()->to('admin/mtdp-plans')->with('error', 'Specific Area not found');
+        }
+
+        // Create CSV content
+        $csvContent = "investment,policy_reference\n";
+        $csvContent .= "\"Agricultural Training Centers\",\"National Agricultural Development Policy 2023\"\n";
+        $csvContent .= "\"Irrigation Infrastructure\",\"Water Resource Management Strategy 2023\"\n";
+
+        // Set headers for file download
+        $filename = 'investments_import_template_sa_' . $saId . '_' . date('Y-m-d') . '.csv';
+
+        return $this->response
+            ->setHeader('Content-Type', 'text/csv')
+            ->setHeader('Content-Disposition', 'attachment; filename="' . $filename . '"')
+            ->setBody($csvContent);
+    }
+
+    /**
+     * Import Investments from CSV file
+     *
+     * @param int $dipId The DIP ID
+     * @param int $saId The Specific Area ID
+     * @return \CodeIgniter\HTTP\Response
+     */
+    public function importInvestments($dipId, $saId)
+    {
+        // Get the specific area with related data
+        $specificArea = $this->mtdpSpecificAreaModel->getSpecificAreas($saId);
+
+        if (!$specificArea) {
+            return redirect()->to('admin/mtdp-plans')->with('error', 'Specific Area not found');
+        }
+
+        // Validate file upload
+        $file = $this->request->getFile('csv_file');
+
+        if (!$file || !$file->isValid()) {
+            return redirect()->back()->with('error', 'Please select a valid CSV file');
+        }
+
+        if ($file->getExtension() !== 'csv') {
+            return redirect()->back()->with('error', 'Please upload a CSV file');
+        }
+
+        $csvData = array_map('str_getcsv', file($file->getTempName()));
+        $header = array_shift($csvData);
+
+        // Validate header
+        if (!in_array('investment', $header)) {
+            return redirect()->back()->with('error', 'CSV must contain "investment" column');
+        }
+
+        $investmentIndex = array_search('investment', $header);
+        $policyRefIndex = array_search('policy_reference', $header);
+
+        $imported = 0;
+        $errors = [];
+
+        foreach ($csvData as $rowIndex => $row) {
+            if (empty($row[$investmentIndex])) {
+                $errors[] = "Row " . ($rowIndex + 2) . ": Investment is required";
+                continue;
+            }
+
+            $data = [
+                'mtdp_id' => $specificArea['mtdp_id'],
+                'spa_id' => $specificArea['spa_id'],
+                'dip_id' => $dipId,
+                'sa_id' => $saId,
+                'investment' => $row[$investmentIndex],
+                'policy_reference' => $policyRefIndex !== false ? ($row[$policyRefIndex] ?? '') : '',
+                'investment_status' => 1,
+                'investment_status_by' => session()->get('user_id'),
+                'investment_status_at' => date('Y-m-d H:i:s'),
+                'investment_status_remarks' => '',
+                'created_by' => session()->get('user_id'),
+                'updated_by' => session()->get('user_id'),
+            ];
+
+            if ($this->mtdpInvestmentsModel->insert($data)) {
+                $imported++;
+            } else {
+                $errors[] = "Row " . ($rowIndex + 2) . ": Failed to import " . $row[$investmentIndex];
+            }
+        }
+
+        $message = "Import completed. $imported investments imported successfully.";
+        if (!empty($errors)) {
+            $message .= " Errors: " . implode(', ', $errors);
+        }
+
+        return redirect()->to('admin/mtdp-plans/dips/' . $dipId . '/specific-areas/' . $saId . '/investments')->with('success', $message);
+    }
 }

@@ -13,6 +13,7 @@ use App\Models\MtdpStrategiesModel;
 use App\Models\MtdpIndicatorsModel;
 use App\Models\WorkplanMtdpLinkModel;
 use App\Models\ProposalModel;
+use App\Models\WorkplanActivityModel;
 use CodeIgniter\Controller;
 
 class MTDReportsController extends Controller
@@ -32,6 +33,7 @@ class MTDReportsController extends Controller
         $indicatorsModel = new MtdpIndicatorsModel();
         $workplanLinkModel = new WorkplanMtdpLinkModel();
         $proposalModel = new ProposalModel();
+        $workplanActivityModel = new WorkplanActivityModel();
 
         // Get date filters from request
         $dateFrom = $this->request->getGet('date_from');
@@ -53,7 +55,7 @@ class MTDReportsController extends Controller
         // Prepare chart data
         $chartData = $this->prepareChartData($plans, $spas, $dips, $kras, $specific_areas, $investments, $strategies, $indicators, $dateFrom, $dateTo);
 
-        // Pass all data to the view
+        // Pass all data to the original view
         return view('reports_mtdp/reports_mtdp_index', [
             'title' => 'MTDP Plans Report',
             'plans' => $plans,
@@ -70,6 +72,8 @@ class MTDReportsController extends Controller
             'dateTo' => $dateTo,
         ]);
     }
+
+
 
     /**
      * Prepare data for charts and graphs
@@ -532,6 +536,8 @@ class MTDReportsController extends Controller
 
         return $counts;
     }
+
+
 
 
 }

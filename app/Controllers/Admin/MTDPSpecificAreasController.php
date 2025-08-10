@@ -333,4 +333,110 @@ class MTDPSpecificAreasController extends BaseController
                 ->with('error', 'Failed to update Specific Area status');
         }
     }
+
+    /**
+     * Download CSV template for Specific Area import
+     *
+     * @param int $dipId The DIP ID
+     * @return \CodeIgniter\HTTP\Response
+     */
+    public function downloadSpecificAreaTemplate($dipId)
+    {
+        // Get the DIP with related data
+        $dip = $this->mtdpDipModel->getDips($dipId);
+
+        if (!$dip) {
+            return redirect()->to('admin/mtdp-plans')->with('error', 'DIP not found');
+        }
+
+        // Create CSV content
+        $csvContent = "sa_code,sa_title,sa_remarks\n";
+        $csvContent .= "\"SA001\",\"Agricultural Extension Services\",\"Focus on smallholder farmers\"\n";
+        $csvContent .= "\"SA002\",\"Market Infrastructure Development\",\"Rural market centers\"\n";
+
+        // Set headers for file download
+        $filename = 'specific_areas_import_template_dip_' . $dipId . '_' . date('Y-m-d') . '.csv';
+
+        return $this->response
+            ->setHeader('Content-Type', 'text/csv')
+            ->setHeader('Content-Disposition', 'attachment; filename="' . $filename . '"')
+            ->setBody($csvContent);
+    }
+
+    /**
+     * Import Specific Areas from CSV file
+     *
+     * @param int $dipId The DIP ID
+     * @return \CodeIgniter\HTTP\Response
+     */
+    public function importSpecificAreas($dipId)
+    {
+        // Get the DIP with related data
+        $dip = $this->mtdpDipModel->getDips($dipId);
+
+        if (!$dip) {
+            return redirect()->to('admin/mtdp-plans')->with('error', 'DIP not found');
+        }
+
+        // Validate file upload
+        $file = $this->request->getFile('csv_file');
+
+        if (!$file || !$file->isValid()) {
+            return redirect()->back()->with('error', 'Please select a valid CSV file');
+        }
+
+        if ($file->getExtension() !== 'csv') {
+            return redirect()->back()->with('error', 'Please upload a CSV file');
+        }
+
+        $csvData = array_map('str_getcsv', file($file->getTempName()));
+        $header = array_shift($csvData);
+
+        // Validate header
+        if (!in_array('sa_code', $header) || !in_array('sa_title', $header)) {
+            return redirect()->back()->with('error', 'CSV must contain "sa_code" and "sa_title" columns');
+        }
+
+        $codeIndex = array_search('sa_code', $header);
+        $titleIndex = array_search('sa_title', $header);
+        $remarksIndex = array_search('sa_remarks', $header);
+
+        $imported = 0;
+        $errors = [];
+
+        foreach ($csvData as $rowIndex => $row) {
+            if (empty($row[$codeIndex]) || empty($row[$titleIndex])) {
+                $errors[] = "Row " . ($rowIndex + 2) . ": Code and title are required";
+                continue;
+            }
+
+            $data = [
+                'mtdp_id' => $dip['mtdp_id'],
+                'spa_id' => $dip['spa_id'],
+                'dip_id' => $dipId,
+                'sa_code' => $row[$codeIndex],
+                'sa_title' => $row[$titleIndex],
+                'sa_remarks' => $remarksIndex !== false ? ($row[$remarksIndex] ?? '') : '',
+                'sa_status' => 1,
+                'sa_status_by' => session()->get('user_id'),
+                'sa_status_at' => date('Y-m-d H:i:s'),
+                'sa_status_remarks' => '',
+                'created_by' => session()->get('user_id'),
+                'updated_by' => session()->get('user_id'),
+            ];
+
+            if ($this->mtdpSpecificAreaModel->insert($data)) {
+                $imported++;
+            } else {
+                $errors[] = "Row " . ($rowIndex + 2) . ": Failed to import " . $row[$titleIndex];
+            }
+        }
+
+        $message = "Import completed. $imported specific areas imported successfully.";
+        if (!empty($errors)) {
+            $message .= " Errors: " . implode(', ', $errors);
+        }
+
+        return redirect()->to('admin/mtdp-plans/dips/' . $dipId . '/specific-areas')->with('success', $message);
+    }
 }

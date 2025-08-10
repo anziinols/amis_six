@@ -463,4 +463,111 @@ class MTDPStrategiesController extends BaseController
                 ->withInput();
         }
     }
+
+    /**
+     * Download CSV template for Strategy import
+     *
+     * @param int $kraId The KRA ID
+     * @return \CodeIgniter\HTTP\Response
+     */
+    public function downloadStrategyTemplate($kraId)
+    {
+        // Get the KRA with related data
+        $kra = $this->mtdpKraModel->getKras($kraId);
+
+        if (!$kra) {
+            return redirect()->to('admin/mtdp-plans')->with('error', 'KRA not found');
+        }
+
+        // Create CSV content
+        $csvContent = "strategy,policy_reference\n";
+        $csvContent .= "\"Improve agricultural productivity through training\",\"National Agricultural Policy 2023\"\n";
+        $csvContent .= "\"Enhance market access for smallholder farmers\",\"Market Development Strategy 2023\"\n";
+
+        // Set headers for file download
+        $filename = 'strategies_import_template_kra_' . $kraId . '_' . date('Y-m-d') . '.csv';
+
+        return $this->response
+            ->setHeader('Content-Type', 'text/csv')
+            ->setHeader('Content-Disposition', 'attachment; filename="' . $filename . '"')
+            ->setBody($csvContent);
+    }
+
+    /**
+     * Import Strategies from CSV file
+     *
+     * @param int $kraId The KRA ID
+     * @return \CodeIgniter\HTTP\Response
+     */
+    public function importStrategies($kraId)
+    {
+        // Get the KRA with related data
+        $kra = $this->mtdpKraModel->getKras($kraId);
+
+        if (!$kra) {
+            return redirect()->to('admin/mtdp-plans')->with('error', 'KRA not found');
+        }
+
+        // Validate file upload
+        $file = $this->request->getFile('csv_file');
+
+        if (!$file || !$file->isValid()) {
+            return redirect()->back()->with('error', 'Please select a valid CSV file');
+        }
+
+        if ($file->getExtension() !== 'csv') {
+            return redirect()->back()->with('error', 'Please upload a CSV file');
+        }
+
+        $csvData = array_map('str_getcsv', file($file->getTempName()));
+        $header = array_shift($csvData);
+
+        // Validate header
+        if (!in_array('strategy', $header)) {
+            return redirect()->back()->with('error', 'CSV must contain "strategy" column');
+        }
+
+        $strategyIndex = array_search('strategy', $header);
+        $policyRefIndex = array_search('policy_reference', $header);
+
+        $imported = 0;
+        $errors = [];
+
+        foreach ($csvData as $rowIndex => $row) {
+            if (empty($row[$strategyIndex])) {
+                $errors[] = "Row " . ($rowIndex + 2) . ": Strategy is required";
+                continue;
+            }
+
+            $data = [
+                'mtdp_id' => $kra['mtdp_id'],
+                'spa_id' => $kra['spa_id'],
+                'dip_id' => $kra['dip_id'],
+                'sa_id' => $kra['sa_id'],
+                'investment_id' => $kra['investment_id'],
+                'kra_id' => $kraId,
+                'strategy' => $row[$strategyIndex],
+                'policy_reference' => $policyRefIndex !== false ? ($row[$policyRefIndex] ?? '') : '',
+                'strategies_status' => 1,
+                'strategies_status_by' => session()->get('user_id'),
+                'strategies_status_at' => date('Y-m-d H:i:s'),
+                'strategies_status_remarks' => '',
+                'created_by' => session()->get('user_id'),
+                'updated_by' => session()->get('user_id'),
+            ];
+
+            if ($this->mtdpStrategiesModel->insert($data)) {
+                $imported++;
+            } else {
+                $errors[] = "Row " . ($rowIndex + 2) . ": Failed to import " . $row[$strategyIndex];
+            }
+        }
+
+        $message = "Import completed. $imported strategies imported successfully.";
+        if (!empty($errors)) {
+            $message .= " Errors: " . implode(', ', $errors);
+        }
+
+        return redirect()->to('admin/mtdp-plans/kras/' . $kraId . '/strategies')->with('success', $message);
+    }
 }

@@ -49,6 +49,7 @@ class WorkplanActivitiesController extends BaseController
             ->select('workplan_activities.*, CONCAT(supervisors.fname, " ", supervisors.lname) as supervisor_name')
             ->join('users as supervisors', 'supervisors.id = workplan_activities.supervisor_id', 'left')
             ->where('workplan_id', $workplanId)
+            ->orderBy('workplan_activities.activity_code', 'ASC')
             ->findAll();
 
         // Load plan link models
@@ -143,15 +144,17 @@ class WorkplanActivitiesController extends BaseController
             return redirect()->to('/workplans')->with('error', 'Workplan not found.');
         }
 
-        // Define validation rules - simplified for the required fields only
+        // Define validation rules - updated for correct field names
         $rules = [
             'title' => 'required|max_length[255]',
             'description' => 'permit_empty',
             'activity_type' => 'required|in_list[training,inputs,infrastructure,output]',
-            'q_one' => 'permit_empty|string',
-            'q_two' => 'permit_empty|string',
-            'q_three' => 'permit_empty|string',
-            'q_four' => 'permit_empty|string',
+            'q_one_target' => 'permit_empty|decimal',
+            'q_two_target' => 'permit_empty|decimal',
+            'q_three_target' => 'permit_empty|decimal',
+            'q_four_target' => 'permit_empty|decimal',
+            'total_budget' => 'permit_empty|decimal',
+            'branch_id' => 'permit_empty|integer',
             'supervisor_id' => 'permit_empty|integer',
         ];
 
@@ -159,18 +162,19 @@ class WorkplanActivitiesController extends BaseController
             return redirect()->back()->withInput()->with('errors', $this->validator->getErrors());
         }
 
-        // Prepare data for saving - simplified for the required fields only
+        // Prepare data for saving - updated for correct field names
         $data = [
             'workplan_id' => $workplanId,
-            'branch_id' => $workplan['branch_id'],
+            'branch_id' => $this->request->getPost('branch_id') ?: $workplan['branch_id'],
             'title' => $this->request->getPost('title'),
             'description' => $this->request->getPost('description'),
             'activity_type' => $this->request->getPost('activity_type'),
-            'q_one' => $this->request->getPost('q_one'),
-            'q_two' => $this->request->getPost('q_two'),
-            'q_three' => $this->request->getPost('q_three'),
-            'q_four' => $this->request->getPost('q_four'),
-            'supervisor_id' => $this->request->getPost('supervisor_id'),
+            'q_one_target' => $this->request->getPost('q_one_target') ?: null,
+            'q_two_target' => $this->request->getPost('q_two_target') ?: null,
+            'q_three_target' => $this->request->getPost('q_three_target') ?: null,
+            'q_four_target' => $this->request->getPost('q_four_target') ?: null,
+            'total_budget' => $this->request->getPost('total_budget') ?: null,
+            'supervisor_id' => $this->request->getPost('supervisor_id') ?: null,
             'created_by' => session()->get('user_id'),
             'updated_by' => session()->get('user_id'),
         ];
@@ -205,8 +209,15 @@ class WorkplanActivitiesController extends BaseController
         }
 
         $activity = $this->workplanActivityModel
-            ->select('workplan_activities.*, CONCAT(supervisors.fname, " ", supervisors.lname) as supervisor_name')
+            ->select('workplan_activities.*,
+                     CONCAT(supervisors.fname, " ", supervisors.lname) as supervisor_name,
+                     branches.name as branch_name,
+                     CONCAT(rated_by_user.fname, " ", rated_by_user.lname) as rated_by_name,
+                     CONCAT(status_by_user.fname, " ", status_by_user.lname) as status_by_name')
             ->join('users as supervisors', 'supervisors.id = workplan_activities.supervisor_id', 'left')
+            ->join('branches', 'branches.id = workplan_activities.branch_id', 'left')
+            ->join('users as rated_by_user', 'rated_by_user.id = workplan_activities.rated_by', 'left')
+            ->join('users as status_by_user', 'status_by_user.id = workplan_activities.status_by', 'left')
             ->where('workplan_activities.id', $id)
             ->first();
 
@@ -531,15 +542,17 @@ class WorkplanActivitiesController extends BaseController
             return redirect()->to('/workplans/' . $workplanId . '/activities')->with('error', 'Activity not found.');
         }
 
-        // Define validation rules - simplified for the required fields only
+        // Define validation rules - updated for correct field names
         $rules = [
             'title' => 'required|max_length[255]',
             'description' => 'permit_empty',
             'activity_type' => 'required|in_list[training,inputs,infrastructure,output]',
-            'q_one' => 'permit_empty|string',
-            'q_two' => 'permit_empty|string',
-            'q_three' => 'permit_empty|string',
-            'q_four' => 'permit_empty|string',
+            'q_one_target' => 'permit_empty|decimal',
+            'q_two_target' => 'permit_empty|decimal',
+            'q_three_target' => 'permit_empty|decimal',
+            'q_four_target' => 'permit_empty|decimal',
+            'total_budget' => 'permit_empty|decimal',
+            'branch_id' => 'permit_empty|integer',
             'supervisor_id' => 'permit_empty|integer',
         ];
 
@@ -547,16 +560,18 @@ class WorkplanActivitiesController extends BaseController
             return redirect()->back()->withInput()->with('errors', $this->validator->getErrors());
         }
 
-        // Prepare data for updating - simplified for the required fields only
+        // Prepare data for updating - updated for correct field names
         $data = [
             'title' => $this->request->getPost('title'),
             'description' => $this->request->getPost('description'),
             'activity_type' => $this->request->getPost('activity_type'),
-            'q_one' => $this->request->getPost('q_one'),
-            'q_two' => $this->request->getPost('q_two'),
-            'q_three' => $this->request->getPost('q_three'),
-            'q_four' => $this->request->getPost('q_four'),
-            'supervisor_id' => $this->request->getPost('supervisor_id'),
+            'q_one_target' => $this->request->getPost('q_one_target') ?: null,
+            'q_two_target' => $this->request->getPost('q_two_target') ?: null,
+            'q_three_target' => $this->request->getPost('q_three_target') ?: null,
+            'q_four_target' => $this->request->getPost('q_four_target') ?: null,
+            'total_budget' => $this->request->getPost('total_budget') ?: null,
+            'branch_id' => $this->request->getPost('branch_id') ?: null,
+            'supervisor_id' => $this->request->getPost('supervisor_id') ?: null,
             'updated_by' => session()->get('user_id'),
         ];
 

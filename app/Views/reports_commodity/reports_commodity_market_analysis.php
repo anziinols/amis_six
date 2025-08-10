@@ -223,10 +223,10 @@
                                         $marketPrices[$market['market_type']] = $market['avg_price'];
                                     }
                                     ?>
-                                    <td><?= isset($marketPrices['local']) ? 'PGK ' . number_format($marketPrices['local'], 2) : '-' ?></td>
-                                    <td><?= isset($marketPrices['export']) ? 'PGK ' . number_format($marketPrices['export'], 2) : '-' ?></td>
-                                    <td><?= isset($marketPrices['wholesale']) ? 'PGK ' . number_format($marketPrices['wholesale'], 2) : '-' ?></td>
-                                    <td><?= isset($marketPrices['retail']) ? 'PGK ' . number_format($marketPrices['retail'], 2) : '-' ?></td>
+                                    <td><?= isset($marketPrices['local']) ? CURRENCY_SYMBOL . ' ' . number_format($marketPrices['local'], 2) : '-' ?></td>
+                                    <td><?= isset($marketPrices['export']) ? CURRENCY_SYMBOL . ' ' . number_format($marketPrices['export'], 2) : '-' ?></td>
+                                    <td><?= isset($marketPrices['wholesale']) ? CURRENCY_SYMBOL . ' ' . number_format($marketPrices['wholesale'], 2) : '-' ?></td>
+                                    <td><?= isset($marketPrices['retail']) ? CURRENCY_SYMBOL . ' ' . number_format($marketPrices['retail'], 2) : '-' ?></td>
                                 </tr>
                                 <?php endforeach; ?>
                                 <?php if (empty($marketAnalysisData)): ?>

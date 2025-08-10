@@ -530,4 +530,124 @@ class MTDPIndicatorsController extends BaseController
                 ->with('error', 'Failed to update indicator status. Please try again.');
         }
     }
+
+    /**
+     * Download CSV template for Indicator import
+     *
+     * @param int $strategyId The Strategy ID
+     * @return \CodeIgniter\HTTP\Response
+     */
+    public function downloadIndicatorTemplate($strategyId)
+    {
+        // Get the strategy with related data
+        $strategy = $this->mtdpStrategiesModel->getStrategies($strategyId);
+
+        if (!$strategy) {
+            return redirect()->to('admin/mtdp-plans')->with('error', 'Strategy not found');
+        }
+
+        // Create CSV content
+        $csvContent = "indicator,source,baseline,year_one,year_two,year_three,year_four,year_five\n";
+        $csvContent .= "\"Number of farmers trained\",\"Training records\",\"0\",\"100\",\"150\",\"200\",\"250\",\"300\"\n";
+        $csvContent .= "\"Hectares of land improved\",\"Field surveys\",\"0\",\"50\",\"75\",\"100\",\"125\",\"150\"\n";
+
+        // Set headers for file download
+        $filename = 'indicators_import_template_strategy_' . $strategyId . '_' . date('Y-m-d') . '.csv';
+
+        return $this->response
+            ->setHeader('Content-Type', 'text/csv')
+            ->setHeader('Content-Disposition', 'attachment; filename="' . $filename . '"')
+            ->setBody($csvContent);
+    }
+
+    /**
+     * Import Indicators from CSV file
+     *
+     * @param int $strategyId The Strategy ID
+     * @return \CodeIgniter\HTTP\Response
+     */
+    public function importIndicators($strategyId)
+    {
+        // Get the strategy with related data
+        $strategy = $this->mtdpStrategiesModel->getStrategies($strategyId);
+
+        if (!$strategy) {
+            return redirect()->to('admin/mtdp-plans')->with('error', 'Strategy not found');
+        }
+
+        // Validate file upload
+        $file = $this->request->getFile('csv_file');
+
+        if (!$file || !$file->isValid()) {
+            return redirect()->back()->with('error', 'Please select a valid CSV file');
+        }
+
+        if ($file->getExtension() !== 'csv') {
+            return redirect()->back()->with('error', 'Please upload a CSV file');
+        }
+
+        $csvData = array_map('str_getcsv', file($file->getTempName()));
+        $header = array_shift($csvData);
+
+        // Validate header
+        if (!in_array('indicator', $header)) {
+            return redirect()->back()->with('error', 'CSV must contain "indicator" column');
+        }
+
+        $indicatorIndex = array_search('indicator', $header);
+        $sourceIndex = array_search('source', $header);
+        $baselineIndex = array_search('baseline', $header);
+        $yearOneIndex = array_search('year_one', $header);
+        $yearTwoIndex = array_search('year_two', $header);
+        $yearThreeIndex = array_search('year_three', $header);
+        $yearFourIndex = array_search('year_four', $header);
+        $yearFiveIndex = array_search('year_five', $header);
+
+        $imported = 0;
+        $errors = [];
+
+        foreach ($csvData as $rowIndex => $row) {
+            if (empty($row[$indicatorIndex])) {
+                $errors[] = "Row " . ($rowIndex + 2) . ": Indicator is required";
+                continue;
+            }
+
+            $data = [
+                'mtdp_id' => $strategy['mtdp_id'],
+                'spa_id' => $strategy['spa_id'],
+                'dip_id' => $strategy['dip_id'],
+                'sa_id' => $strategy['sa_id'],
+                'investment_id' => $strategy['investment_id'],
+                'kra_id' => $strategy['kra_id'],
+                'strategies_id' => $strategyId,
+                'indicator' => $row[$indicatorIndex],
+                'source' => $sourceIndex !== false ? ($row[$sourceIndex] ?? '') : '',
+                'baseline' => $baselineIndex !== false ? ($row[$baselineIndex] ?? '') : '',
+                'year_one' => $yearOneIndex !== false ? ($row[$yearOneIndex] ?? '') : '',
+                'year_two' => $yearTwoIndex !== false ? ($row[$yearTwoIndex] ?? '') : '',
+                'year_three' => $yearThreeIndex !== false ? ($row[$yearThreeIndex] ?? '') : '',
+                'year_four' => $yearFourIndex !== false ? ($row[$yearFourIndex] ?? '') : '',
+                'year_five' => $yearFiveIndex !== false ? ($row[$yearFiveIndex] ?? '') : '',
+                'indicators_status' => 1,
+                'indicators_status_by' => session()->get('user_id'),
+                'indicators_status_at' => date('Y-m-d H:i:s'),
+                'indicators_status_remarks' => '',
+                'created_by' => session()->get('user_id'),
+                'updated_by' => session()->get('user_id'),
+            ];
+
+            if ($this->mtdpIndicatorsModel->insert($data)) {
+                $imported++;
+            } else {
+                $errors[] = "Row " . ($rowIndex + 2) . ": Failed to import " . $row[$indicatorIndex];
+            }
+        }
+
+        $message = "Import completed. $imported indicators imported successfully.";
+        if (!empty($errors)) {
+            $message .= " Errors: " . implode(', ', $errors);
+        }
+
+        return redirect()->to('admin/mtdp-plans/strategies/' . $strategyId . '/indicators')->with('success', $message);
+    }
 }

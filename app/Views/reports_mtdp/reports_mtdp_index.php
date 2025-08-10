@@ -25,18 +25,23 @@
 
 <?= $this->section('content') ?>
 <div class="container-fluid">
+    <!-- Page Header -->
     <div class="row mb-4">
         <div class="col-12">
             <div class="card bg-primary text-white">
                 <div class="card-body">
-                    <div>
-                        <h4 class="card-title">MTDP Plans Report</h4>
-                        <p class="card-text mb-0">This report displays all MTDP plans and their related entities with visual charts and graphs.</p>
+                    <div class="row align-items-center">
+                        <div class="col-md-12">
+                            <h4 class="card-title">MTDP Plans Report</h4>
+                            <p class="card-text mb-0">This report displays all MTDP plans and their related entities with visual charts and graphs.</p>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
+
+
 
     <!-- Date Filter Form -->
     <div class="row mb-4">
@@ -133,6 +138,53 @@
         </div>
     </div>
 
+    <!-- Performance Analytics Section -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card bg-info text-white">
+                <div class="card-body">
+                    <h4 class="card-title">Performance Analytics & Strategic Insights</h4>
+                    <p class="card-text mb-0">Comprehensive performance analysis showing activity linkages, financial metrics, and cascading strategic performance.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Performance Charts Section -->
+    <div class="row mb-4">
+        <!-- Performance by Component Type Chart -->
+        <div class="col-md-6 mb-4">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <strong>Performance by Component Type</strong>
+                    <button class="btn btn-sm btn-outline-primary" onclick="copyChartAsImage('performanceByTypeChart')" title="Copy Chart as Image">
+                        <i class="fas fa-copy"></i>
+                    </button>
+                </div>
+                <div class="card-body">
+                    <canvas id="performanceByTypeChart" width="400" height="300"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Cost by Performance Level Chart -->
+        <div class="col-md-6 mb-4">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <strong>Cost Distribution by Performance Level</strong>
+                    <button class="btn btn-sm btn-outline-primary" onclick="copyChartAsImage('costByPerformanceChart')" title="Copy Chart as Image">
+                        <i class="fas fa-copy"></i>
+                    </button>
+                </div>
+                <div class="card-body">
+                    <canvas id="costByPerformanceChart" width="400" height="300"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+
     <!-- MTDP Plans Table -->
     <div class="row mb-4">
         <div class="col-12">
@@ -151,11 +203,15 @@
                                 <th>Date To</th>
                                 <th>Status</th>
                                 <th>Activities</th>
+                                <th>Actions</th>
                             </tr>
                         </thead>
                         <tbody>
                         <?php $counter = 1; ?>
                         <?php foreach ($plans as $plan): ?>
+                            <?php
+                            $activityCount = isset($workplanCounts['mtdp_plans'][$plan['id']]) ? $workplanCounts['mtdp_plans'][$plan['id']] : 0;
+                            ?>
                             <tr>
                                 <td><?= $counter++ ?></td>
                                 <td><?= esc($plan['abbrev']) ?></td>
@@ -163,7 +219,16 @@
                                 <td><?= esc($plan['date_from']) ?></td>
                                 <td><?= esc($plan['date_to']) ?></td>
                                 <td><?= esc($plan['mtdp_status']) == 1 ? 'Active' : 'Inactive' ?></td>
-                                <td><?= isset($workplanCounts['mtdp_plans'][$plan['id']]) ? $workplanCounts['mtdp_plans'][$plan['id']] : 0 ?></td>
+                                <td>
+                                    <span class="badge bg-primary"><?= $activityCount ?></span>
+                                </td>
+                                <td>
+                                    <?php if ($activityCount > 0): ?>
+                                        <button class="btn btn-sm btn-outline-info" onclick="showLinkedActivities('mtdp', <?= $plan['id'] ?>)" title="View Linked Activities">
+                                            <i class="fas fa-list"></i>
+                                        </button>
+                                    <?php endif; ?>
+                                </td>
                             </tr>
                         <?php endforeach; ?>
                         </tbody>
@@ -190,11 +255,15 @@
                                 <th>Title</th>
                                 <th>Status</th>
                                 <th>Activities</th>
+                                <th>Actions</th>
                             </tr>
                         </thead>
                         <tbody>
                         <?php $counter = 1; ?>
                         <?php foreach ($spas as $spa): ?>
+                            <?php
+                            $activityCount = isset($workplanCounts['spas'][$spa['id']]) ? $workplanCounts['spas'][$spa['id']] : 0;
+                            ?>
                             <tr>
                                 <td><?= $counter++ ?></td>
                                 <td>
@@ -210,7 +279,16 @@
                                 <td><?= esc($spa['code']) ?></td>
                                 <td><?= esc($spa['title']) ?></td>
                                 <td><?= esc($spa['spa_status']) == 1 ? 'Active' : 'Inactive' ?></td>
-                                <td><?= isset($workplanCounts['spas'][$spa['id']]) ? $workplanCounts['spas'][$spa['id']] : 0 ?></td>
+                                <td>
+                                    <span class="badge bg-primary"><?= $activityCount ?></span>
+                                </td>
+                                <td>
+                                    <?php if ($activityCount > 0): ?>
+                                        <button class="btn btn-sm btn-outline-info" onclick="showLinkedActivities('spa', <?= $spa['id'] ?>)" title="View Linked Activities">
+                                            <i class="fas fa-list"></i>
+                                        </button>
+                                    <?php endif; ?>
+                                </td>
                             </tr>
                         <?php endforeach; ?>
                         </tbody>
@@ -911,7 +989,7 @@
                                 if (context.parsed.y !== null) {
                                     label += new Intl.NumberFormat('en-US', {
                                         style: 'currency',
-                                        currency: 'USD',
+                                        currency: '<?= CURRENCY_CODE ?>',
                                         minimumFractionDigits: 2
                                     }).format(context.parsed.y);
                                 }
@@ -927,7 +1005,7 @@
                             callback: function(value) {
                                 return new Intl.NumberFormat('en-US', {
                                     style: 'currency',
-                                    currency: 'USD',
+                                    currency: '<?= CURRENCY_CODE ?>',
                                     minimumFractionDigits: 0,
                                     maximumFractionDigits: 0
                                 }).format(value);
@@ -1040,7 +1118,7 @@
                                 if (context.raw !== null) {
                                     label += new Intl.NumberFormat('en-US', {
                                         style: 'currency',
-                                        currency: 'USD',
+                                        currency: '<?= CURRENCY_CODE ?>',
                                         minimumFractionDigits: 2
                                     }).format(context.raw);
                                 }
@@ -1254,6 +1332,101 @@
             });
         });
 
+        // Performance by Component Type Chart
+        const performanceByTypeCtx = document.getElementById('performanceByTypeChart').getContext('2d');
+        new Chart(performanceByTypeCtx, {
+            type: 'radar',
+            data: {
+                labels: ['Strategies', 'KRAs', 'Investments', 'Specific Areas', 'DIPs', 'SPAs', 'MTDP Plans'],
+                datasets: [{
+                    label: 'Performance Score (%)',
+                    data: [
+                        <?= isset($chartData['performanceByType']['strategies']) ? $chartData['performanceByType']['strategies'] : 0 ?>,
+                        <?= isset($chartData['performanceByType']['kras']) ? $chartData['performanceByType']['kras'] : 0 ?>,
+                        <?= isset($chartData['performanceByType']['investments']) ? $chartData['performanceByType']['investments'] : 0 ?>,
+                        <?= isset($chartData['performanceByType']['specific_areas']) ? $chartData['performanceByType']['specific_areas'] : 0 ?>,
+                        <?= isset($chartData['performanceByType']['dips']) ? $chartData['performanceByType']['dips'] : 0 ?>,
+                        <?= isset($chartData['performanceByType']['spas']) ? $chartData['performanceByType']['spas'] : 0 ?>,
+                        <?= isset($chartData['performanceByType']['mtdp_plans']) ? $chartData['performanceByType']['mtdp_plans'] : 0 ?>
+                    ],
+                    backgroundColor: 'rgba(107, 168, 79, 0.2)',
+                    borderColor: colors.primary,
+                    borderWidth: 2,
+                    pointBackgroundColor: colors.primary,
+                    pointBorderColor: '#fff',
+                    pointHoverBackgroundColor: '#fff',
+                    pointHoverBorderColor: colors.primary
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    r: {
+                        beginAtZero: true,
+                        max: 100,
+                        ticks: {
+                            stepSize: 20
+                        }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return context.parsed.r.toFixed(1) + '%';
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+        // Cost by Performance Level Chart
+        const costByPerformanceCtx = document.getElementById('costByPerformanceChart').getContext('2d');
+        new Chart(costByPerformanceCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Excellent (80-100%)', 'Good (60-79%)', 'Average (40-59%)', 'Poor (0-39%)'],
+                datasets: [{
+                    data: [
+                        <?= isset($chartData['costByPerformance']['excellent']) ? $chartData['costByPerformance']['excellent'] : 0 ?>,
+                        <?= isset($chartData['costByPerformance']['good']) ? $chartData['costByPerformance']['good'] : 0 ?>,
+                        <?= isset($chartData['costByPerformance']['average']) ? $chartData['costByPerformance']['average'] : 0 ?>,
+                        <?= isset($chartData['costByPerformance']['poor']) ? $chartData['costByPerformance']['poor'] : 0 ?>
+                    ],
+                    backgroundColor: [
+                        colors.success,
+                        colors.warning,
+                        colors.info,
+                        colors.danger
+                    ],
+                    borderWidth: 2,
+                    borderColor: '#fff'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom'
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                const value = context.parsed;
+                                return context.label + ': $' + value.toLocaleString();
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
         // Toast notification function
         function showToast(message, type = 'info') {
             // Check if toastr is available
@@ -1264,6 +1437,113 @@
                 alert(message);
             }
         }
+
+        // Function to show linked activities modal
+        window.showLinkedActivities = function(componentType, componentId) {
+            const modalHtml = `
+                <div class="modal fade" id="linkedActivitiesModal" tabindex="-1">
+                    <div class="modal-dialog modal-xl">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title">Linked Activities - ${componentType.toUpperCase()} ID: ${componentId}</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                            </div>
+                            <div class="modal-body">
+                                <p>Loading activity details...</p>
+                                <div class="text-center">
+                                    <div class="spinner-border" role="status">
+                                        <span class="visually-hidden">Loading...</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            // Remove existing modal if any
+            $('#linkedActivitiesModal').remove();
+
+            // Add modal to body and show
+            $('body').append(modalHtml);
+            $('#linkedActivitiesModal').modal('show');
+
+            // Get current date filters
+            const dateFrom = $('#date_from').val();
+            const dateTo = $('#date_to').val();
+
+            // Make AJAX call to get detailed activity data
+            $.ajax({
+                url: '<?= base_url('reports/mtdp/linked-activities') ?>',
+                method: 'GET',
+                data: {
+                    component_type: componentType,
+                    component_id: componentId,
+                    date_from: dateFrom,
+                    date_to: dateTo
+                },
+                success: function(response) {
+                    if (response.success && response.data.length > 0) {
+                        let activityList = `
+                            <div class="mb-3">
+                                <strong>Total Activities: ${response.total}</strong>
+                            </div>
+                            <div class="table-responsive">
+                                <table class="table table-sm table-striped">
+                                    <thead>
+                                        <tr>
+                                            <th>Activity</th>
+                                            <th>Type</th>
+                                            <th>Workplan</th>
+                                            <th>Branch</th>
+                                            <th>Target</th>
+                                            <th>Cost</th>
+                                            <th>Rating</th>
+                                            <th>Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                        `;
+
+                        response.data.forEach(activity => {
+                            const rating = activity.rating > 0 ? activity.rating.toFixed(1) : 'N/A';
+                            const cost = activity.total_cost > 0 ? activity.total_cost.toLocaleString() : '0';
+                            const target = activity.total_target > 0 ? activity.total_target.toLocaleString() : 'N/A';
+                            const ratingBadge = rating !== 'N/A' ? `<span class="badge bg-warning">${rating}/5</span>` : '<span class="text-muted">N/A</span>';
+                            const statusBadge = activity.status ? `<span class="badge bg-info">${activity.status}</span>` : '<span class="text-muted">N/A</span>';
+
+                            activityList += `
+                                <tr>
+                                    <td>
+                                        <strong>${activity.title || 'N/A'}</strong>
+                                        ${activity.description ? '<br><small class="text-muted">' + activity.description.substring(0, 100) + '...</small>' : ''}
+                                    </td>
+                                    <td><span class="badge bg-secondary">${activity.type || 'N/A'}</span></td>
+                                    <td>${activity.workplan || 'N/A'}</td>
+                                    <td>${activity.branch || 'N/A'}</td>
+                                    <td>${target}</td>
+                                    <td>$${cost}</td>
+                                    <td>${ratingBadge}</td>
+                                    <td>${statusBadge}</td>
+                                </tr>
+                            `;
+                        });
+
+                        activityList += '</tbody></table></div>';
+                        $('#linkedActivitiesModal .modal-body').html(activityList);
+                    } else {
+                        $('#linkedActivitiesModal .modal-body').html('<p class="text-muted text-center">No activities found for this component.</p>');
+                    }
+                },
+                error: function(xhr, status, error) {
+                    $('#linkedActivitiesModal .modal-body').html('<p class="text-danger text-center">Error loading activity data. Please try again.</p>');
+                    console.error('Error loading activities:', error);
+                }
+            });
+        };
     });
 </script>
 

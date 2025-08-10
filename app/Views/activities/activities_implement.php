@@ -569,11 +569,6 @@
                             <a href="<?= base_url('activities/' . $proposal['id']) ?>" class="btn btn-secondary">
                                 <i class="fas fa-times me-1"></i> Cancel
                             </a>
-                            <?php if ($proposal['status'] === 'pending'): ?>
-                            <button type="button" id="submitForSupervision" class="btn btn-warning ms-2">
-                                <i class="fas fa-paper-plane me-1"></i> Submit for Supervision
-                            </button>
-                            <?php endif; ?>
                         </div>
                     </form>
                 </div>
@@ -581,29 +576,7 @@
         </div>
     </div>
 </div>
-<!-- Submit for Supervision Modal -->
-<div class="modal fade" id="supervisionModal" tabindex="-1" aria-labelledby="supervisionModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header bg-warning text-dark">
-                <h5 class="modal-title" id="supervisionModalLabel">Submit for Supervision</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <div class="alert alert-warning">
-                    <i class="fas fa-exclamation-triangle me-2"></i> <strong>Warning:</strong> If you submit this activity for supervision, it will no longer be editable and the implement button will no longer be displayed.
-                </div>
-                <p>Are you sure you want to proceed?</p>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-warning" id="confirmSubmitForSupervision">
-                    <i class="fas fa-paper-plane me-1"></i> Submit for Supervision
-                </button>
-            </div>
-        </div>
-    </div>
-</div>
+
 <?= $this->endSection() ?>
 
 <?= $this->section('styles') ?>
@@ -745,30 +718,7 @@
             }
         });
 
-        // Submit for Supervision button - Show modal
-        $('#submitForSupervision').click(function(e) {
-            e.preventDefault();
-            $('#supervisionModal').modal('show');
-        });
 
-        // Confirm Submit for Supervision - Handle form submission
-        $('#confirmSubmitForSupervision').click(function() {
-            // Create a form to submit
-            var form = $('<form></form>');
-            form.attr('method', 'post');
-            form.attr('action', '<?= base_url('activities/' . $proposal['id'] . '/submit-for-supervision') ?>');
-
-            // Add CSRF token
-            form.append($('<input>').attr({
-                type: 'hidden',
-                name: '<?= csrf_token() ?>',
-                value: '<?= csrf_hash() ?>'
-            }));
-
-            // Append form to body and submit
-            $('body').append(form);
-            form.submit();
-        });
     });
 </script>
 <?= $this->endSection() ?>

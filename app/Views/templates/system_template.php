@@ -298,6 +298,7 @@
             background-color: var(--primary-green);
         }
     </style>
+    <?= $this->renderSection('head') ?>
 </head>
 <body>
     <!-- Mobile navigation toggle button (only visible on small screens) -->
@@ -433,6 +434,16 @@
                     <a class="nav-link <?= strpos(current_url(), 'proposals') !== false ? 'active' : '' ?>" href="<?= base_url('proposals') ?>">
                         <i class="fas fa-lightbulb"></i>
                         <span class="nav-text">Proposal</span>
+                    </a>
+                </li>
+                <?php endif; ?>
+
+                <!-- Evaluation Menu - For Admin and Supervisor -->
+                <?php if (canAccessMenu('evaluation', $userRole)): ?>
+                <li class="nav-item">
+                    <a class="nav-link <?= strpos(current_url(), 'evaluation') !== false ? 'active' : '' ?>" href="<?= base_url('evaluation') ?>">
+                        <i class="fas fa-clipboard-check"></i>
+                        <span class="nav-text">Evaluation</span>
                     </a>
                 </li>
                 <?php endif; ?>

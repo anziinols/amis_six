@@ -104,6 +104,7 @@
                 <thead class="table-light">
                     <tr>
                         <th>#</th>
+                        <th>Activity Code</th>
                         <th>Title</th>
                         <th>Type</th>
                         <th>Supervisor</th>
@@ -116,6 +117,7 @@
                         <?php foreach ($activities as $index => $activity): ?>
                             <tr>
                                 <td><?= esc($index + 1) ?></td>
+                                <td><span class="badge bg-primary"><?= esc($activity['activity_code'] ?? 'N/A') ?></span></td>
                                 <td><?= esc($activity['title']) ?></td>
                                 <td>
                                     <?= ucfirst(esc($activity['activity_type'])) ?>
@@ -165,7 +167,7 @@
                         <?php endforeach; ?>
                     <?php else: ?>
                         <tr>
-                            <td colspan="6" class="text-center">No activities found for this workplan.</td>
+                            <td colspan="7" class="text-center">No activities found for this workplan.</td>
                         </tr>
                     <?php endif; ?>
                 </tbody>

@@ -59,7 +59,7 @@ class SmeController extends BaseController
         $logo = $this->request->getFile('logo');
         if ($logo && $logo->isValid() && !$logo->hasMoved()) {
             // Create upload directory if it doesn't exist
-            $uploadPath = 'uploads/sme_logos';
+            $uploadPath = 'public/uploads/sme_logos';
             if (!is_dir($uploadPath)) {
                 mkdir($uploadPath, 0777, true);
             }
@@ -123,7 +123,7 @@ class SmeController extends BaseController
         $logo = $this->request->getFile('logo');
         if ($logo && $logo->isValid() && !$logo->hasMoved()) {
             // Create upload directory if it doesn't exist
-            $uploadPath = 'uploads/sme_logos';
+            $uploadPath = 'public/uploads/sme_logos';
             if (!is_dir($uploadPath)) {
                 mkdir($uploadPath, 0777, true);
             }
@@ -200,7 +200,7 @@ class SmeController extends BaseController
         $idPhoto = $this->request->getFile('id_photo');
         if ($idPhoto && $idPhoto->isValid() && !$idPhoto->hasMoved()) {
             // Create upload directory if it doesn't exist
-            $uploadPath = 'uploads/sme_staff_photos';
+            $uploadPath = 'public/uploads/sme_staff_photos';
             if (!is_dir($uploadPath)) {
                 mkdir($uploadPath, 0777, true);
             }
@@ -251,7 +251,7 @@ class SmeController extends BaseController
         $idPhoto = $this->request->getFile('id_photo');
         if ($idPhoto && $idPhoto->isValid() && !$idPhoto->hasMoved()) {
             // Create upload directory if it doesn't exist
-            $uploadPath = 'uploads/sme_staff_photos';
+            $uploadPath = 'public/uploads/sme_staff_photos';
             if (!is_dir($uploadPath)) {
                 mkdir($uploadPath, 0777, true);
             }

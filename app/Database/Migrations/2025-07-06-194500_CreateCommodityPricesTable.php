@@ -42,7 +42,7 @@ class CreateCommodityPricesTable extends Migration
             'currency' => [
                 'type'       => 'VARCHAR',
                 'constraint' => 10,
-                'default'    => 'PGK',
+                'default'    => CURRENCY_CODE,
             ],
             'location' => [
                 'type'       => 'VARCHAR',

@@ -87,12 +87,20 @@
             <div class="col-md-6">
                 <table class="table table-bordered">
                     <tr>
-                        <th style="width: 30%">Activity Title</th>
+                        <th style="width: 30%">Activity Code</th>
+                        <td><span class="badge bg-primary"><?= esc($activity['activity_code'] ?? 'N/A') ?></span></td>
+                    </tr>
+                    <tr>
+                        <th>Activity Title</th>
                         <td><?= esc($activity['title']) ?></td>
                     </tr>
                     <tr>
                         <th>Activity Type</th>
                         <td><?= ucfirst(esc($activity['activity_type'])) ?></td>
+                    </tr>
+                    <tr>
+                        <th>Branch</th>
+                        <td><?= esc($activity['branch_name'] ?? 'Not assigned') ?></td>
                     </tr>
                     <tr>
                         <th>Supervisor</th>
@@ -101,6 +109,18 @@
                     <tr>
                         <th>Action Officer</th>
                         <td><?= esc($activity['officer_name'] ?? 'Not assigned') ?></td>
+                    </tr>
+                    <tr>
+                        <th>Status</th>
+                        <td>
+                            <?php if (!empty($activity['status'])): ?>
+                                <span class="badge bg-<?= $activity['status'] === 'active' ? 'success' : ($activity['status'] === 'pending' ? 'warning' : 'secondary') ?>">
+                                    <?= ucfirst(esc($activity['status'])) ?>
+                                </span>
+                            <?php else: ?>
+                                <span class="badge bg-secondary">Not Set</span>
+                            <?php endif; ?>
+                        </td>
                     </tr>
                 </table>
             </div>
@@ -112,6 +132,163 @@
                 <?= nl2br(esc($activity['description'] ?? 'No description provided.')) ?>
             </div>
         </div>
+
+        <!-- Quarterly Targets Section -->
+        <div class="mt-4">
+            <h6>Quarterly Targets</h6>
+            <div class="row">
+                <div class="col-md-3">
+                    <div class="card border-primary">
+                        <div class="card-body text-center">
+                            <h6 class="card-title text-primary">Quarter 1 Target</h6>
+                            <p class="card-text fs-5 fw-bold"><?= $activity['q_one_target'] ? number_format($activity['q_one_target'], 2) : 'N/A' ?></p>
+                            <small class="text-muted">Achieved: <?= $activity['q_one_achieved'] ? number_format($activity['q_one_achieved'], 2) : 'N/A' ?></small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card border-success">
+                        <div class="card-body text-center">
+                            <h6 class="card-title text-success">Quarter 2 Target</h6>
+                            <p class="card-text fs-5 fw-bold"><?= $activity['q_two_target'] ? number_format($activity['q_two_target'], 2) : 'N/A' ?></p>
+                            <small class="text-muted">Achieved: <?= $activity['q_two_achieved'] ? number_format($activity['q_two_achieved'], 2) : 'N/A' ?></small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card border-warning">
+                        <div class="card-body text-center">
+                            <h6 class="card-title text-warning">Quarter 3 Target</h6>
+                            <p class="card-text fs-5 fw-bold"><?= $activity['q_three_target'] ? number_format($activity['q_three_target'], 2) : 'N/A' ?></p>
+                            <small class="text-muted">Achieved: <?= $activity['q_three_achieved'] ? number_format($activity['q_three_achieved'], 2) : 'N/A' ?></small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card border-info">
+                        <div class="card-body text-center">
+                            <h6 class="card-title text-info">Quarter 4 Target</h6>
+                            <p class="card-text fs-5 fw-bold"><?= $activity['q_four_target'] ? number_format($activity['q_four_target'], 2) : 'N/A' ?></p>
+                            <small class="text-muted">Achieved: <?= $activity['q_four_achieved'] ? number_format($activity['q_four_achieved'], 2) : 'N/A' ?></small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Budget and Achievement Summary -->
+        <div class="mt-4">
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="card bg-light">
+                        <div class="card-body text-center">
+                            <h6 class="card-title">Total Budget</h6>
+                            <p class="card-text fs-4 fw-bold text-success"><?= $activity['total_budget'] ? CURRENCY_SYMBOL . ' ' . number_format($activity['total_budget'], 2) : 'N/A' ?></p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card bg-light">
+                        <div class="card-body text-center">
+                            <h6 class="card-title">Total Target</h6>
+                            <p class="card-text fs-4 fw-bold text-primary">
+                                <?php
+                                $totalTarget = ($activity['q_one_target'] ?? 0) + ($activity['q_two_target'] ?? 0) + ($activity['q_three_target'] ?? 0) + ($activity['q_four_target'] ?? 0);
+                                echo $totalTarget > 0 ? number_format($totalTarget, 2) : 'N/A';
+                                ?>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card bg-light">
+                        <div class="card-body text-center">
+                            <h6 class="card-title">Total Achieved</h6>
+                            <p class="card-text fs-4 fw-bold text-info">
+                                <?php
+                                $totalAchieved = ($activity['q_one_achieved'] ?? 0) + ($activity['q_two_achieved'] ?? 0) + ($activity['q_three_achieved'] ?? 0) + ($activity['q_four_achieved'] ?? 0);
+                                echo $totalAchieved > 0 ? number_format($totalAchieved, 2) : 'N/A';
+                                ?>
+                            </p>
+                            <?php if ($totalTarget > 0): ?>
+                                <small class="text-muted">
+                                    Achievement: <?= round(($totalAchieved / $totalTarget) * 100, 2) ?>%
+                                </small>
+                            <?php endif; ?>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Rating Section -->
+        <?php if (!empty($activity['rating']) || !empty($activity['rated_at'])): ?>
+        <div class="mt-4">
+            <h6>Activity Rating</h6>
+            <div class="card bg-light">
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p><strong>Rating:</strong>
+                                <?php if (!empty($activity['rating'])): ?>
+                                    <span class="badge bg-warning fs-6"><?= esc($activity['rating']) ?>/10</span>
+                                <?php else: ?>
+                                    <span class="text-muted">Not rated</span>
+                                <?php endif; ?>
+                            </p>
+                            <?php if (!empty($activity['rated_at'])): ?>
+                                <p><strong>Rated Date:</strong> <?= date('M d, Y H:i', strtotime($activity['rated_at'])) ?></p>
+                            <?php endif; ?>
+                        </div>
+                        <div class="col-md-6">
+                            <?php if (!empty($activity['rated_by'])): ?>
+                                <p><strong>Rated By:</strong> <?= esc($activity['rated_by_name'] ?? 'N/A') ?></p>
+                            <?php endif; ?>
+                        </div>
+                    </div>
+                    <?php if (!empty($activity['reated_remarks'])): ?>
+                        <div class="mt-3">
+                            <strong>Rating Remarks:</strong>
+                            <div class="p-2 bg-white rounded border">
+                                <?= nl2br(esc($activity['reated_remarks'])) ?>
+                            </div>
+                        </div>
+                    <?php endif; ?>
+                </div>
+            </div>
+        </div>
+        <?php endif; ?>
+
+        <!-- Status Information -->
+        <?php if (!empty($activity['status_remarks']) || !empty($activity['status_at'])): ?>
+        <div class="mt-4">
+            <h6>Status Information</h6>
+            <div class="card bg-light">
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <?php if (!empty($activity['status_at'])): ?>
+                                <p><strong>Status Updated:</strong> <?= date('M d, Y H:i', strtotime($activity['status_at'])) ?></p>
+                            <?php endif; ?>
+                        </div>
+                        <div class="col-md-6">
+                            <?php if (!empty($activity['status_by'])): ?>
+                                <p><strong>Updated By:</strong> <?= esc($activity['status_by_name'] ?? 'N/A') ?></p>
+                            <?php endif; ?>
+                        </div>
+                    </div>
+                    <?php if (!empty($activity['status_remarks'])): ?>
+                        <div class="mt-3">
+                            <strong>Status Remarks:</strong>
+                            <div class="p-2 bg-white rounded border">
+                                <?= nl2br(esc($activity['status_remarks'])) ?>
+                            </div>
+                        </div>
+                    <?php endif; ?>
+                </div>
+            </div>
+        </div>
+        <?php endif; ?>
 
         <!-- Plan Links Section -->
         <div class="mt-4">

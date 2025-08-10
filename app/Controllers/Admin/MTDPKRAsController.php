@@ -417,4 +417,110 @@ class MTDPKRAsController extends BaseController
                 ->with('error', 'Failed to update KRA status');
         }
     }
+
+    /**
+     * Download CSV template for KRA import
+     *
+     * @param int $investmentId The Investment ID
+     * @return \CodeIgniter\HTTP\Response
+     */
+    public function downloadKraTemplate($investmentId)
+    {
+        // Get the investment with related data
+        $investment = $this->mtdpInvestmentsModel->getInvestments($investmentId);
+
+        if (!$investment) {
+            return redirect()->to('admin/mtdp-plans')->with('error', 'Investment not found');
+        }
+
+        // Create CSV content
+        $csvContent = "kra,policy_reference\n";
+        $csvContent .= "\"Increased agricultural productivity\",\"National Development Plan 2023\"\n";
+        $csvContent .= "\"Enhanced food security\",\"Food Security Strategy 2023\"\n";
+
+        // Set headers for file download
+        $filename = 'kras_import_template_investment_' . $investmentId . '_' . date('Y-m-d') . '.csv';
+
+        return $this->response
+            ->setHeader('Content-Type', 'text/csv')
+            ->setHeader('Content-Disposition', 'attachment; filename="' . $filename . '"')
+            ->setBody($csvContent);
+    }
+
+    /**
+     * Import KRAs from CSV file
+     *
+     * @param int $investmentId The Investment ID
+     * @return \CodeIgniter\HTTP\Response
+     */
+    public function importKras($investmentId)
+    {
+        // Get the investment with related data
+        $investment = $this->mtdpInvestmentsModel->getInvestments($investmentId);
+
+        if (!$investment) {
+            return redirect()->to('admin/mtdp-plans')->with('error', 'Investment not found');
+        }
+
+        // Validate file upload
+        $file = $this->request->getFile('csv_file');
+
+        if (!$file || !$file->isValid()) {
+            return redirect()->back()->with('error', 'Please select a valid CSV file');
+        }
+
+        if ($file->getExtension() !== 'csv') {
+            return redirect()->back()->with('error', 'Please upload a CSV file');
+        }
+
+        $csvData = array_map('str_getcsv', file($file->getTempName()));
+        $header = array_shift($csvData);
+
+        // Validate header
+        if (!in_array('kra', $header)) {
+            return redirect()->back()->with('error', 'CSV must contain "kra" column');
+        }
+
+        $kraIndex = array_search('kra', $header);
+        $policyRefIndex = array_search('policy_reference', $header);
+
+        $imported = 0;
+        $errors = [];
+
+        foreach ($csvData as $rowIndex => $row) {
+            if (empty($row[$kraIndex])) {
+                $errors[] = "Row " . ($rowIndex + 2) . ": KRA is required";
+                continue;
+            }
+
+            $data = [
+                'mtdp_id' => $investment['mtdp_id'],
+                'spa_id' => $investment['spa_id'],
+                'dip_id' => $investment['dip_id'],
+                'sa_id' => $investment['sa_id'],
+                'investment_id' => $investmentId,
+                'kra' => $row[$kraIndex],
+                'policy_reference' => $policyRefIndex !== false ? ($row[$policyRefIndex] ?? '') : '',
+                'kra_status' => 1,
+                'kra_status_by' => session()->get('user_id'),
+                'kra_status_at' => date('Y-m-d H:i:s'),
+                'kra_status_remarks' => '',
+                'created_by' => session()->get('user_id'),
+                'updated_by' => session()->get('user_id'),
+            ];
+
+            if ($this->mtdpKraModel->insert($data)) {
+                $imported++;
+            } else {
+                $errors[] = "Row " . ($rowIndex + 2) . ": Failed to import " . $row[$kraIndex];
+            }
+        }
+
+        $message = "Import completed. $imported KRAs imported successfully.";
+        if (!empty($errors)) {
+            $message .= " Errors: " . implode(', ', $errors);
+        }
+
+        return redirect()->to('admin/mtdp-plans/investments/' . $investmentId . '/kras')->with('success', $message);
+    }
 }

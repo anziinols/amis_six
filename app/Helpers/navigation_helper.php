@@ -20,6 +20,11 @@ if (!function_exists('canAccessMenu')) {
             $userRole = session()->get('role');
         }
 
+        // Special check for evaluation menu - accessible to admin OR is_evaluator
+        if ($menuItem === 'evaluation') {
+            return $userRole === 'admin' || session()->get('is_evaluator') == 1;
+        }
+
         // Define menu permissions for each role
         $menuPermissions = [
             'admin' => [
@@ -158,6 +163,13 @@ if (!function_exists('getNavigationMenus')) {
                 'icon' => 'fas fa-lightbulb',
                 'url' => 'proposals',
                 'roles' => ['admin', 'supervisor']
+            ],
+            'evaluation' => [
+                'title' => 'Evaluation',
+                'icon' => 'fas fa-clipboard-check',
+                'url' => 'evaluation',
+                'roles' => ['admin', 'supervisor', 'user'], // Allow all roles, but access controlled by special logic
+                'special_access' => 'admin_or_evaluator'
             ],
             'activities' => [
                 'title' => 'Activities',

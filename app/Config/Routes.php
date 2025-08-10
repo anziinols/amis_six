@@ -332,6 +332,10 @@ $routes->group('admin', ['filter' => 'auth'], static function ($routes) {
         $routes->delete('spas/(:num)', [MtdpPlanController::class, 'deleteSpa/$1']);
         $routes->post('spas/(:num)/toggle-status', [MtdpPlanController::class, 'toggleSpaStatus/$1']);
 
+        // SPA CSV Import Routes
+        $routes->get('(:num)/spas/csv-template', [MtdpPlanController::class, 'downloadSpaTemplate/$1']);
+        $routes->post('(:num)/spas/csv-import', [MtdpPlanController::class, 'importSpas/$1']);
+
         // DIPs (Development Investment Plans)
         $routes->get('spas/(:num)/dips', [MtdpPlanController::class, 'dips/$1']);
         $routes->get('spas/(:num)/dips/new', [MtdpPlanController::class, 'newDip/$1']);
@@ -347,6 +351,10 @@ $routes->group('admin', ['filter' => 'auth'], static function ($routes) {
         $routes->get('spas/(:num)/dips/(:num)', [MtdpPlanController::class, 'showDip/$2']);
         $routes->get('spas/(:num)/dips/(:num)/edit', [MtdpPlanController::class, 'editDip/$2']);
 
+        // DIPs CSV Import Routes
+        $routes->get('spas/(:num)/dips/csv-template', [MtdpPlanController::class, 'downloadDipTemplate/$1']);
+        $routes->post('spas/(:num)/dips/csv-import', [MtdpPlanController::class, 'importDips/$1']);
+
         // Specific Areas Routes
         $routes->get('dips/(:num)/specific-areas', [MTDPSpecificAreasController::class, 'index/$1']);
         $routes->get('dips/(:num)/specific-areas/new', [MTDPSpecificAreasController::class, 'new/$1']);
@@ -355,6 +363,10 @@ $routes->group('admin', ['filter' => 'auth'], static function ($routes) {
         $routes->get('dips/(:num)/specific-areas/(:num)/edit', [MTDPSpecificAreasController::class, 'edit/$2']);
         $routes->post('specific-areas/(:num)', [MTDPSpecificAreasController::class, 'update/$1']);
         $routes->post('specific-areas/(:num)/toggle-status', [MTDPSpecificAreasController::class, 'toggleStatus/$1']);
+
+        // Specific Areas CSV Import Routes
+        $routes->get('dips/(:num)/specific-areas/csv-template', [MTDPSpecificAreasController::class, 'downloadSpecificAreaTemplate/$1']);
+        $routes->post('dips/(:num)/specific-areas/csv-import', [MTDPSpecificAreasController::class, 'importSpecificAreas/$1']);
 
         // Investments Routes
         $routes->get('dips/(:num)/specific-areas/(:num)/investments', [MTDPInvestmentsController::class, 'index/$1/$2']);
@@ -365,6 +377,10 @@ $routes->group('admin', ['filter' => 'auth'], static function ($routes) {
         $routes->post('investments/(:num)', [MTDPInvestmentsController::class, 'update/$1']);
         $routes->post('investments/(:num)/toggle-status', [MTDPInvestmentsController::class, 'toggleStatus/$1']);
 
+        // Investments CSV Import Routes
+        $routes->get('dips/(:num)/specific-areas/(:num)/investments/csv-template', [MTDPInvestmentsController::class, 'downloadInvestmentTemplate/$1/$2']);
+        $routes->post('dips/(:num)/specific-areas/(:num)/investments/csv-import', [MTDPInvestmentsController::class, 'importInvestments/$1/$2']);
+
         // KRAs Routes
         $routes->get('investments/(:num)/kras', [\App\Controllers\Admin\MTDPKRAsController::class, 'index/$1']);
         $routes->get('investments/(:num)/kras/new', [\App\Controllers\Admin\MTDPKRAsController::class, 'new/$1']);
@@ -373,6 +389,10 @@ $routes->group('admin', ['filter' => 'auth'], static function ($routes) {
         $routes->get('kras/(:num)/edit', [\App\Controllers\Admin\MTDPKRAsController::class, 'edit/$1']);
         $routes->post('kras/(:num)', [\App\Controllers\Admin\MTDPKRAsController::class, 'update/$1']);
         $routes->post('kras/(:num)/toggle-status', [\App\Controllers\Admin\MTDPKRAsController::class, 'toggleStatus/$1']);
+
+        // KRAs CSV Import Routes
+        $routes->get('investments/(:num)/kras/csv-template', [\App\Controllers\Admin\MTDPKRAsController::class, 'downloadKraTemplate/$1']);
+        $routes->post('investments/(:num)/kras/csv-import', [\App\Controllers\Admin\MTDPKRAsController::class, 'importKras/$1']);
 
         // Strategies Routes
         $routes->get('kras/(:num)/strategies', [\App\Controllers\Admin\MTDPStrategiesController::class, 'index/$1']);
@@ -383,6 +403,10 @@ $routes->group('admin', ['filter' => 'auth'], static function ($routes) {
         $routes->post('strategies/(:num)', [\App\Controllers\Admin\MTDPStrategiesController::class, 'update/$1']);
         $routes->post('strategies/(:num)/toggle-status', [\App\Controllers\Admin\MTDPStrategiesController::class, 'toggleStatus/$1']);
 
+        // Strategies CSV Import Routes
+        $routes->get('kras/(:num)/strategies/csv-template', [\App\Controllers\Admin\MTDPStrategiesController::class, 'downloadStrategyTemplate/$1']);
+        $routes->post('kras/(:num)/strategies/csv-import', [\App\Controllers\Admin\MTDPStrategiesController::class, 'importStrategies/$1']);
+
         // Indicators Routes
         $routes->get('strategies/(:num)/indicators', [\App\Controllers\Admin\MTDPIndicatorsController::class, 'index/$1']);
         $routes->get('strategies/(:num)/indicators/new', [\App\Controllers\Admin\MTDPIndicatorsController::class, 'new/$1']);
@@ -391,6 +415,10 @@ $routes->group('admin', ['filter' => 'auth'], static function ($routes) {
         $routes->get('indicators/(:num)/edit', [\App\Controllers\Admin\MTDPIndicatorsController::class, 'edit/$1']);
         $routes->post('indicators/(:num)', [\App\Controllers\Admin\MTDPIndicatorsController::class, 'update/$1']);
         $routes->post('indicators/(:num)/toggle-status', [\App\Controllers\Admin\MTDPIndicatorsController::class, 'toggleStatus/$1']);
+
+        // Indicators CSV Import Routes
+        $routes->get('strategies/(:num)/indicators/csv-template', [\App\Controllers\Admin\MTDPIndicatorsController::class, 'downloadIndicatorTemplate/$1']);
+        $routes->post('strategies/(:num)/indicators/csv-import', [\App\Controllers\Admin\MTDPIndicatorsController::class, 'importIndicators/$1']);
     });
 
     // Legacy MTDP routes for backward compatibility
@@ -615,14 +643,23 @@ $routes->group('proposals', ['filter' => 'auth'], function($routes) {
     $routes->get('supervise/(:num)', 'ProposalsController::supervise/$1');
     $routes->post('resend/(:num)', 'ProposalsController::resendProposal/$1');
     $routes->post('approve/(:num)', 'ProposalsController::approveProposal/$1');
-    $routes->get('rate/(:num)', 'ProposalsController::rate/$1');
-    $routes->post('rate/(:num)', 'ProposalsController::submitRating/$1');
+
     $routes->get('get-activities', 'ProposalsController::getActivities');
     $routes->get('get-districts', 'ProposalsController::getDistricts');
 });
 
+
+// Evaluation routes (RESTful) - Only for admin evaluators
+$routes->group('evaluation', ['filter' => 'auth'], function($routes) {
+    $routes->get('/', 'EvaluationController::index');
+    $routes->get('(:num)', 'EvaluationController::show/$1');
+    $routes->get('(:num)/rate', 'EvaluationController::rate/$1');
+    $routes->post('(:num)/rate', 'EvaluationController::updateRating/$1');
+});
+
 // MTDP Reports routes
 $routes->get('reports/mtdp', [MTDReportsController::class, 'index']);
+$routes->get('reports/mtdp/linked-activities', [MTDReportsController::class, 'getLinkedActivities']);
 
 // NASP Reports routes
 $routes->get('reports/nasp', [NASPReportsController::class, 'index']);

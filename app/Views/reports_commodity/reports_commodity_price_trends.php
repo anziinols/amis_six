@@ -402,7 +402,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         beginAtZero: true,
                         title: {
                             display: true,
-                            text: 'Price (PGK)'
+                            text: 'Price (<?= CURRENCY_SYMBOL ?>)'
                         }
                     }
                 }

@@ -44,8 +44,8 @@
                                 <td><?= esc($workplan['title']) ?></td>
                                 <td><?= esc($workplan['branch_name'] ?? 'N/A') ?></td>
                                 <td><?= esc($workplan['supervisor_name'] ?? 'N/A') ?></td>
-                                <td><?= esc(date('Y-m-d', strtotime($workplan['start_date']))) ?></td>
-                                <td><?= esc(date('Y-m-d', strtotime($workplan['end_date']))) ?></td>
+                                <td><?= esc(date('d/m/Y', strtotime($workplan['start_date']))) ?></td>
+                                <td><?= esc(date('d/m/Y', strtotime($workplan['end_date']))) ?></td>
                                 <td>
                                     <?php
                                         // Map status values to text and colors

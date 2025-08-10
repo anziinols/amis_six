@@ -1,3 +1,15 @@
+<?php if (isset($activity['activity_code']) && !empty($activity['activity_code'])): ?>
+<div class="row mb-3">
+    <div class="col-md-6">
+        <div class="mb-3">
+            <label for="activity_code_display" class="form-label">Activity Code</label>
+            <input type="text" class="form-control" id="activity_code_display" value="<?= esc($activity['activity_code']) ?>" readonly>
+            <div class="form-text">Activity code is automatically generated and cannot be changed.</div>
+        </div>
+    </div>
+</div>
+<?php endif; ?>
+
 <div class="row">
     <div class="col-md-6">
         <div class="mb-3">
@@ -32,59 +44,111 @@
     <?php endif; ?>
 </div>
 
-<!-- Quality Questions Section -->
+<!-- Quarterly Targets Section -->
 <div class="card mb-4">
     <div class="card-header">
-        <h6 class="mb-0">Quality Questions</h6>
+        <h6 class="mb-0">Quarterly Targets</h6>
     </div>
     <div class="card-body">
-        <div class="mb-3">
-            <label for="q_one" class="form-label">Question One</label>
-            <textarea class="form-control <?= session('errors.q_one') ? 'is-invalid' : '' ?>" id="q_one" name="q_one" rows="3"><?= old('q_one', $activity['q_one'] ?? '') ?></textarea>
-            <?php if (session('errors.q_one')): ?>
-                <div class="invalid-feedback"><?= session('errors.q_one') ?></div>
-            <?php endif; ?>
+        <div class="row">
+            <div class="col-md-6">
+                <div class="mb-3">
+                    <label for="q_one_target" class="form-label">Quarter One Target</label>
+                    <input type="number" step="0.01" class="form-control <?= session('errors.q_one_target') ? 'is-invalid' : '' ?>" id="q_one_target" name="q_one_target" value="<?= old('q_one_target', $activity['q_one_target'] ?? '') ?>">
+                    <?php if (session('errors.q_one_target')): ?>
+                        <div class="invalid-feedback"><?= session('errors.q_one_target') ?></div>
+                    <?php endif; ?>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="mb-3">
+                    <label for="q_two_target" class="form-label">Quarter Two Target</label>
+                    <input type="number" step="0.01" class="form-control <?= session('errors.q_two_target') ? 'is-invalid' : '' ?>" id="q_two_target" name="q_two_target" value="<?= old('q_two_target', $activity['q_two_target'] ?? '') ?>">
+                    <?php if (session('errors.q_two_target')): ?>
+                        <div class="invalid-feedback"><?= session('errors.q_two_target') ?></div>
+                    <?php endif; ?>
+                </div>
+            </div>
         </div>
-
-        <div class="mb-3">
-            <label for="q_two" class="form-label">Question Two</label>
-            <textarea class="form-control <?= session('errors.q_two') ? 'is-invalid' : '' ?>" id="q_two" name="q_two" rows="3"><?= old('q_two', $activity['q_two'] ?? '') ?></textarea>
-            <?php if (session('errors.q_two')): ?>
-                <div class="invalid-feedback"><?= session('errors.q_two') ?></div>
-            <?php endif; ?>
-        </div>
-
-        <div class="mb-3">
-            <label for="q_three" class="form-label">Question Three</label>
-            <textarea class="form-control <?= session('errors.q_three') ? 'is-invalid' : '' ?>" id="q_three" name="q_three" rows="3"><?= old('q_three', $activity['q_three'] ?? '') ?></textarea>
-            <?php if (session('errors.q_three')): ?>
-                <div class="invalid-feedback"><?= session('errors.q_three') ?></div>
-            <?php endif; ?>
-        </div>
-
-        <div class="mb-3">
-            <label for="q_four" class="form-label">Question Four</label>
-            <textarea class="form-control <?= session('errors.q_four') ? 'is-invalid' : '' ?>" id="q_four" name="q_four" rows="3"><?= old('q_four', $activity['q_four'] ?? '') ?></textarea>
-            <?php if (session('errors.q_four')): ?>
-                <div class="invalid-feedback"><?= session('errors.q_four') ?></div>
-            <?php endif; ?>
+        <div class="row">
+            <div class="col-md-6">
+                <div class="mb-3">
+                    <label for="q_three_target" class="form-label">Quarter Three Target</label>
+                    <input type="number" step="0.01" class="form-control <?= session('errors.q_three_target') ? 'is-invalid' : '' ?>" id="q_three_target" name="q_three_target" value="<?= old('q_three_target', $activity['q_three_target'] ?? '') ?>">
+                    <?php if (session('errors.q_three_target')): ?>
+                        <div class="invalid-feedback"><?= session('errors.q_three_target') ?></div>
+                    <?php endif; ?>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="mb-3">
+                    <label for="q_four_target" class="form-label">Quarter Four Target</label>
+                    <input type="number" step="0.01" class="form-control <?= session('errors.q_four_target') ? 'is-invalid' : '' ?>" id="q_four_target" name="q_four_target" value="<?= old('q_four_target', $activity['q_four_target'] ?? '') ?>">
+                    <?php if (session('errors.q_four_target')): ?>
+                        <div class="invalid-feedback"><?= session('errors.q_four_target') ?></div>
+                    <?php endif; ?>
+                </div>
+            </div>
         </div>
     </div>
 </div>
 
-<div class="row">
-    <div class="col-md-12">
+<!-- Budget Section -->
+<div class="card mb-4">
+    <div class="card-header">
+        <h6 class="mb-0">Budget Information</h6>
+    </div>
+    <div class="card-body">
         <div class="mb-3">
-            <label for="supervisor_id" class="form-label">Supervisor</label>
-            <select class="form-select <?= session('errors.supervisor_id') ? 'is-invalid' : '' ?>" id="supervisor_id" name="supervisor_id">
-                <option value="">Select Supervisor</option>
-                <?php foreach ($supervisors as $supervisor): ?>
-                    <option value="<?= $supervisor['id'] ?>" <?= old('supervisor_id', $activity['supervisor_id'] ?? '') == $supervisor['id'] ? 'selected' : '' ?>><?= $supervisor['fname'] . ' ' . $supervisor['lname'] ?></option>
-                <?php endforeach; ?>
-            </select>
-            <?php if (session('errors.supervisor_id')): ?>
-                <div class="invalid-feedback"><?= session('errors.supervisor_id') ?></div>
+            <label for="total_budget" class="form-label">Total Budget</label>
+            <input type="number" step="0.01" class="form-control <?= session('errors.total_budget') ? 'is-invalid' : '' ?>" id="total_budget" name="total_budget" value="<?= old('total_budget', $activity['total_budget'] ?? '') ?>">
+            <?php if (session('errors.total_budget')): ?>
+                <div class="invalid-feedback"><?= session('errors.total_budget') ?></div>
             <?php endif; ?>
+            <div class="form-text">Enter the total budget allocated for this activity.</div>
+        </div>
+    </div>
+</div>
+
+<!-- Assignment Section -->
+<div class="card mb-4">
+    <div class="card-header">
+        <h6 class="mb-0">Assignment Information</h6>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-6">
+                <div class="mb-3">
+                    <label for="supervisor_id" class="form-label">Supervisor</label>
+                    <select class="form-select <?= session('errors.supervisor_id') ? 'is-invalid' : '' ?>" id="supervisor_id" name="supervisor_id">
+                        <option value="">Select Supervisor</option>
+                        <?php foreach ($supervisors as $supervisor): ?>
+                            <option value="<?= $supervisor['id'] ?>" <?= old('supervisor_id', $activity['supervisor_id'] ?? '') == $supervisor['id'] ? 'selected' : '' ?>><?= $supervisor['fname'] . ' ' . $supervisor['lname'] ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                    <?php if (session('errors.supervisor_id')): ?>
+                        <div class="invalid-feedback"><?= session('errors.supervisor_id') ?></div>
+                    <?php endif; ?>
+                    <div class="form-text">Select the supervisor responsible for this activity.</div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="mb-3">
+                    <label for="branch_id" class="form-label">Branch</label>
+                    <select class="form-select <?= session('errors.branch_id') ? 'is-invalid' : '' ?>" id="branch_id" name="branch_id">
+                        <option value="">Select Branch</option>
+                        <?php if (isset($branches)): ?>
+                            <?php foreach ($branches as $branch): ?>
+                                <option value="<?= $branch['id'] ?>" <?= old('branch_id', $activity['branch_id'] ?? $workplan['branch_id'] ?? '') == $branch['id'] ? 'selected' : '' ?>><?= $branch['name'] ?></option>
+                            <?php endforeach; ?>
+                        <?php endif; ?>
+                    </select>
+                    <?php if (session('errors.branch_id')): ?>
+                        <div class="invalid-feedback"><?= session('errors.branch_id') ?></div>
+                    <?php endif; ?>
+                    <div class="form-text">Select the branch responsible for this activity.</div>
+                </div>
+            </div>
         </div>
     </div>
 </div>

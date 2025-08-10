@@ -21,7 +21,7 @@ class CommodityPricesSeeder extends Seeder
 
         // Generate sample price data for the last 12 months
         foreach ($commodities as $commodity) {
-            $basePrice = rand(50, 500); // Base price between 50-500 PGK
+            $basePrice = rand(50, 500); // Base price between 50-500 " . CURRENCY_SYMBOL
             
             foreach ($marketTypes as $marketType) {
                 // Adjust base price for market type
@@ -58,7 +58,7 @@ class CommodityPricesSeeder extends Seeder
                         'market_type' => $marketType,
                         'price_per_unit' => $price,
                         'unit_of_measurement' => 'kg',
-                        'currency' => 'PGK',
+                        'currency' => CURRENCY_CODE,
                         'location' => 'Port Moresby',
                         'source' => 'Market Survey',
                         'notes' => 'Sample data for testing',

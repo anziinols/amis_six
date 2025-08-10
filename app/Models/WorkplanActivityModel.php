@@ -1,16 +1,9 @@
 <?php
-// app/Models/WorkplanActivityModel.php
 
 namespace App\Models;
 
 use CodeIgniter\Model;
 
-/**
- * WorkplanActivityModel
- *
- * Handles database operations for the workplan_activities table.
- * This model has been updated to match the current database structure.
- */
 class WorkplanActivityModel extends Model
 {
     protected $table            = 'workplan_activities';
@@ -20,158 +13,131 @@ class WorkplanActivityModel extends Model
     protected $useSoftDeletes   = true;
     protected $protectFields    = true;
 
-    // Fields that can be set during save/insert/update
     protected $allowedFields    = [
         'workplan_id',
         'branch_id',
-        'province_id',
-        'district_id',
-        'location',
-        'gps_coordinates',
+        'activity_code',
         'title',
         'description',
         'activity_type',
-        'q_one',
-        'q_two',
-        'q_three',
-        'q_four',
+        'q_one_target',
+        'q_two_target',
+        'q_three_target',
+        'q_four_target',
+        'q_one_achieved',
+        'q_two_achieved',
+        'q_three_achieved',
+        'q_four_achieved',
+        'total_budget',
+        'rated_at',
+        'rated_by',
+        'rating',
+        'reated_remarks',
         'supervisor_id',
         'status',
         'status_by',
         'status_at',
         'status_remarks',
-        'total_cost',
-        'image_paths',
-        'trainers',
-        'trainees',
-        'unit',
-        'quantity',
         'created_by',
         'updated_by',
         'deleted_by'
     ];
 
-    // Dates
     protected $useTimestamps = true;
     protected $dateFormat    = 'datetime';
     protected $createdField  = 'created_at';
     protected $updatedField  = 'updated_at';
     protected $deletedField  = 'deleted_at';
 
-    // Validation
     protected $validationRules = [
-        'workplan_id'      => 'required|integer',
-        'branch_id'        => 'permit_empty|integer',
-        'province_id'      => 'permit_empty|integer',
-        'district_id'      => 'permit_empty|integer',
-        'location'         => 'permit_empty|max_length[255]',
-        'gps_coordinates'  => 'permit_empty|max_length[100]',
-        'title'            => 'required|max_length[255]',
-        'description'      => 'permit_empty|string',
-        'activity_type'    => 'required|in_list[training,inputs,infrastructure,output]',
-        'q_one'            => 'permit_empty|string',
-        'q_two'            => 'permit_empty|string',
-        'q_three'          => 'permit_empty|string',
-        'q_four'           => 'permit_empty|string',
-        'supervisor_id'    => 'permit_empty|integer',
-        'status'           => 'permit_empty|max_length[50]',
-        'status_by'        => 'permit_empty|integer',
-        'status_at'        => 'permit_empty|valid_date',
-        'status_remarks'   => 'permit_empty|string',
-        'total_cost'       => 'permit_empty|decimal',
-        'image_paths'      => 'permit_empty|string',
-        'trainers'         => 'permit_empty|string',
-        'trainees'         => 'permit_empty|string',
-        'unit'             => 'permit_empty|max_length[100]',
-        'quantity'         => 'permit_empty|integer',
-        'created_by'       => 'permit_empty|integer',
-        'updated_by'       => 'permit_empty|integer',
-        'deleted_by'       => 'permit_empty|integer'
+        'workplan_id'   => 'required',
+        'title'         => 'required|max_length[255]',
+        'activity_type' => 'required|in_list[training,inputs,infrastructure,output]',
+        'rating'        => 'permit_empty|integer|greater_than[0]|less_than_equal_to[5]'
     ];
 
     protected $validationMessages = [
         'workplan_id' => [
-            'required' => 'Workplan ID is required',
-            'integer' => 'Workplan ID must be a valid integer'
+            'required' => 'Workplan is required'
         ],
         'title' => [
             'required' => 'Activity title is required',
             'max_length' => 'Title cannot exceed 255 characters'
         ],
         'activity_type' => [
-            'required' => 'Activity type is required',
-            'in_list' => 'Activity type must be either training, inputs, infrastructure, or output'
+            'required' => 'Activity type is required'
+        ],
+        'rating' => [
+            'integer' => 'Rating must be a valid number',
+            'greater_than' => 'Rating must be at least 1 star',
+            'less_than_equal_to' => 'Rating cannot exceed 5 stars'
         ]
     ];
 
-    /**
-     * Get activities with their related workplan information
-     *
-     * @param array $conditions Optional conditions for filtering
-     * @return array
-     */
-    public function getActivitiesWithWorkplan($conditions = [])
+    public function getActivitiesWithWorkplan($workplanId = null)
     {
-        $builder = $this->db->table($this->table);
-        $builder->select($this->table . '.*, workplans.title as workplan_title');
-        $builder->join('workplans', 'workplans.id = ' . $this->table . '.workplan_id');
-
-        if (!empty($conditions)) {
-            $builder->where($conditions);
+        $builder = $this->select('workplan_activities.*, workplans.title as workplan_title')
+                        ->join('workplans', 'workplans.id = workplan_activities.workplan_id', 'left');
+        
+        if ($workplanId) {
+            $builder->where('workplan_activities.workplan_id', $workplanId);
         }
-
-        return $builder->get()->getResultArray();
+        
+        return $builder->findAll();
     }
 
-    /**
-     * Get activities by branch
-     *
-     * @param int $branchId
-     * @return array
-     */
-    public function getActivitiesByBranch($branchId)
-    {
-        return $this->where('branch_id', $branchId)
-                    ->where('deleted_at IS NULL')
-                    ->findAll();
-    }
-
-    /**
-     * Get activities by supervisor
-     *
-     * @param int $supervisorId
-     * @return array
-     */
-    public function getActivitiesBySupervisor($supervisorId)
-    {
-        return $this->where('supervisor_id', $supervisorId)
-                    ->where('deleted_at IS NULL')
-                    ->findAll();
-    }
-
-    /**
-     * Get activities with detailed information
-     *
-     * @return array
-     */
     public function getActivitiesWithDetails()
     {
-        $builder = $this->db->table($this->table . ' as wa');
-        $builder->select([
-            'wa.*',
-            'w.title as workplan_title',
-            'w.year as workplan_year',
-            'b.name as branch_name',
-            'CONCAT(s.fname, " ", s.lname) as supervisor_name',
-            'CONCAT(u.fname, " ", u.lname) as created_by_name'
-        ]);
-        $builder->join('workplans as w', 'w.id = wa.workplan_id', 'left');
-        $builder->join('branches as b', 'b.id = wa.branch_id', 'left');
-        $builder->join('users as s', 's.id = wa.supervisor_id', 'left');
-        $builder->join('users as u', 'u.id = wa.created_by', 'left');
-        $builder->where('wa.deleted_at IS NULL');
-        $builder->orderBy('wa.created_at', 'DESC');
+        return $this->select('workplan_activities.*, 
+                             workplans.title as workplan_title,
+                             branches.name as branch_name,
+                             CONCAT(supervisors.fname, " ", supervisors.lname) as supervisor_name')
+                    ->join('workplans', 'workplans.id = workplan_activities.workplan_id', 'left')
+                    ->join('branches', 'branches.id = workplan_activities.branch_id', 'left')
+                    ->join('users as supervisors', 'supervisors.id = workplan_activities.supervisor_id', 'left')
+                    ->orderBy('workplan_activities.activity_code', 'ASC')
+                    ->findAll();
+    }
 
-        return $builder->get()->getResultArray();
+    public function generateActivityCode()
+    {
+        $yearSuffix = date('y');
+        $prefix = 'ACT' . $yearSuffix;
+
+        $builder = $this->db->table($this->table);
+        $builder->select('activity_code');
+        $builder->like('activity_code', $prefix, 'after');
+        $builder->orderBy('activity_code', 'DESC');
+        $builder->limit(1);
+
+        $result = $builder->get()->getRowArray();
+
+        if ($result && !empty($result['activity_code'])) {
+            $lastCode = $result['activity_code'];
+            $numericPart = (int) substr($lastCode, -3);
+            $newIncrement = $numericPart + 1;
+        } else {
+            $newIncrement = 1;
+        }
+
+        return $prefix . str_pad($newIncrement, 3, '0', STR_PAD_LEFT);
+    }
+
+    public function insert($data = null, bool $returnID = true)
+    {
+        if (is_array($data) && !isset($data['activity_code'])) {
+            $data['activity_code'] = $this->generateActivityCode();
+        }
+
+        return parent::insert($data, $returnID);
+    }
+
+    public function save($data): bool
+    {
+        if (is_array($data) && (!isset($data['id']) || empty($data['id'])) && !isset($data['activity_code'])) {
+            $data['activity_code'] = $this->generateActivityCode();
+        }
+
+        return parent::save($data);
     }
 }

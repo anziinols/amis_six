@@ -344,7 +344,7 @@
                                         Not specified
                                     <?php endif; ?>
                                 </td>
-                                <td class="text-end"><?= isset($proposal['total_cost']) ? number_format($proposal['total_cost'], 2) : '0.00' ?></td>
+                                <td class="text-end"><?= isset($proposal['total_cost']) ? CURRENCY_SYMBOL . ' ' . number_format($proposal['total_cost'], 2) : CURRENCY_SYMBOL . ' 0.00' ?></td>
                                 <td>
                                     <?php if (isset($proposal['status']) && !empty($proposal['status'])): ?>
                                         <span class="badge <?= getProposalStatusBadgeClass($proposal['status']) ?>">
