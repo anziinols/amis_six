@@ -62,20 +62,20 @@ class DakoiiUserModel extends Model
     protected $skipValidation = false;
     
     /**
-     * Hash the password before storing
+     * Hash the password before storing (for new users only)
      *
      * @param array $data
      * @return array
      */
     protected function hashPassword(array $data)
     {
-        if (isset($data['data']['password'])) {
+        if (isset($data['data']['password']) && !empty($data['data']['password'])) {
             $data['data']['password'] = password_hash($data['data']['password'], PASSWORD_DEFAULT);
         }
-        
+
         return $data;
     }
-    
+
     /**
      * Before insert callback
      *
@@ -83,17 +83,6 @@ class DakoiiUserModel extends Model
      * @return array
      */
     protected function beforeInsert(array $data)
-    {
-        return $this->hashPassword($data);
-    }
-    
-    /**
-     * Before update callback
-     *
-     * @param array $data
-     * @return array
-     */
-    protected function beforeUpdate(array $data)
     {
         return $this->hashPassword($data);
     }

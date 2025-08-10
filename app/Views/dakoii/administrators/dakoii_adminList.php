@@ -36,13 +36,13 @@
                                     <td><?= esc($admin['phone']) ?></td>
                                     <td><?= esc($admin['employee_number']) ?></td>
                                     <td>
-                                        <span class="badge <?= $admin['status'] ? 'bg-success' : 'bg-danger' ?>">
-                                            <?= $admin['status'] ? 'Active' : 'Inactive' ?>
+                                        <span class="badge <?= $admin['user_status'] ? 'bg-success' : 'bg-danger' ?>">
+                                            <?= $admin['user_status'] ? 'Active' : 'Inactive' ?>
                                         </span>
                                     </td>
                                     <td>
                                         <div class="btn-group">
-                                            <a href="<?= base_url('dakoii/administrators/edit/' . $admin['id']) ?>" 
+                                            <a href="<?= base_url('dakoii/administrators/' . $admin['id'] . '/edit') ?>"
                                                class="btn btn-sm btn-primary">
                                                 <i class="fas fa-edit"></i>
                                             </a>
@@ -76,7 +76,10 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <a href="#" id="deleteButton" class="btn btn-danger">Delete</a>
+                <form id="deleteForm" method="post" style="display: inline;">
+                    <?= csrf_field() ?>
+                    <button type="submit" class="btn btn-danger">Delete</button>
+                </form>
             </div>
         </div>
     </div>
@@ -87,8 +90,8 @@
 <script>
 function confirmDelete(id) {
     const modal = new bootstrap.Modal(document.getElementById('deleteModal'));
-    const deleteButton = document.getElementById('deleteButton');
-    deleteButton.href = '<?= base_url('dakoii/administrators/delete/') ?>' + id;
+    const deleteForm = document.getElementById('deleteForm');
+    deleteForm.action = '<?= base_url('dakoii/administrators/') ?>' + id + '/delete';
     modal.show();
 }
 </script>

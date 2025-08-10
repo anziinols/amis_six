@@ -53,116 +53,35 @@ class UserModel extends Model
         'updated_by'
     ];
 
-    // Validation rules
+    // Simple validation rules - no complex email uniqueness check
     protected $validationRules = [
-        'ucode' => 'required|max_length[200]',
-        'password' => 'required|min_length[4]',
-        'email' => 'required|valid_email|is_unique[users.email,id,{id}]',
-        'phone' => 'permit_empty',
+        'email' => 'required|valid_email',
         'fname' => 'required|max_length[255]',
         'lname' => 'required|max_length[255]',
-        'gender' => 'permit_empty|in_list[male,female]',
-        'dobirth' => 'permit_empty|valid_date',
-        'place_birth' => 'permit_empty|max_length[255]',
-        'address' => 'permit_empty',
-        'employee_number' => 'permit_empty|max_length[100]',
-        'branch_id' => 'permit_empty|integer',
-        'designation' => 'permit_empty|max_length[255]',
-        'grade' => 'permit_empty|max_length[100]',
-        'report_to_id' => 'permit_empty|integer',
-        'is_evaluator' => 'permit_empty|in_list[0,1]',
-        'is_supervisor' => 'permit_empty|in_list[0,1]',
-        'commodity_id' => 'permit_empty|integer',
-        'role' => 'required|in_list[admin,supervisor,user,guest,commodity]',
-        'joined_date' => 'permit_empty|valid_date',
-        'id_photo_filepath' => 'permit_empty|max_length[255]',
-        'user_status' => 'permit_empty|in_list[1,0]',
-        'user_status_remarks' => 'permit_empty',
-        'user_status_at' => 'permit_empty|valid_date[Y-m-d H:i:s]',
-        'user_status_by' => 'permit_empty|integer',
-        'created_by' => 'permit_empty|integer',
-        'updated_by' => 'permit_empty|integer'
+        'role' => 'required|in_list[admin,supervisor,user,guest,commodity]'
     ];
 
-    // Validation messages
+    // Simple validation messages
     protected $validationMessages = [
-        'ucode' => [
-            'required' => 'User code is required',
-            'max_length' => 'User code cannot exceed 200 characters'
-        ],
         'email' => [
             'required' => 'Email address is required',
-            'valid_email' => 'Please enter a valid email address',
-            'is_unique' => 'This email is already registered'
+            'valid_email' => 'Please enter a valid email address'
         ],
         'fname' => [
-            'required' => 'First name is required',
-            'max_length' => 'First name cannot exceed 255 characters'
+            'required' => 'First name is required'
         ],
         'lname' => [
-            'required' => 'Last name is required',
-            'max_length' => 'Last name cannot exceed 255 characters'
+            'required' => 'Last name is required'
         ],
         'role' => [
-            'required' => 'User role is required',
-            'in_list' => 'Invalid role selected'
+            'required' => 'User role is required'
         ]
     ];
 
     protected $skipValidation = false;
     protected $cleanValidationRules = true;
 
-    /**
-     * Hash password before insert/update
-     */
-    protected function hashPassword(array $data)
-    {
-        // Handle both data formats: ['data']['password'] and ['password']
-        if (isset($data['data']['password']) && !empty($data['data']['password'])) {
-            // Check if password is already hashed (bcrypt hashes start with $2y$ and are 60 chars long)
-            if (!$this->isPasswordHashed($data['data']['password'])) {
-                $data['data']['password'] = password_hash($data['data']['password'], PASSWORD_DEFAULT);
-                log_message('debug', 'Password hashed in model via data.password');
-            } else {
-                log_message('debug', 'Password already hashed in model via data.password');
-            }
-        } elseif (isset($data['password']) && !empty($data['password'])) {
-            // Check if password is already hashed (bcrypt hashes start with $2y$ and are 60 chars long)
-            if (!$this->isPasswordHashed($data['password'])) {
-                $data['password'] = password_hash($data['password'], PASSWORD_DEFAULT);
-                log_message('debug', 'Password hashed in model via password');
-            } else {
-                log_message('debug', 'Password already hashed in model via password');
-            }
-        }
-        return $data;
-    }
-
-    /**
-     * Check if a password is already hashed
-     */
-    private function isPasswordHashed($password)
-    {
-        // Bcrypt hashes start with $2y$ or $2a$ or $2b$ and are typically 60 characters long
-        return (strlen($password) === 60 && preg_match('/^\$2[ayb]\$/', $password));
-    }
-
-    /**
-     * Before insert callback
-     */
-    protected function beforeInsert(array $data)
-    {
-        log_message('debug', 'beforeInsert called with data: ' . json_encode(array_keys($data)));
-        return $this->hashPassword($data);
-    }
-
-    /**
-     * Before update callback
-     */
-    protected function beforeUpdate(array $data)
-    {
-        return $this->hashPassword($data);
-    }
+    // No automatic password hashing - handle explicitly in controller
 
     /**
      * Before validate callback

@@ -2,19 +2,7 @@
 
 <?= $this->section('content') ?>
 <div class="container-fluid">
-    <?php if (session()->has('success')): ?>
-        <div class="alert alert-success alert-dismissible fade show" role="alert">
-            <?= session('success') ?>
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
-    <?php endif; ?>
 
-    <?php if (session()->has('error')): ?>
-        <div class="alert alert-danger alert-dismissible fade show" role="alert">
-            <?= session('error') ?>
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
-    <?php endif; ?>
 
     <?php if (!isset($user) || empty($user)): ?>
         <div class="alert alert-danger">
@@ -95,8 +83,8 @@
                         <div class="row">
                             <div class="col-md-6">
                                 <p class="mb-1"><strong>Account Status:</strong></p>
-                                <span class="badge bg-<?= $user['is_active'] ? 'success' : 'secondary' ?>">
-                                    <?= $user['is_active'] ? 'Active' : 'Inactive' ?>
+                                <span class="badge bg-<?= ($user['dakoii_user_status'] == 1) ? 'success' : 'secondary' ?>">
+                                    <?= ($user['dakoii_user_status'] == 1) ? 'Active' : 'Inactive' ?>
                                 </span>
                             </div>
                             <div class="col-md-6">
@@ -126,20 +114,42 @@
 $(document).ready(function() {
     // Password confirmation validation
     $('form').on('submit', function(e) {
+        console.log('Form submission started');
+
+        var name = $('#name').val();
+        var username = $('#username').val();
+        var currentPassword = $('#current_password').val();
         var newPassword = $('#new_password').val();
         var confirmPassword = $('#confirm_password').val();
-        
+
+        console.log('Form data:', {
+            name: name,
+            username: username,
+            currentPassword: currentPassword ? 'provided' : 'empty',
+            newPassword: newPassword ? 'provided' : 'empty',
+            confirmPassword: confirmPassword ? 'provided' : 'empty'
+        });
+
+        // Check required fields
+        if (!name || !username || !currentPassword) {
+            e.preventDefault();
+            alert('DEBUG: Missing required fields - Name: ' + (name ? 'OK' : 'EMPTY') + ', Username: ' + (username ? 'OK' : 'EMPTY') + ', Current Password: ' + (currentPassword ? 'OK' : 'EMPTY'));
+            return false;
+        }
+
         if (newPassword && newPassword !== confirmPassword) {
             e.preventDefault();
-            alert('New passwords do not match!');
+            alert('DEBUG: New passwords do not match!');
             return false;
         }
-        
-        if (!$('#current_password').val()) {
+
+        if (!currentPassword) {
             e.preventDefault();
-            alert('Please enter your current password to save changes');
+            alert('DEBUG: Please enter your current password to save changes');
             return false;
         }
+
+        console.log('Form validation passed, submitting...');
     });
 });
 </script>

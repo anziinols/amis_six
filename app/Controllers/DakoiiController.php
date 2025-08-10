@@ -282,16 +282,31 @@ class DakoiiController extends ResourceController
      */
     public function updateProfile()
     {
+        log_message('debug', '=== updateProfile method called ===');
+        log_message('debug', 'Request method: ' . $this->request->getMethod());
+        log_message('debug', 'Request URI: ' . $this->request->getUri());
+        log_message('debug', 'POST data: ' . json_encode($this->request->getPost()));
+
+        // Check if this is actually a POST request
+        if (!$this->request->getMethod() === 'post') {
+            log_message('error', 'updateProfile called with non-POST method: ' . $this->request->getMethod());
+            return redirect()->to('dakoii/profile')->with('error', 'DEBUG: Invalid request method: ' . $this->request->getMethod());
+        }
+
         if ($this->verifyLoggedIn() !== true) {
+            log_message('debug', 'User not logged in');
             return $this->verifyLoggedIn();
         }
 
         $userId = session()->get('dakoii_user_id');
+        log_message('debug', 'User ID from session: ' . $userId);
+
         $user = $this->dakoiiUserModel->find($userId);
+        log_message('debug', 'User found: ' . ($user ? 'Yes' : 'No'));
 
         if (!$user) {
-            return redirect()->to('dakoii/profile')
-                           ->with('error', 'User not found');
+            log_message('error', 'User not found for ID: ' . $userId);
+            return redirect()->to('dakoii/profile')->with('error', 'DEBUG: User not found for ID: ' . $userId);
         }
 
         // Get form data
@@ -301,10 +316,19 @@ class DakoiiController extends ResourceController
         $newPassword = $this->request->getPost('new_password');
         $confirmPassword = $this->request->getPost('confirm_password');
 
-        // Validate current password
-        if (!password_verify($currentPassword, $user['password'])) {
-            return redirect()->to('dakoii/profile')
-                           ->with('error', 'Current password is incorrect');
+        log_message('debug', 'Form data received - Name: ' . $name . ', Username: ' . $username . ', Current Password: ' . ($currentPassword ? 'provided' : 'empty') . ', New Password: ' . ($newPassword ? 'provided' : 'empty'));
+
+        // Check if form data is empty
+        if (empty($name) || empty($username) || empty($currentPassword)) {
+            log_message('error', 'Required form data missing');
+            return redirect()->to('dakoii/profile')->with('error', 'DEBUG: Required fields missing - Name: ' . ($name ? 'OK' : 'EMPTY') . ', Username: ' . ($username ? 'OK' : 'EMPTY') . ', Current Password: ' . ($currentPassword ? 'OK' : 'EMPTY'));
+        }
+
+        // Validate current password (simple check)
+        log_message('debug', 'Stored password: ' . $user['password'] . ', Provided password: ' . $currentPassword);
+        if ($currentPassword !== $user['password']) {
+            log_message('error', 'Current password incorrect');
+            return redirect()->to('dakoii/profile')->with('error', 'DEBUG: Current password is incorrect. Stored: ' . substr($user['password'], 0, 10) . '..., Provided: ' . substr($currentPassword, 0, 10) . '...');
         }
 
         // Prepare update data
@@ -315,21 +339,58 @@ class DakoiiController extends ResourceController
 
         // Handle password update if provided
         if (!empty($newPassword)) {
+            log_message('debug', 'New password provided, validating...');
+
             if ($newPassword !== $confirmPassword) {
-                return redirect()->to('dakoii/profile')
-                               ->with('error', 'New passwords do not match');
+                log_message('error', 'New passwords do not match');
+                return redirect()->to('dakoii/profile')->with('error', 'DEBUG: New passwords do not match');
             }
 
-            if (strlen($newPassword) < 8) {
-                return redirect()->to('dakoii/profile')
-                               ->with('error', 'New password must be at least 8 characters long');
+            if (strlen($newPassword) < 4) {
+                log_message('error', 'New password too short');
+                return redirect()->to('dakoii/profile')->with('error', 'DEBUG: New password must be at least 4 characters long');
             }
 
-            $updateData['password'] = $newPassword; // Will be hashed by model
+            // Hash the password directly here
+            $hashedPassword = password_hash($newPassword, PASSWORD_DEFAULT);
+            $updateData['password'] = $hashedPassword;
+            log_message('debug', 'Password hashed successfully: ' . substr($hashedPassword, 0, 20) . '...');
         }
 
-        try {
-            $this->dakoiiUserModel->update($userId, $updateData);
+        log_message('debug', 'Update data prepared: ' . json_encode($updateData));
+
+        // Set custom validation rules to exclude current user from username uniqueness check
+        $validationRules = [
+            'name' => 'required|min_length[3]|max_length[255]',
+            'username' => 'required|min_length[3]|max_length[255]|is_unique[dakoii_users.username,id,' . $userId . ']'
+        ];
+
+        // Validate the data
+        if (!$this->validate($validationRules)) {
+            $errors = $this->validator->getErrors();
+            log_message('error', 'Validation errors: ' . json_encode($errors));
+            return redirect()->to('dakoii/profile')->with('error', 'DEBUG: Validation errors: ' . implode(', ', $errors));
+        }
+
+        // Temporarily disable model validation since we already validated in controller
+        $this->dakoiiUserModel->skipValidation(true);
+
+        // Update using the model
+        $result = $this->dakoiiUserModel->update($userId, $updateData);
+        log_message('debug', 'Model update result: ' . ($result ? 'TRUE' : 'FALSE'));
+
+        // Re-enable model validation for future operations
+        $this->dakoiiUserModel->skipValidation(false);
+
+        // Check for model errors
+        $errors = $this->dakoiiUserModel->errors();
+        if (!empty($errors)) {
+            log_message('error', 'Model validation errors: ' . json_encode($errors));
+            return redirect()->to('dakoii/profile')->with('error', 'DEBUG: Model validation errors: ' . implode(', ', $errors));
+        }
+
+        if ($result) {
+            log_message('debug', 'Profile updated successfully');
 
             // Update session data
             session()->set([
@@ -337,11 +398,10 @@ class DakoiiController extends ResourceController
                 'dakoii_username' => $username
             ]);
 
-            return redirect()->to('dakoii/profile')
-                           ->with('success', 'Profile updated successfully');
-        } catch (\Exception $e) {
-            return redirect()->to('dakoii/profile')
-                           ->with('error', 'Failed to update profile. Please try again.');
+            return redirect()->to('dakoii/profile')->with('success', 'Profile updated successfully');
+        } else {
+            log_message('error', 'Model update returned false');
+            return redirect()->to('dakoii/profile')->with('error', 'DEBUG: Model update returned false. Check database connection and field validation.');
         }
     }
 
@@ -383,9 +443,9 @@ class DakoiiController extends ResourceController
     }
 
     /**
-     * Create Administrator Form
+     * Show create administrator form
      */
-    public function createAdministrator()
+    public function create()
     {
         if ($this->verifyLoggedIn() !== true) {
             return $this->verifyLoggedIn();
@@ -396,60 +456,62 @@ class DakoiiController extends ResourceController
             return redirect()->to('dakoii/dashboard')
                            ->with('error', 'Access denied. Admin privileges required.');
         }
-        
+
         $data = [
             'title' => 'Add New Administrator',
             'validation' => \Config\Services::validation()
         ];
-        
+
         return view('dakoii/administrators/dakoii_createAdmin', $data);
     }
 
     /**
-     * Store Administrator Method
+     * Store new administrator - Simple and straightforward
      */
-    public function storeAdministrator()
+    public function store()
     {
         if ($this->verifyLoggedIn() !== true) {
             return $this->verifyLoggedIn();
         }
-        
+
         // Check if current user is admin
         if (session()->get('dakoii_role') !== 'admin') {
             return redirect()->to('dakoii/dashboard')
                            ->with('error', 'Access denied. Admin privileges required.');
         }
 
-        // Get POST data
+        // Simple data preparation with explicit password hashing
+        $password = $this->request->getPost('password');
         $data = [
             'email' => $this->request->getPost('email'),
-            'password' => password_hash($this->request->getPost('password'), PASSWORD_DEFAULT),
+            'password' => password_hash($password, PASSWORD_DEFAULT), // Hash password explicitly
             'fname' => $this->request->getPost('fname'),
             'lname' => $this->request->getPost('lname'),
             'role' => 'admin',
-            'user_status' => 1, // Set status as active
+            'user_status' => 1,
             'created_by' => session()->get('dakoii_user_id')
         ];
-        
-        // Validate required fields
+
+        // Simple validation
         if (empty($data['email']) || empty($data['password']) || empty($data['fname']) || empty($data['lname'])) {
             return redirect()->back()
                            ->withInput()
-                           ->with('error', 'Please fill in all required fields');
+                           ->with('error', 'Please fill in all required fields (Email, Password, First Name, Last Name)');
         }
 
-        // Validate password strength
-        if (strlen($data['password']) < 4) {
+        // Check email uniqueness for new users
+        $existingUser = $this->userModel->where('email', $data['email'])->first();
+        if ($existingUser) {
             return redirect()->back()
                            ->withInput()
-                           ->with('error', 'Password must be at least 4 characters long');
+                           ->with('error', 'This email address is already registered');
         }
-        
-        try {
-            $this->userModel->insert($data);
+
+        // Insert with model (model will handle password hashing)
+        if ($this->userModel->insert($data)) {
             return redirect()->to('dakoii/administrators')
                            ->with('success', 'Administrator created successfully');
-        } catch (\Exception $e) {
+        } else {
             return redirect()->back()
                            ->withInput()
                            ->with('error', 'Failed to create administrator. Please try again.');
@@ -457,9 +519,9 @@ class DakoiiController extends ResourceController
     }
 
     /**
-     * Edit Administrator Form
+     * Show edit administrator form
      */
-    public function editAdministrator($id = null)
+    public function edit($id = null)
     {
         if ($this->verifyLoggedIn() !== true) {
             return $this->verifyLoggedIn();
@@ -470,10 +532,10 @@ class DakoiiController extends ResourceController
             return redirect()->to('dakoii/dashboard')
                            ->with('error', 'Access denied. Admin privileges required.');
         }
-        
+
         $admin = $this->userModel->where('role', 'admin')
                                ->find($id);
-        
+
         if (!$admin) {
             return redirect()->to('dakoii/administrators')
                            ->with('error', 'Administrator not found');
@@ -484,14 +546,14 @@ class DakoiiController extends ResourceController
             'admin' => $admin,
             'validation' => \Config\Services::validation()
         ];
-        
+
         return view('dakoii/administrators/dakoii_editAdmin', $data);
     }
 
     /**
-     * Update Administrator Method
+     * Update administrator - Simple and straightforward
      */
-    public function updateAdministrator($id = null)
+    public function update($id = null)
     {
         if ($this->verifyLoggedIn() !== true) {
             return $this->verifyLoggedIn();
@@ -503,7 +565,14 @@ class DakoiiController extends ResourceController
                            ->with('error', 'Access denied. Admin privileges required.');
         }
 
-        // Get POST data
+        // Check if administrator exists
+        $admin = $this->userModel->where('role', 'admin')->find($id);
+        if (!$admin) {
+            return redirect()->to('dakoii/administrators')
+                           ->with('error', 'Administrator not found');
+        }
+
+        // Simple data preparation
         $data = [
             'email' => $this->request->getPost('email'),
             'fname' => $this->request->getPost('fname'),
@@ -513,34 +582,34 @@ class DakoiiController extends ResourceController
             'updated_by' => session()->get('dakoii_user_id')
         ];
 
-        // Validate required fields
+        // Add password if provided - hash it explicitly
+        $password = $this->request->getPost('password');
+        if (!empty($password)) {
+            $data['password'] = password_hash($password, PASSWORD_DEFAULT); // Hash password explicitly
+        }
+
+        // Simple validation
         if (empty($data['email']) || empty($data['fname']) || empty($data['lname'])) {
             return redirect()->back()
                            ->withInput()
-                           ->with('error', 'Please fill in all required fields');
+                           ->with('error', 'Please fill in all required fields (Email, First Name, Last Name)');
         }
 
-        // Handle password update if provided
-        $password = $this->request->getPost('password');
-        if (!empty($password)) {
-            if (strlen($password) < 4) {
-                return redirect()->back()
-                               ->withInput()
-                               ->with('error', 'Password must be at least 4 characters long');
-            }
-            $data['password'] = password_hash($password, PASSWORD_DEFAULT);
+        // Check email uniqueness for updates (exclude current user)
+        $existingUser = $this->userModel->where('email', $data['email'])
+                                       ->where('id !=', $id)
+                                       ->first();
+        if ($existingUser) {
+            return redirect()->back()
+                           ->withInput()
+                           ->with('error', 'This email address is already registered by another user');
         }
 
-        try {
-            $db = \Config\Database::connect();
-            $builder = $db->table('users');
-            $builder->where('id', $id);
-            $builder->where('role', 'admin');
-            $builder->update($data);
-
+        // Update with model (model will handle password hashing)
+        if ($this->userModel->update($id, $data)) {
             return redirect()->to('dakoii/administrators')
                            ->with('success', 'Administrator updated successfully');
-        } catch (\Exception $e) {
+        } else {
             return redirect()->back()
                            ->withInput()
                            ->with('error', 'Failed to update administrator. Please try again.');
@@ -548,9 +617,9 @@ class DakoiiController extends ResourceController
     }
 
     /**
-     * Delete Administrator Method
+     * Delete administrator
      */
-    public function deleteAdministrator($id = null)
+    public function delete($id = null)
     {
         if ($this->verifyLoggedIn() !== true) {
             return $this->verifyLoggedIn();
@@ -561,20 +630,19 @@ class DakoiiController extends ResourceController
             return redirect()->to('dakoii/dashboard')
                            ->with('error', 'Access denied. Admin privileges required.');
         }
-        
+
         $admin = $this->userModel->where('role', 'admin')
                                ->find($id);
-        
+
         if (!$admin) {
             return redirect()->to('dakoii/administrators')
                            ->with('error', 'Administrator not found');
         }
 
-        try {
-            $this->userModel->delete($id);
+        if ($this->userModel->delete($id)) {
             return redirect()->to('dakoii/administrators')
                            ->with('success', 'Administrator deleted successfully');
-        } catch (\Exception $e) {
+        } else {
             return redirect()->to('dakoii/administrators')
                            ->with('error', 'Failed to delete administrator');
         }

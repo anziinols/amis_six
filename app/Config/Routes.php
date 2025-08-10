@@ -55,13 +55,13 @@ $routes->group('dakoii', ['filter' => 'auth'], static function ($routes) {
     $routes->get('users/delete/(:num)', [DakoiiController::class, 'deleteUser/$1']);
     $routes->get('users/roles', [DakoiiController::class, 'userRoles']);
 
-    // Dakoii Administrators Management
-    $routes->get('administrators', [DakoiiController::class, 'administrators']);
-    $routes->get('administrators/create', [DakoiiController::class, 'createAdministrator']);
-    $routes->post('administrators/store', [DakoiiController::class, 'storeAdministrator']);
-    $routes->get('administrators/edit/(:num)', [DakoiiController::class, 'editAdministrator/$1']);
-    $routes->post('administrators/update/(:num)', [DakoiiController::class, 'updateAdministrator/$1']);
-    $routes->get('administrators/delete/(:num)', [DakoiiController::class, 'deleteAdministrator/$1']);
+    // Dakoii Administrators Management - Simple RESTful Routes
+    $routes->get('administrators', [DakoiiController::class, 'administrators']);                    // GET /dakoii/administrators - list administrators
+    $routes->get('administrators/create', [DakoiiController::class, 'create']);                     // GET /dakoii/administrators/create - show create form
+    $routes->post('administrators/store', [DakoiiController::class, 'store']);                      // POST /dakoii/administrators/store - store new administrator
+    $routes->get('administrators/(:num)/edit', [DakoiiController::class, 'edit/$1']);              // GET /dakoii/administrators/{id}/edit - show edit form
+    $routes->post('administrators/(:num)/update', [DakoiiController::class, 'update/$1']);         // POST /dakoii/administrators/{id}/update - update administrator
+    $routes->post('administrators/(:num)/delete', [DakoiiController::class, 'delete/$1']);         // POST /dakoii/administrators/{id}/delete - delete administrator
 });
 
 // Routes requiring regular user login
