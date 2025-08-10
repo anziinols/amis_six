@@ -23,7 +23,7 @@ class UsersController extends BaseController
 
     public function index()
     {
-        // Get users with branch information
+        // Get users with branch information and activation status
         $users = $this->userModel
             ->select('users.*, branches.name as branch_name')
             ->join('branches', 'branches.id = users.branch_id', 'left')
@@ -146,10 +146,8 @@ class UsersController extends BaseController
                    ->with('validation', $this->validator);
         }
 
-        // Generate user code if not provided
-        if (empty($userData['ucode'])) {
-            $userData['ucode'] = 'USR' . date('Ymd') . rand(1000, 9999);
-        }
+        // Always auto-generate user code on create to ensure consistency
+        $userData['ucode'] = $this->generateUniqueUserCode();
 
         // Handle checkbox fields - set to 0 if not checked
         if (!isset($userData['is_evaluator'])) {
@@ -167,18 +165,13 @@ class UsersController extends BaseController
             }
         }
 
-        // Hash password explicitly to ensure it's properly hashed
-        if (!empty($userData['password'])) {
-            // Check if password is already hashed to avoid double hashing
-            if (strlen($userData['password']) !== 60 || !preg_match('/^\$2[ayb]\$/', $userData['password'])) {
-                $userData['password'] = password_hash($userData['password'], PASSWORD_DEFAULT);
-                log_message('debug', 'Password hashed in controller store method');
-            } else {
-                log_message('debug', 'Password already hashed in controller store method');
-            }
-        } else {
-            unset($userData['password']); // Remove empty password field
-        }
+        // Generate activation token for email-based activation
+        $activationToken = $this->userModel->generateActivationToken();
+
+        // Set user as inactive and pending activation
+        $userData['user_status'] = 0;  // Inactive until activated
+        $userData['is_activated'] = 0;
+        $userData['password'] = null;  // No password until activation
 
         // Save to database
         if ($this->userModel->save($userData)) {
@@ -186,11 +179,25 @@ class UsersController extends BaseController
             $newUserId = $this->userModel->getInsertID();
             log_message('debug', 'User created successfully with ID: ' . $newUserId);
 
-            // Send email notification to the new user
-            $this->sendCreationNotificationEmail($newUserId, $userData);
+            // Set activation token with 48-hour expiration
+            if ($this->userModel->setActivationToken($newUserId, $activationToken, 48)) {
+                // Send activation email to the new user
+                $emailSent = $this->sendActivationEmail($newUserId, $activationToken);
 
-            return redirect()->to('/admin/users')
-                   ->with('success', 'User added successfully');
+                if ($emailSent) {
+                    return redirect()->to('/admin/users')
+                           ->with('success', 'User created successfully. An activation email has been sent to ' . $userData['email']);
+                } else {
+                    log_message('error', 'Failed to send activation email to: ' . $userData['email']);
+                    return redirect()->to('/admin/users')
+                           ->with('warning', 'User created but failed to send activation email. Please resend activation from the users list.');
+                }
+            } else {
+                log_message('error', 'Failed to set activation token for user ID: ' . $newUserId);
+                return redirect()->back()
+                       ->withInput()
+                       ->with('error', 'Failed to set up user activation. Please try again.');
+            }
         } else {
             log_message('debug', 'Failed to save user. Database errors: ' . json_encode($this->userModel->errors()));
             return redirect()->back()
@@ -260,18 +267,23 @@ class UsersController extends BaseController
         // Remove email uniqueness validation - we'll check manually
         $rules['email'] = 'required|valid_email';
 
-        // If password is empty, remove it from validation
-        if (empty($this->request->getPost('password'))) {
-            unset($rules['password']);
-        }
+        // Remove password validation (not handled in edit form)
+        unset($rules['password']);
 
         // First validate the basic rules
         if ($this->validate($rules, $messages)) {
             $userData = $this->request->getPost();
             $userData['updated_by'] = session()->get('user_id');
 
-            // Keep the original ucode
+            // Remove _method field if present (used for PUT/PATCH routing)
+            unset($userData['_method']);
+
+            // Keep the original ucode and activation fields
             $userData['ucode'] = $user['ucode'];
+            $userData['activation_token'] = $user['activation_token'];
+            $userData['activation_expires_at'] = $user['activation_expires_at'];
+            $userData['activated_at'] = $user['activated_at'];
+            $userData['is_activated'] = $user['is_activated'];
 
             // Handle checkbox fields - set to 0 if not checked
             if (!isset($userData['is_evaluator'])) {
@@ -303,14 +315,8 @@ class UsersController extends BaseController
 
             // Email is unique or belongs to current user, continue with update
 
-            // Handle password - hash if provided, remove if empty
-            if (empty($userData['password'])) {
-                unset($userData['password']);
-            } else {
-                // Hash the password since we're using direct database query (bypassing model callbacks)
-                $userData['password'] = password_hash($userData['password'], PASSWORD_DEFAULT);
-                log_message('debug', 'Password hashed in controller update method for direct DB query');
-            }
+            // Remove password field - not handled in edit form (use activation workflow)
+            unset($userData['password']);
 
             // Log the data being sent to the database
             log_message('debug', 'User data being updated: ' . json_encode($userData));
@@ -331,7 +337,7 @@ class UsersController extends BaseController
                     // Send email notification to the user
                     $this->sendUpdateNotificationEmail($id, $userData);
 
-                    return redirect()->to('/admin/users/edit/' . $id)->with('success', 'User updated successfully');
+                    return redirect()->to('/admin/users/' . $id . '/edit')->with('success', 'User updated successfully');
                 } else {
                     log_message('error', 'Failed to update user with direct query. DB Error: ' . $db->error()['message']);
                     return redirect()->back()->withInput()->with('error', 'Failed to update user. Database error.');
@@ -420,6 +426,82 @@ class UsersController extends BaseController
     }
 
     /**
+     * Resend activation email to user
+     */
+    public function resendActivation($id = null)
+    {
+        if ($id === null) {
+            return redirect()->to('/admin/users')->with('error', 'Invalid user ID');
+        }
+
+        $user = $this->userModel->find($id);
+        if (empty($user)) {
+            return redirect()->to('/admin/users')->with('error', 'User not found');
+        }
+
+        // Check if user needs activation
+        if ($user['is_activated'] == 1) {
+            return redirect()->to('/admin/users')->with('error', 'User is already activated');
+        }
+
+        // Generate new activation token
+        $activationToken = $this->userModel->generateActivationToken();
+
+        // Set new activation token with 48-hour expiration
+        if ($this->userModel->setActivationToken($id, $activationToken, 48)) {
+            // Send activation email
+            $emailSent = $this->sendActivationEmail($id, $activationToken);
+
+            if ($emailSent) {
+                return redirect()->to('/admin/users')
+                       ->with('success', 'Activation email has been resent to ' . $user['email']);
+            } else {
+                return redirect()->to('/admin/users')
+                       ->with('error', 'Failed to send activation email. Please try again.');
+            }
+        } else {
+            return redirect()->to('/admin/users')
+                   ->with('error', 'Failed to generate new activation token. Please try again.');
+        }
+    }
+
+    /**
+     * Delete user (only allowed within 24 hours of creation)
+     */
+    public function delete($id = null)
+    {
+        if ($id === null) {
+            return redirect()->to('/admin/users')->with('error', 'Invalid user ID');
+        }
+
+        // Prevent deleting your own account
+        if ($id == session()->get('user_id')) {
+            return redirect()->to('/admin/users')->with('error', 'You cannot delete your own account');
+        }
+
+        $user = $this->userModel->find($id);
+        if (empty($user)) {
+            return redirect()->to('/admin/users')->with('error', 'User not found');
+        }
+
+        // Check if user was created within the last 24 hours
+        if (!$this->userModel->isRecentlyCreated($id, 24)) {
+            return redirect()->to('/admin/users')
+                   ->with('error', 'Users can only be deleted within 24 hours of creation');
+        }
+
+        // Perform the deletion
+        if ($this->userModel->delete($id)) {
+            log_message('info', 'User deleted by admin: ' . $user['email'] . ' (ID: ' . $id . ')');
+            return redirect()->to('/admin/users')
+                   ->with('success', 'User ' . $user['fname'] . ' ' . $user['lname'] . ' has been deleted successfully');
+        } else {
+            return redirect()->to('/admin/users')
+                   ->with('error', 'Failed to delete user. Please try again.');
+        }
+    }
+
+    /**
      * Send email notification to user about account update
      *
      * @param int $userId ID of the user being updated
@@ -505,7 +587,196 @@ class UsersController extends BaseController
     }
 
     /**
-     * Send email notification to user about account creation
+     * Send activation email to newly created user
+     *
+     * @param int $userId ID of the newly created user
+     * @param string $activationToken Plain text activation token
+     * @return bool Success or failure
+     */
+    protected function sendActivationEmail($userId, $activationToken): bool
+    {
+        try {
+            // Get the complete user data
+            $user = $this->userModel->find($userId);
+            if (!$user || empty($user['email'])) {
+                log_message('error', 'Cannot send activation email: User not found or no email available');
+                return false;
+            }
+
+            // Get the name of the person who created the account
+            $creatorName = 'System Administrator';
+            $creatorId = session()->get('user_id');
+            if ($creatorId) {
+                $creator = $this->userModel->find($creatorId);
+                if ($creator) {
+                    $creatorName = $creator['fname'] . ' ' . $creator['lname'];
+                }
+            }
+
+            // Create activation link
+            $activationLink = base_url('activate/' . $activationToken);
+
+            // Prepare email subject and message
+            $subject = 'Activate Your AMIS Account';
+
+            // Create HTML message
+            $message = '
+            <html>
+            <head>
+                <style>
+                    body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+                    .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+                    .header { background-color: #4CAF50; color: white; padding: 10px; text-align: center; }
+                    .content { padding: 20px; border: 1px solid #ddd; }
+                    .footer { font-size: 12px; text-align: center; margin-top: 20px; color: #777; }
+                    .highlight { background-color: #f8f9fa; padding: 10px; border-left: 4px solid #4CAF50; margin: 15px 0; }
+                    .button { display: inline-block; padding: 12px 24px; background-color: #4CAF50; color: white; text-decoration: none; border-radius: 4px; margin: 10px 0; }
+                </style>
+            </head>
+            <body>
+                <div class="container">
+                    <div class="header">
+                        <h2>Welcome to AMIS System</h2>
+                    </div>
+                    <div class="content">
+                        <p>Dear ' . $user['fname'] . ' ' . $user['lname'] . ',</p>
+
+                        <p>Your AMIS account has been created by <strong>' . $creatorName . '</strong>. To complete your account setup, please activate your account by clicking the link below:</p>
+
+                        <div class="highlight">
+                            <p style="text-align: center;">
+                                <a href="' . $activationLink . '" class="button">Activate My Account</a>
+                            </p>
+                            <p><small>Or copy and paste this link into your browser:<br>' . $activationLink . '</small></p>
+                        </div>
+
+                        <p><strong>Important:</strong></p>
+                        <ul>
+                            <li>This activation link will expire in 48 hours</li>
+                            <li>After activation, you will receive a temporary password via email</li>
+                            <li>You can change your password after your first login</li>
+                        </ul>
+
+                        <p>If you did not expect this account creation or have any questions, please contact your system administrator.</p>
+
+                        <p>Thank you,<br>
+                        AMIS System</p>
+                    </div>
+                    <div class="footer">
+                        <p>This is an automated message. Please do not reply to this email.</p>
+                    </div>
+                </div>
+            </body>
+            </html>';
+
+            // Send the email
+            $result = send_email($user['email'], $subject, $message);
+
+            if (!$result) {
+                log_message('error', 'Failed to send activation email to: ' . $user['email']);
+            } else {
+                log_message('info', 'Activation email sent successfully to: ' . $user['email']);
+            }
+
+            return $result;
+        } catch (\Exception $e) {
+            log_message('error', 'Exception sending activation email: ' . $e->getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * Send temporary password email after successful activation
+     *
+     * @param int $userId ID of the activated user
+     * @param string $tempPassword Plain text temporary password
+     * @return bool Success or failure
+     */
+    protected function sendTemporaryPasswordEmail($userId, $tempPassword): bool
+    {
+        try {
+            // Get the complete user data
+            $user = $this->userModel->find($userId);
+            if (!$user || empty($user['email'])) {
+                log_message('error', 'Cannot send temporary password email: User not found or no email available');
+                return false;
+            }
+
+            // Prepare email subject and message
+            $subject = 'Your AMIS Account is Now Active - Temporary Password';
+
+            // Create HTML message
+            $message = '
+            <html>
+            <head>
+                <style>
+                    body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+                    .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+                    .header { background-color: #4CAF50; color: white; padding: 10px; text-align: center; }
+                    .content { padding: 20px; border: 1px solid #ddd; }
+                    .footer { font-size: 12px; text-align: center; margin-top: 20px; color: #777; }
+                    .highlight { background-color: #f8f9fa; padding: 10px; border-left: 4px solid #4CAF50; margin: 15px 0; }
+                    .password { font-size: 24px; font-weight: bold; color: #4CAF50; text-align: center; padding: 10px; background: #f0f0f0; border-radius: 4px; }
+                </style>
+            </head>
+            <body>
+                <div class="container">
+                    <div class="header">
+                        <h2>Account Activated Successfully</h2>
+                    </div>
+                    <div class="content">
+                        <p>Dear ' . $user['fname'] . ' ' . $user['lname'] . ',</p>
+
+                        <p>Congratulations! Your AMIS account has been successfully activated.</p>
+
+                        <div class="highlight">
+                            <p><strong>Your temporary password is:</strong></p>
+                            <div class="password">' . $tempPassword . '</div>
+                        </div>
+
+                        <p><strong>To log in:</strong></p>
+                        <ol>
+                            <li>Go to the AMIS login page: <a href="' . base_url('login') . '">' . base_url('login') . '</a></li>
+                            <li>Enter your email: <strong>' . $user['email'] . '</strong></li>
+                            <li>Enter the temporary password above</li>
+                            <li>Change your password immediately after logging in</li>
+                        </ol>
+
+                        <p><strong>Important Security Notes:</strong></p>
+                        <ul>
+                            <li>This is a temporary password - please change it after your first login</li>
+                            <li>Do not share this password with anyone</li>
+                            <li>If you did not activate this account, contact support immediately</li>
+                        </ul>
+
+                        <p>Thank you,<br>
+                        AMIS System</p>
+                    </div>
+                    <div class="footer">
+                        <p>This is an automated message. Please do not reply to this email.</p>
+                    </div>
+                </div>
+            </body>
+            </html>';
+
+            // Send the email
+            $result = send_email($user['email'], $subject, $message);
+
+            if (!$result) {
+                log_message('error', 'Failed to send temporary password email to: ' . $user['email']);
+            } else {
+                log_message('info', 'Temporary password email sent successfully to: ' . $user['email']);
+            }
+
+            return $result;
+        } catch (\Exception $e) {
+            log_message('error', 'Exception sending temporary password email: ' . $e->getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * Send email notification to user about account creation (DEPRECATED - replaced by activation workflow)
      *
      * @param int $userId ID of the newly created user
      * @param array $userData User data
@@ -707,4 +978,30 @@ class UsersController extends BaseController
             return false;
         }
     }
+
+    /**
+     * Generate a unique user code following the system pattern USRYYYYMMDD####
+     */
+    protected function generateUniqueUserCode(): string
+    {
+        $prefix = 'USR';
+        $datePart = date('Ymd');
+        $attempts = 0;
+        $code = '';
+
+        do {
+            $randomPart = str_pad((string)rand(0, 9999), 4, '0', STR_PAD_LEFT);
+            $code = $prefix . $datePart . $randomPart;
+            $exists = $this->userModel->where('ucode', $code)->first();
+            $attempts++;
+        } while ($exists && $attempts < 5);
+
+        if ($exists) {
+            // Fallback to a timestamp-based unique code if collisions persist
+            $code = $prefix . date('YmdHis') . str_pad((string)rand(0, 999), 3, '0', STR_PAD_LEFT);
+        }
+
+        return $code;
+    }
+
 }

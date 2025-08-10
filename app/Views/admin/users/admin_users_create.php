@@ -46,16 +46,6 @@
                             <div class="col-md-6">
                                 <h6 class="mb-3 text-primary">Basic Information</h6>
 
-                                <div class="mb-3">
-                                    <label for="ucode" class="form-label">User Code <span class="text-danger">*</span></label>
-                                    <div class="input-group">
-                                        <input type="text" class="form-control" id="ucode" name="ucode" value="<?= uniqid('AMIS_') ?>" readonly required>
-                                        <button type="button" class="btn btn-secondary" id="generateNewCode">
-                                            <i class="fas fa-sync-alt"></i> Generate New
-                                        </button>
-                                    </div>
-                                    <small class="text-muted">Automatically generated unique identifier</small>
-                                </div>
 
                                 <div class="mb-3">
                                     <label for="email" class="form-label">Email <span class="text-danger">*</span></label>
@@ -69,14 +59,10 @@
                                 </div>
 
                                 <div class="mb-3">
-                                    <label for="password" class="form-label">Password <span class="text-danger">*</span></label>
-                                    <input type="password" class="form-control <?= session()->has('validation') && session('validation')->hasError('password') ? 'is-invalid' : '' ?>"
-                                           id="password" name="password" required>
-                                    <?php if (session()->has('validation') && session('validation')->hasError('password')): ?>
-                                        <div class="invalid-feedback">
-                                            <?= session('validation')->getError('password') ?>
-                                        </div>
-                                    <?php endif; ?>
+                                    <div class="alert alert-info">
+                                        <i class="fas fa-info-circle"></i>
+                                        <strong>Account Activation:</strong> An activation email will be sent to the user. They will set their password during the activation process.
+                                    </div>
                                 </div>
 
                                 <div class="mb-3">
@@ -225,14 +211,6 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Generate new unique code
-    document.getElementById('generateNewCode').addEventListener('click', function() {
-        // Generate timestamp-based unique ID with AMIS prefix
-        const timestamp = new Date().getTime().toString(36); // Convert timestamp to base36
-        const random = Math.random().toString(36).substr(2, 5); // Get 5 random chars
-        const newCode = `AMIS_${timestamp}_${random}`.toUpperCase();
-        document.getElementById('ucode').value = newCode;
-    });
 
     // Form validation
     var form = document.querySelector('.needs-validation');

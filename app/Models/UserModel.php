@@ -50,10 +50,15 @@ class UserModel extends Model
         'user_status_at',
         'user_status_by',
         'created_by',
-        'updated_by'
+        'updated_by',
+        'activation_token',
+        'activation_expires_at',
+        'activated_at',
+        'is_activated'
     ];
 
     // Simple validation rules - no complex email uniqueness check
+    // Password not required for new users (activation workflow)
     protected $validationRules = [
         'email' => 'required|valid_email',
         'fname' => 'required|max_length[255]',
@@ -246,5 +251,93 @@ class UserModel extends Model
             'id_photo_filepath' => $filepath,
             'updated_by' => $updatedBy
         ]);
+    }
+
+    /**
+     * Generate a secure activation token
+     */
+    public function generateActivationToken(): string
+    {
+        return bin2hex(random_bytes(32));
+    }
+
+    /**
+     * Set activation token and expiration for a user
+     */
+    public function setActivationToken(int $userId, string $token, int $hoursValid = 48): bool
+    {
+        $expiresAt = date('Y-m-d H:i:s', strtotime("+{$hoursValid} hours"));
+
+        return $this->update($userId, [
+            'activation_token' => hash('sha256', $token),
+            'activation_expires_at' => $expiresAt,
+            'is_activated' => 0,
+            'user_status' => 0  // Set to inactive until activated
+        ]);
+    }
+
+    /**
+     * Validate activation token and return user if valid
+     */
+    public function validateActivationToken(string $token): ?array
+    {
+        $hashedToken = hash('sha256', $token);
+
+        $user = $this->where('activation_token', $hashedToken)
+                     ->where('activation_expires_at >', date('Y-m-d H:i:s'))
+                     ->where('is_activated', 0)
+                     ->first();
+
+        return $user ?: null;
+    }
+
+    /**
+     * Activate user account
+     */
+    public function activateUser(int $userId, string $tempPassword): bool
+    {
+        $hashedPassword = password_hash($tempPassword, PASSWORD_DEFAULT);
+
+        return $this->update($userId, [
+            'is_activated' => 1,
+            'activated_at' => date('Y-m-d H:i:s'),
+            'user_status' => 1,  // Set to active
+            'password' => $hashedPassword,
+            'activation_token' => null,
+            'activation_expires_at' => null
+        ]);
+    }
+
+    /**
+     * Check if user needs activation
+     */
+    public function needsActivation(int $userId): bool
+    {
+        $user = $this->find($userId);
+        return $user && $user['is_activated'] == 0;
+    }
+
+    /**
+     * Get users pending activation
+     */
+    public function getPendingActivationUsers(): array
+    {
+        return $this->where('is_activated', 0)
+                    ->where('activation_token IS NOT NULL')
+                    ->findAll();
+    }
+
+    /**
+     * Check if user was created within specified hours (for delete permission)
+     */
+    public function isRecentlyCreated(int $userId, int $hours = 24): bool
+    {
+        $user = $this->find($userId);
+        if (!$user) return false;
+
+        $createdTime = strtotime($user['created_at']);
+        $cutoffTime = time() - ($hours * 3600);
+
+        return $createdTime > $cutoffTime;
     }
 }

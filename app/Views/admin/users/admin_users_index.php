@@ -36,6 +36,7 @@
                             <th>Role</th>
                             <th>Is M&E</th>
                             <th>Status</th>
+                            <th>Activation</th>
                             <th>Actions</th>
                         </tr>
                     </thead>
@@ -62,18 +63,73 @@
                                     </span>
                                 </td>
                                 <td>
-                                    <a href="<?= base_url('admin/users/edit/' . $user['id']) ?>" class="btn btn-sm btn-primary">
-                                        <i class="fas fa-edit"></i>
-                                    </a>
-                                    <button type="button" class="btn btn-sm <?= $user['user_status'] ? 'btn-warning' : 'btn-success' ?>" 
-                                            data-bs-toggle="modal" 
-                                            data-bs-target="#statusModal<?= $user['id'] ?>"
-                                            data-userid="<?= $user['id'] ?>"
-                                            data-username="<?= $user['fname'] . ' ' . $user['lname'] ?>"
-                                            data-status="<?= $user['user_status'] ?>"
-                                            data-action="<?= $user['user_status'] ? 'deactivate' : 'activate' ?>">
-                                        <i class="fas <?= $user['user_status'] ? 'fa-user-slash' : 'fa-user-check' ?>"></i>
-                                    </button>
+                                    <?php if (isset($user['is_activated'])): ?>
+                                        <?php if ($user['is_activated']): ?>
+                                            <span class="badge bg-success">
+                                                <i class="fas fa-check-circle"></i> Activated
+                                            </span>
+                                            <?php if (!empty($user['activated_at'])): ?>
+                                                <br><small class="text-muted"><?= date('M d, Y', strtotime($user['activated_at'])) ?></small>
+                                            <?php endif; ?>
+                                        <?php else: ?>
+                                            <span class="badge bg-warning">
+                                                <i class="fas fa-clock"></i> Pending
+                                            </span>
+                                            <?php if (!empty($user['activation_expires_at'])): ?>
+                                                <br><small class="text-muted">Expires: <?= date('M d, H:i', strtotime($user['activation_expires_at'])) ?></small>
+                                            <?php endif; ?>
+                                        <?php endif; ?>
+                                    <?php else: ?>
+                                        <span class="badge bg-secondary">Legacy</span>
+                                    <?php endif; ?>
+                                </td>
+                                <td>
+                                    <div class="btn-group" role="group">
+                                        <a href="<?= base_url('admin/users/' . $user['id'] . '/edit') ?>" class="btn btn-sm btn-primary" title="Edit User">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+
+                                        <?php if (isset($user['is_activated']) && !$user['is_activated']): ?>
+                                            <!-- Resend Activation Button -->
+                                            <form method="post" action="<?= base_url('admin/users/' . $user['id'] . '/resend-activation') ?>" style="display: inline;">
+                                                <?= csrf_field() ?>
+                                                <button type="submit" class="btn btn-sm btn-info" title="Resend Activation Email"
+                                                        onclick="return confirm('Resend activation email to <?= esc($user['email']) ?>?')">
+                                                    <i class="fas fa-envelope"></i>
+                                                </button>
+                                            </form>
+                                        <?php endif; ?>
+
+                                        <?php
+                                        // Check if user was created within 24 hours for delete permission
+                                        $createdTime = strtotime($user['created_at']);
+                                        $canDelete = (time() - $createdTime) < (24 * 3600);
+                                        ?>
+
+                                        <?php if ($canDelete && $user['id'] != session()->get('user_id')): ?>
+                                            <!-- Delete Button (24-hour window) -->
+                                            <form method="post" action="<?= base_url('admin/users/' . $user['id']) ?>" style="display: inline;">
+                                                <?= csrf_field() ?>
+                                                <input type="hidden" name="_method" value="DELETE">
+                                                <button type="submit" class="btn btn-sm btn-danger" title="Delete User (24hr window)"
+                                                        onclick="return confirm('Are you sure you want to delete <?= esc($user['fname'] . ' ' . $user['lname']) ?>? This action cannot be undone.')">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            </form>
+                                        <?php endif; ?>
+
+                                        <!-- Status Toggle Button -->
+                                        <button type="button" class="btn btn-sm <?= $user['user_status'] ? 'btn-warning' : 'btn-success' ?>"
+                                                data-bs-toggle="modal"
+                                                data-bs-target="#statusModal<?= $user['id'] ?>"
+                                                data-userid="<?= $user['id'] ?>"
+                                                data-username="<?= $user['fname'] . ' ' . $user['lname'] ?>"
+                                                data-status="<?= $user['user_status'] ?>"
+                                                data-action="<?= $user['user_status'] ? 'deactivate' : 'activate' ?>"
+                                                title="<?= $user['user_status'] ? 'Deactivate' : 'Activate' ?> User">
+                                            <i class="fas <?= $user['user_status'] ? 'fa-user-slash' : 'fa-user-check' ?>"></i>
+                                        </button>
+                                    </div>
                                 </td>
                             </tr>
                         <?php endforeach; ?>

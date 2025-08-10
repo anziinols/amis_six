@@ -35,6 +35,9 @@ $routes->get('logout', [Home::class, 'logout']);
 $routes->get('forgot-password', [Home::class, 'forgotPassword']);
 $routes->post('forgot-password', [Home::class, 'processForgotPassword']);
 
+// User Activation routes
+$routes->get('activate/(:any)', 'ActivationController::activate/$1');
+
 // Dakoii specific routes
 $routes->get('dakoii', [Home::class, 'dakoii']);
 $routes->post('dakoii/login', [Home::class, 'dakoiiLogin']);
@@ -78,13 +81,15 @@ $routes->group('admin', ['filter' => 'auth'], static function ($routes) {
     // Users Management - RESTful Routes
     $routes->get('users', [UsersController::class, 'index']);                    // GET /admin/users - list users
     $routes->get('users/create', [UsersController::class, 'create']);            // GET /admin/users/create - show create form
+    $routes->get('users/(:num)/edit', [UsersController::class, 'edit/$1']);      // GET /admin/users/{id}/edit - show edit form
     $routes->post('users', [UsersController::class, 'store']);                   // POST /admin/users - store new user
     $routes->get('users/(:num)', [UsersController::class, 'show/$1']);           // GET /admin/users/{id} - show user
-    $routes->get('users/(:num)/edit', [UsersController::class, 'edit/$1']);      // GET /admin/users/{id}/edit - show edit form
     $routes->put('users/(:num)', [UsersController::class, 'update/$1']);         // PUT /admin/users/{id} - update user
     $routes->patch('users/(:num)', [UsersController::class, 'update/$1']);       // PATCH /admin/users/{id} - update user
     $routes->get('users/(:num)/toggle-status', [UsersController::class, 'toggleStatus/$1']);  // GET toggle status
     $routes->post('users/(:num)/toggle-status', [UsersController::class, 'toggleStatus/$1']); // POST toggle status
+    $routes->post('users/(:num)/resend-activation', [UsersController::class, 'resendActivation/$1']); // POST resend activation
+    $routes->delete('users/(:num)', [UsersController::class, 'delete/$1']);                    // DELETE user (24hr limit)
 
     // --- Government Structure RESTful Routes ---
     $routes->group('gov-structure', static function ($routes) {

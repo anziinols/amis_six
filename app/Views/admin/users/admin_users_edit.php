@@ -58,19 +58,15 @@
                                 </div>
 
                                 <div class="mb-3">
-                                    <label for="password" class="form-label">Password <small>(leave blank to keep current)</small></label>
-                                    <input type="password" class="form-control <?= isset($validation) && $validation->hasError('password') ? 'is-invalid' : '' ?>"
-                                           id="password" name="password">
-                                    <?php if (isset($validation) && $validation->hasError('password')): ?>
-                                        <div class="invalid-feedback">
-                                            <?= $validation->getError('password') ?>
-                                        </div>
-                                    <?php endif; ?>
+                                    <label for="phone" class="form-label">Phone</label>
+                                    <input type="tel" class="form-control" id="phone" name="phone" value="<?= old('phone', $user['phone']) ?>">
                                 </div>
 
                                 <div class="mb-3">
-                                    <label for="phone" class="form-label">Phone</label>
-                                    <input type="tel" class="form-control" id="phone" name="phone" value="<?= old('phone', $user['phone']) ?>">
+                                    <div class="alert alert-info">
+                                        <i class="fas fa-info-circle"></i>
+                                        <strong>Password Management:</strong> Users manage their own passwords through the activation workflow. Contact support for password resets.
+                                    </div>
                                 </div>
                             </div>
 
@@ -348,16 +344,16 @@ document.addEventListener('DOMContentLoaded', function() {
 <script>
     // Display flash messages using Toastr
     <?php if (session()->has('success')): ?>
-        toastr.success('<?= session('success') ?>');
+        toastr.success(<?= json_encode(session('success')) ?>);
     <?php endif; ?>
 
     <?php if (session()->has('error')): ?>
-        toastr.error('<?= session('error') ?>');
+        toastr.error(<?= json_encode(session('error')) ?>);
     <?php endif; ?>
 
     <?php if (isset($validation)): ?>
         <?php foreach ($validation->getErrors() as $field => $error): ?>
-            toastr.error('<?= esc($error) ?>');
+            toastr.error(<?= json_encode($error) ?>);
         <?php endforeach; ?>
     <?php endif; ?>
 </script>
