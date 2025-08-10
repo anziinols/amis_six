@@ -41,11 +41,7 @@
                             <small class="text-muted">Only fill this if you want to change the password</small>
                         </div>
 
-                        <div class="mb-3">
-                            <label for="orgcode" class="form-label">Organization Code</label>
-                            <input type="text" class="form-control" id="orgcode" name="orgcode" 
-                                   value="<?= old('orgcode', $user['orgcode']) ?>" required>
-                        </div>
+
 
                         <div class="mb-3">
                             <label for="role" class="form-label">Role</label>

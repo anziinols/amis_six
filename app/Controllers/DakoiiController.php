@@ -125,7 +125,6 @@ class DakoiiController extends ResourceController
             'name' => $this->request->getPost('name'),
             'username' => $this->request->getPost('username'),
             'password' => $password,
-            'orgcode' => $this->request->getPost('orgcode'),
             'role' => $this->request->getPost('role'),
             'dakoii_user_status' => 1,
             'dakoii_user_status_at' => date('Y-m-d H:i:s'),
@@ -192,7 +191,6 @@ class DakoiiController extends ResourceController
         $data = [
             'name' => $this->request->getPost('name'),
             'username' => $this->request->getPost('username'),
-            'orgcode' => $this->request->getPost('orgcode'),
             'role' => $this->request->getPost('role')
         ];
 
@@ -278,7 +276,75 @@ class DakoiiController extends ResourceController
         
         return view('dakoii/dakoii_profile', $data);
     }
-    
+
+    /**
+     * Update user profile
+     */
+    public function updateProfile()
+    {
+        if ($this->verifyLoggedIn() !== true) {
+            return $this->verifyLoggedIn();
+        }
+
+        $userId = session()->get('dakoii_user_id');
+        $user = $this->dakoiiUserModel->find($userId);
+
+        if (!$user) {
+            return redirect()->to('dakoii/profile')
+                           ->with('error', 'User not found');
+        }
+
+        // Get form data
+        $name = $this->request->getPost('name');
+        $username = $this->request->getPost('username');
+        $currentPassword = $this->request->getPost('current_password');
+        $newPassword = $this->request->getPost('new_password');
+        $confirmPassword = $this->request->getPost('confirm_password');
+
+        // Validate current password
+        if (!password_verify($currentPassword, $user['password'])) {
+            return redirect()->to('dakoii/profile')
+                           ->with('error', 'Current password is incorrect');
+        }
+
+        // Prepare update data
+        $updateData = [
+            'name' => $name,
+            'username' => $username
+        ];
+
+        // Handle password update if provided
+        if (!empty($newPassword)) {
+            if ($newPassword !== $confirmPassword) {
+                return redirect()->to('dakoii/profile')
+                               ->with('error', 'New passwords do not match');
+            }
+
+            if (strlen($newPassword) < 8) {
+                return redirect()->to('dakoii/profile')
+                               ->with('error', 'New password must be at least 8 characters long');
+            }
+
+            $updateData['password'] = $newPassword; // Will be hashed by model
+        }
+
+        try {
+            $this->dakoiiUserModel->update($userId, $updateData);
+
+            // Update session data
+            session()->set([
+                'dakoii_name' => $name,
+                'dakoii_username' => $username
+            ]);
+
+            return redirect()->to('dakoii/profile')
+                           ->with('success', 'Profile updated successfully');
+        } catch (\Exception $e) {
+            return redirect()->to('dakoii/profile')
+                           ->with('error', 'Failed to update profile. Please try again.');
+        }
+    }
+
     /**
      * Logout method
      */

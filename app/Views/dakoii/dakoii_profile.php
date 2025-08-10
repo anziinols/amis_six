@@ -55,12 +55,6 @@
                                        value="<?= esc($user['username']) ?>" required>
                             </div>
 
-                            <div class="mb-3">
-                                <label for="orgcode" class="form-label">Organization Code</label>
-                                <input type="text" class="form-control" id="orgcode" name="orgcode" 
-                                       value="<?= esc($user['orgcode']) ?>" readonly>
-                            </div>
-
                             <div class="mb-4">
                                 <label for="current_password" class="form-label">Current Password</label>
                                 <input type="password" class="form-control" id="current_password" name="current_password">

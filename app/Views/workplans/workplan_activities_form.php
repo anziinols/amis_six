@@ -32,6 +32,46 @@
     <?php endif; ?>
 </div>
 
+<!-- Quality Questions Section -->
+<div class="card mb-4">
+    <div class="card-header">
+        <h6 class="mb-0">Quality Questions</h6>
+    </div>
+    <div class="card-body">
+        <div class="mb-3">
+            <label for="q_one" class="form-label">Question One</label>
+            <textarea class="form-control <?= session('errors.q_one') ? 'is-invalid' : '' ?>" id="q_one" name="q_one" rows="3"><?= old('q_one', $activity['q_one'] ?? '') ?></textarea>
+            <?php if (session('errors.q_one')): ?>
+                <div class="invalid-feedback"><?= session('errors.q_one') ?></div>
+            <?php endif; ?>
+        </div>
+
+        <div class="mb-3">
+            <label for="q_two" class="form-label">Question Two</label>
+            <textarea class="form-control <?= session('errors.q_two') ? 'is-invalid' : '' ?>" id="q_two" name="q_two" rows="3"><?= old('q_two', $activity['q_two'] ?? '') ?></textarea>
+            <?php if (session('errors.q_two')): ?>
+                <div class="invalid-feedback"><?= session('errors.q_two') ?></div>
+            <?php endif; ?>
+        </div>
+
+        <div class="mb-3">
+            <label for="q_three" class="form-label">Question Three</label>
+            <textarea class="form-control <?= session('errors.q_three') ? 'is-invalid' : '' ?>" id="q_three" name="q_three" rows="3"><?= old('q_three', $activity['q_three'] ?? '') ?></textarea>
+            <?php if (session('errors.q_three')): ?>
+                <div class="invalid-feedback"><?= session('errors.q_three') ?></div>
+            <?php endif; ?>
+        </div>
+
+        <div class="mb-3">
+            <label for="q_four" class="form-label">Question Four</label>
+            <textarea class="form-control <?= session('errors.q_four') ? 'is-invalid' : '' ?>" id="q_four" name="q_four" rows="3"><?= old('q_four', $activity['q_four'] ?? '') ?></textarea>
+            <?php if (session('errors.q_four')): ?>
+                <div class="invalid-feedback"><?= session('errors.q_four') ?></div>
+            <?php endif; ?>
+        </div>
+    </div>
+</div>
+
 <div class="row">
     <div class="col-md-12">
         <div class="mb-3">

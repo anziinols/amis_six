@@ -38,11 +38,6 @@
                         </div>
 
                         <div class="mb-3">
-                            <label for="orgcode" class="form-label">Organization Code</label>
-                            <input type="text" class="form-control" id="orgcode" name="orgcode" value="<?= old('orgcode') ?>" required>
-                        </div>
-
-                        <div class="mb-3">
                             <label for="role" class="form-label text-light">Role</label>
                             <select class="form-select text-light" id="role" name="role" required>
                                 <option value="" class="text-light">Select Role</option>

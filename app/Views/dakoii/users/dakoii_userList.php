@@ -32,7 +32,6 @@
                             <th>ID</th>
                             <th>Name</th>
                             <th>Username</th>
-                            <th>Organization</th>
                             <th>Role</th>
                             <th>Status</th>
                             <th>Created</th>
@@ -42,7 +41,7 @@
                     <tbody>
                         <?php if (empty($users)): ?>
                             <tr>
-                                <td colspan="8" class="text-center">No users found</td>
+                                <td colspan="7" class="text-center">No users found</td>
                             </tr>
                         <?php else: ?>
                             <?php foreach ($users as $user): ?>
@@ -50,7 +49,6 @@
                                     <td><?= esc($user['id']) ?></td>
                                     <td><?= esc($user['name']) ?></td>
                                     <td><?= esc($user['username']) ?></td>
-                                    <td><?= esc($user['orgcode']) ?></td>
                                     <td>
                                         <span class="badge bg-<?= $user['role'] === 'admin' ? 'danger' : ($user['role'] === 'manager' ? 'warning' : 'info') ?>">
                                             <?= esc(ucfirst($user['role'])) ?>

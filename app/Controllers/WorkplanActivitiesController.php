@@ -148,6 +148,10 @@ class WorkplanActivitiesController extends BaseController
             'title' => 'required|max_length[255]',
             'description' => 'permit_empty',
             'activity_type' => 'required|in_list[training,inputs,infrastructure,output]',
+            'q_one' => 'permit_empty|string',
+            'q_two' => 'permit_empty|string',
+            'q_three' => 'permit_empty|string',
+            'q_four' => 'permit_empty|string',
             'supervisor_id' => 'permit_empty|integer',
         ];
 
@@ -162,6 +166,10 @@ class WorkplanActivitiesController extends BaseController
             'title' => $this->request->getPost('title'),
             'description' => $this->request->getPost('description'),
             'activity_type' => $this->request->getPost('activity_type'),
+            'q_one' => $this->request->getPost('q_one'),
+            'q_two' => $this->request->getPost('q_two'),
+            'q_three' => $this->request->getPost('q_three'),
+            'q_four' => $this->request->getPost('q_four'),
             'supervisor_id' => $this->request->getPost('supervisor_id'),
             'created_by' => session()->get('user_id'),
             'updated_by' => session()->get('user_id'),
@@ -528,6 +536,10 @@ class WorkplanActivitiesController extends BaseController
             'title' => 'required|max_length[255]',
             'description' => 'permit_empty',
             'activity_type' => 'required|in_list[training,inputs,infrastructure,output]',
+            'q_one' => 'permit_empty|string',
+            'q_two' => 'permit_empty|string',
+            'q_three' => 'permit_empty|string',
+            'q_four' => 'permit_empty|string',
             'supervisor_id' => 'permit_empty|integer',
         ];
 
@@ -540,6 +552,10 @@ class WorkplanActivitiesController extends BaseController
             'title' => $this->request->getPost('title'),
             'description' => $this->request->getPost('description'),
             'activity_type' => $this->request->getPost('activity_type'),
+            'q_one' => $this->request->getPost('q_one'),
+            'q_two' => $this->request->getPost('q_two'),
+            'q_three' => $this->request->getPost('q_three'),
+            'q_four' => $this->request->getPost('q_four'),
             'supervisor_id' => $this->request->getPost('supervisor_id'),
             'updated_by' => session()->get('user_id'),
         ];

@@ -37,10 +37,7 @@
                             <input type="password" class="form-control" id="password" name="password" required>
                         </div>
 
-                        <div class="mb-3">
-                            <label for="orgcode" class="form-label">Organization Code</label>
-                            <input type="text" class="form-control" id="orgcode" name="orgcode" value="<?= old('orgcode') ?>" required>
-                        </div>
+
 
                         <div class="mb-3">
                             <label for="role" class="form-label">Role</label>

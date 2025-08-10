@@ -44,6 +44,7 @@ $routes->group('dakoii', ['filter' => 'auth'], static function ($routes) {
     $routes->get('dashboard', [DakoiiController::class, 'dashboard']);
     $routes->get('logout', [DakoiiController::class, 'logout']);
     $routes->get('profile', [DakoiiController::class, 'profile']);
+    $routes->post('profile/update', [DakoiiController::class, 'updateProfile']);
 
     // Dakoii Users Management
     $routes->get('users', [DakoiiController::class, 'userList']);

@@ -34,11 +34,10 @@ class DakoiiUserModel extends Model
     
     // Fields that can be set during save, insert, update
     protected $allowedFields = [
-        'name', 
-        'username', 
-        'password', 
-        'orgcode', 
-        'role', 
+        'name',
+        'username',
+        'password',
+        'role',
         'dakoii_user_status',
         'dakoii_user_status_remarks',
         'dakoii_user_status_at',
@@ -51,7 +50,6 @@ class DakoiiUserModel extends Model
         'name' => 'required|min_length[3]|max_length[255]',
         'username' => 'required|min_length[3]|max_length[255]|is_unique[dakoii_users.username,id,{id}]',
         'password' => 'required|min_length[8]|max_length[255]',
-        'orgcode' => 'required|max_length[500]',
         'role' => 'required|max_length[100]'
     ];
     
@@ -213,5 +211,40 @@ class DakoiiUserModel extends Model
         return $this->where('role', $role)
                     ->where('dakoii_user_status', 1)
                     ->findAll();
+    }
+
+    /**
+     * Create a new user with the specified credentials
+     *
+     * @param string $name
+     * @param string $username
+     * @param string $password
+     * @param string $role
+     * @return int|false User ID if successful, false if failed
+     */
+    public function createUser($name, $username, $password, $role = 'admin')
+    {
+        $userData = [
+            'name' => $name,
+            'username' => $username,
+            'password' => $password,
+            'role' => $role,
+            'dakoii_user_status' => 1  // Active status
+        ];
+
+        try {
+            $result = $this->insert($userData);
+            if ($result) {
+                log_message('info', 'User created successfully: ' . $username);
+                return $this->getInsertID();
+            } else {
+                log_message('error', 'Failed to create user: ' . $username);
+                log_message('error', 'Validation errors: ' . json_encode($this->errors()));
+                return false;
+            }
+        } catch (\Exception $e) {
+            log_message('error', 'Exception creating user: ' . $e->getMessage());
+            return false;
+        }
     }
 }

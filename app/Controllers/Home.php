@@ -185,7 +185,6 @@ class Home extends ResourceController
                 'dakoii_name'     => $user['name'],
                 'dakoii_username' => $user['username'],
                 'dakoii_role'     => $user['role'],
-                'dakoii_orgcode'  => $user['orgcode'],
                 'dakoii_logged_in'=> true
             ];
 
