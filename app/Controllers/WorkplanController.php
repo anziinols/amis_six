@@ -29,13 +29,20 @@ class WorkplanController extends BaseController
      */
     public function index()
     {
+        $workplans = $this->workplanModel
+            ->select('workplans.*, branches.name as branch_name, CONCAT(users.fname, " ", users.lname) as supervisor_name')
+            ->join('branches', 'branches.id = workplans.branch_id', 'left')
+            ->join('users', 'users.id = workplans.supervisor_id', 'left')
+            ->findAll(); // Fetch all non-deleted workplans
+
+        // Add activity count to each workplan
+        foreach ($workplans as &$workplan) {
+            $workplan['activity_count'] = $this->workplanModel->countActivities($workplan['id']);
+        }
+
         $data = [
             'title' => 'Workplans List',
-            'workplans' => $this->workplanModel
-                ->select('workplans.*, branches.name as branch_name, CONCAT(users.fname, " ", users.lname) as supervisor_name')
-                ->join('branches', 'branches.id = workplans.branch_id', 'left')
-                ->join('users', 'users.id = workplans.supervisor_id', 'left')
-                ->findAll() // Fetch all non-deleted workplans
+            'workplans' => $workplans
         ];
 
         return view('workplans/workplan_index', $data);
@@ -473,6 +480,11 @@ class WorkplanController extends BaseController
         $workplan = $this->workplanModel->find($id);
         if (!$workplan) {
             return redirect()->to('/workplans')->with('error', 'Workplan not found.');
+        }
+
+        // Check if workplan has activities
+        if ($this->workplanModel->hasActivities($id)) {
+            return redirect()->to('/workplans')->with('error', 'Cannot delete workplan that has activities. Please delete all activities first.');
         }
 
         // Perform soft delete

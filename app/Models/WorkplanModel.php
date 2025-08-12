@@ -98,4 +98,29 @@ class WorkplanModel extends Model
 
         return $builder->get()->getResultArray();
     }
+
+    /**
+     * Count activities for a specific workplan
+     *
+     * @param int $workplanId
+     * @return int
+     */
+    public function countActivities($workplanId)
+    {
+        $activityModel = new \App\Models\WorkplanActivityModel();
+        return $activityModel->where('workplan_id', $workplanId)
+                           ->where('deleted_at IS NULL')
+                           ->countAllResults();
+    }
+
+    /**
+     * Check if workplan has activities
+     *
+     * @param int $workplanId
+     * @return bool
+     */
+    public function hasActivities($workplanId)
+    {
+        return $this->countActivities($workplanId) > 0;
+    }
 }

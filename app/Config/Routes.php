@@ -546,7 +546,7 @@ $routes->get('workplans/(:num)', 'WorkplanController::show/$1');
 $routes->get('workplans/edit/(:num)', 'WorkplanController::edit/$1');
 $routes->post('workplans/update/(:num)', 'WorkplanController::update/$1');
 $routes->put('workplans/update/(:num)', 'WorkplanController::update/$1'); // Add PUT method support
-$routes->get('workplans/delete/(:num)', 'WorkplanController::delete/$1');
+$routes->post('workplans/delete/(:num)', 'WorkplanController::delete/$1');
 
 // Workplan Activities routes (RESTful)
 $routes->group('workplans/(:num)/activities', function($routes) {

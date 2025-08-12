@@ -33,6 +33,7 @@
                         <th>Start Date</th>
                         <th>End Date</th>
                         <th>Status</th>
+                        <th>Activities</th>
                         <th>Actions</th>
                     </tr>
                 </thead>
@@ -72,6 +73,9 @@
                                     <span class="status-badge <?= $statusClassName ?>"><?= esc($statusText) ?></span>
                                 </td>
                                 <td>
+                                    <span class="badge bg-info"><?= esc($workplan['activity_count']) ?></span>
+                                </td>
+                                <td>
                                     <a href="<?= base_url('workplans/' . $workplan['id']) ?>" class="btn btn-info btn-sm" title="View">
                                         <i class="fas fa-eye"></i>
                                     </a>
@@ -81,17 +85,23 @@
                                     <a href="<?= base_url('workplans/edit/' . $workplan['id']) ?>" class="btn btn-primary btn-sm" title="Edit">
                                         <i class="fas fa-edit"></i>
                                     </a>
-                                    <?= form_open('workplans/delete/' . $workplan['id'], ['style' => 'display:inline-block;', 'onsubmit' => 'return confirm("Are you sure you want to delete this workplan?");']) ?>
-                                        <button type="submit" class="btn btn-danger btn-sm" title="Delete">
+                                    <?php if ($workplan['activity_count'] > 0): ?>
+                                        <button type="button" class="btn btn-secondary btn-sm" disabled title="Cannot delete workplan with activities">
                                             <i class="fas fa-trash"></i>
                                         </button>
-                                    <?= form_close() ?>
+                                    <?php else: ?>
+                                        <?= form_open('workplans/delete/' . $workplan['id'], ['style' => 'display:inline-block;', 'onsubmit' => 'return confirm("Are you sure you want to delete this workplan?");']) ?>
+                                            <button type="submit" class="btn btn-danger btn-sm" title="Delete">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        <?= form_close() ?>
+                                    <?php endif; ?>
                                 </td>
                             </tr>
                         <?php endforeach; ?>
                     <?php else: ?>
                         <tr>
-                            <td colspan="8" class="text-center">No workplans found.</td>
+                            <td colspan="9" class="text-center">No workplans found.</td>
                         </tr>
                     <?php endif; ?>
                 </tbody>
