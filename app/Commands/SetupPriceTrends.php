@@ -82,7 +82,7 @@ class SetupPriceTrends extends BaseCommand
         if ($result->count > 0) {
             CLI::write("Price data already exists ({$result->count} records). Skipping sample data creation.", 'yellow');
             CLI::write('Price Trends feature is ready to use!', 'green');
-            CLI::write('Visit http://localhost/amis_five/reports/commodity/price-trends to see the dashboard.', 'cyan');
+            CLI::write('Visit http://localhost/amis_six/reports/commodity/price-trends to see the dashboard.', 'cyan');
             return;
         }
 
@@ -157,6 +157,6 @@ class SetupPriceTrends extends BaseCommand
 
         CLI::write("\nSample data added successfully! ({$recordsAdded} records)", 'green');
         CLI::write('Price Trends feature is now ready to use!', 'green');
-        CLI::write('Visit http://localhost/amis_five/reports/commodity/price-trends to see the price trends dashboard.', 'cyan');
+        CLI::write('Visit http://localhost/amis_six/reports/commodity/price-trends to see the price trends dashboard.', 'cyan');
     }
 }

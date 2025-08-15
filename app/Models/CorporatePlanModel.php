@@ -16,6 +16,7 @@ class CorporatePlanModel extends Model
     
     // Fields that can be set during save/insert/update
     protected $allowedFields    = [
+        //ytypes are: plans, corporate objectives, kra, strategies
         'parent_id', 'type', 'code', 'title', 'date_from', 'date_to', 'remarks',
         'corp_plan_status', 'corp_plan_status_by', 'corp_plan_status_at', 'corp_plan_status_remarks',
         'created_by', 'updated_by', 'deleted_by'
@@ -83,16 +84,12 @@ class CorporatePlanModel extends Model
     // Create a new corporate plan item
     public function createItem($data)
     {
-        // If parent_id is not provided, set to 0 (no parent)
-        if (!isset($data['parent_id'])) {
-            $data['parent_id'] = 0;
-        }
-        
-        // Set default status to active (1)
-        if (!isset($data['corp_plan_status'])) {
-            $data['corp_plan_status'] = 1;
-        }
-        
+        // Set defaults
+        $data['parent_id'] = $data['parent_id'] ?? 0;
+        $data['corp_plan_status'] = $data['corp_plan_status'] ?? 1;
+        $data['created_by'] = $data['created_by'] ?? 1;
+        $data['updated_by'] = $data['updated_by'] ?? 1;
+
         return $this->insert($data);
     }
     

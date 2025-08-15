@@ -76,8 +76,8 @@ $routes->group('dashboard', ['filter' => 'auth'], static function ($routes) {
     $routes->post('update-password', [DashboardController::class, 'updatePassword']);
 });
 
-// Admin routes
-$routes->group('admin', ['filter' => 'auth'], static function ($routes) {
+// Admin routes - require admin capability
+$routes->group('admin', ['filter' => 'admin'], static function ($routes) {
     // Users Management - RESTful Routes
     $routes->get('users', [UsersController::class, 'index']);                    // GET /admin/users - list users
     $routes->get('users/create', [UsersController::class, 'create']);            // GET /admin/users/create - show create form
@@ -275,21 +275,12 @@ $routes->group('admin', ['filter' => 'auth'], static function ($routes) {
         $routes->post('(:num)/delete', [CorporatePlanController::class, 'delete/$1']); // Add this for form-based deletion
         $routes->post('(:num)/toggle-status', [CorporatePlanController::class, 'toggleStatus/$1']);
 
-        // Overarching Objectives
-        $routes->get('overarching-objectives/(:num)', [CorporatePlanController::class, 'overarchingObjectives/$1']);
-        $routes->post('overarching-objectives', [CorporatePlanController::class, 'createOverarchingObjective']);
-        $routes->put('overarching-objectives/(:num)', [CorporatePlanController::class, 'updateOverarchingObjective/$1']);
-        $routes->post('overarching-objectives/(:num)', [CorporatePlanController::class, 'updateOverarchingObjective/$1']);
-        $routes->post('overarching-objectives/(:num)/toggle-status', [CorporatePlanController::class, 'toggleOverarchingObjectiveStatus/$1']);
-        $routes->get('overarching-objectives/(:num)/edit', [CorporatePlanController::class, 'editOverarchingObjective/$1']);
-
         // Objectives
         $routes->get('objectives/(:num)', [CorporatePlanController::class, 'objectives/$1']);
         $routes->post('objectives', [CorporatePlanController::class, 'createObjective']);
         $routes->put('objectives/(:num)', [CorporatePlanController::class, 'updateObjective/$1']);
         $routes->post('objectives/(:num)', [CorporatePlanController::class, 'updateObjective/$1']);
         $routes->post('objectives/(:num)/toggle-status', [CorporatePlanController::class, 'toggleObjectiveStatus/$1']);
-        $routes->get('objectives/(:num)/edit', [CorporatePlanController::class, 'editObjective/$1']);
 
         // KRAs
         $routes->get('kras/(:num)', [CorporatePlanController::class, 'kras/$1']);
@@ -578,11 +569,24 @@ $routes->get('workplans/get-districts/(:num)', 'WorkplanActivitiesController::ge
 // Activities routes (RESTful)
 $routes->group('activities', ['filter' => 'auth'], function($routes) {
     $routes->get('/', 'ActivitiesController::index');
+    $routes->get('new', 'ActivitiesController::new');
+    $routes->post('create', 'ActivitiesController::create');
     $routes->get('(:num)', 'ActivitiesController::show/$1');
+    $routes->get('(:num)/edit', 'ActivitiesController::edit/$1');
+    $routes->post('(:num)/update', 'ActivitiesController::update/$1');
+    $routes->post('(:num)/delete', 'ActivitiesController::delete/$1');
     $routes->get('(:num)/implement', 'ActivitiesController::implement/$1');
     $routes->post('(:num)/save-implementation', 'ActivitiesController::saveImplementation/$1');
     $routes->post('(:num)/submit-for-supervision', 'ActivitiesController::submitForSupervision/$1');
+    $routes->get('(:num)/supervise', 'ActivitiesController::supervise/$1');
+    $routes->post('(:num)/process-supervision', 'ActivitiesController::processSupervision/$1');
+    $routes->get('(:num)/view', 'ActivitiesController::viewActivity/$1');
+    $routes->get('(:num)/evaluate', 'ActivitiesController::evaluate/$1');
+    $routes->post('(:num)/process-evaluation', 'ActivitiesController::processEvaluation/$1');
+
+    // AJAX endpoints
     $routes->get('get-districts/(:num)', 'ActivitiesController::getDistricts/$1');
+    $routes->get('get-performance-outputs/(:num)', 'ActivitiesController::getPerformanceOutputs/$1');
 });
 
 // Output Activities routes (RESTful)
@@ -630,23 +634,7 @@ $routes->group('api', function($routes) {
 // Dakoii Portal routes (RESTful)
 $routes->get('/dakoii_dashboard', 'DakoiiController::index');
 
-// Proposals routes (RESTful)
-$routes->group('proposals', ['filter' => 'auth'], function($routes) {
-    $routes->get('/', 'ProposalsController::index');
-    $routes->get('new', 'ProposalsController::new');
-    $routes->post('create', 'ProposalsController::create');
-    $routes->get('(:num)', 'ProposalsController::show/$1');
-    $routes->get('edit/(:num)', 'ProposalsController::edit/$1');
-    $routes->post('update/(:num)', 'ProposalsController::update/$1');
-    $routes->get('status/(:num)', 'ProposalsController::status/$1');
-    $routes->post('status/(:num)', 'ProposalsController::updateStatus/$1');
-    $routes->get('supervise/(:num)', 'ProposalsController::supervise/$1');
-    $routes->post('resend/(:num)', 'ProposalsController::resendProposal/$1');
-    $routes->post('approve/(:num)', 'ProposalsController::approveProposal/$1');
 
-    $routes->get('get-activities', 'ProposalsController::getActivities');
-    $routes->get('get-districts', 'ProposalsController::getDistricts');
-});
 
 
 // Evaluation routes (RESTful) - Only for admin evaluators
@@ -655,6 +643,88 @@ $routes->group('evaluation', ['filter' => 'auth'], function($routes) {
     $routes->get('(:num)', 'EvaluationController::show/$1');
     $routes->get('(:num)/rate', 'EvaluationController::rate/$1');
     $routes->post('(:num)/rate', 'EvaluationController::updateRating/$1');
+});
+
+// Duty Instructions routes (RESTful)
+$routes->group('duty-instructions', ['filter' => 'auth'], static function ($routes) {
+    $routes->get('/', 'DutyInstructionsController::index');
+    $routes->get('new', 'DutyInstructionsController::new');
+    $routes->post('create', 'DutyInstructionsController::create');
+    $routes->get('(:num)', 'DutyInstructionsController::show/$1');
+    $routes->get('(:num)/edit', 'DutyInstructionsController::edit/$1');
+    $routes->post('(:num)/update', 'DutyInstructionsController::update/$1');
+    $routes->get('(:num)/delete', 'DutyInstructionsController::delete/$1');
+    $routes->post('(:num)/status', 'DutyInstructionsController::updateStatus/$1');
+
+    // Duty Instruction Items routes
+    $routes->get('(:num)/items/new', 'DutyInstructionsController::newItem/$1');
+    $routes->post('(:num)/items/create', 'DutyInstructionsController::createItem/$1');
+});
+
+// Duty Instruction Items routes (outside the group for direct access)
+$routes->post('duty-instructions/items/(:num)/update', 'DutyInstructionsController::updateItem/$1', ['filter' => 'auth']);
+$routes->post('duty-instructions/items/(:num)/delete', 'DutyInstructionsController::deleteItem/$1', ['filter' => 'auth']);
+
+// Workplan Period routes (RESTful)
+$routes->group('workplan-period', ['filter' => 'auth'], static function ($routes) {
+    $routes->get('/', 'WorkplanPeriodController::index');
+    $routes->get('new', 'WorkplanPeriodController::new');
+    $routes->post('create', 'WorkplanPeriodController::create');
+    $routes->get('(:num)', 'WorkplanPeriodController::show/$1');
+    $routes->get('(:num)/edit', 'WorkplanPeriodController::edit/$1');
+    $routes->post('(:num)/update', 'WorkplanPeriodController::update/$1');
+    $routes->get('(:num)/delete', 'WorkplanPeriodController::delete/$1');
+    $routes->post('(:num)/status', 'WorkplanPeriodController::updateStatus/$1');
+
+    // KRA routes within performance period
+    $routes->get('(:num)/kra', 'PerformanceIndicatorsKraController::indexKra/$1');
+    $routes->get('(:num)/kra/new', 'PerformanceIndicatorsKraController::newKra/$1');
+    $routes->post('(:num)/kra/create', 'PerformanceIndicatorsKraController::createKra/$1');
+
+    // Performance Indicators routes within KRA
+    $routes->get('kra/(:num)/indicators', 'PerformanceIndicatorsKraController::indexIndicators/$1');
+    $routes->get('kra/(:num)/indicators/new', 'PerformanceIndicatorsKraController::newIndicator/$1');
+    $routes->post('kra/(:num)/indicators/create', 'PerformanceIndicatorsKraController::createIndicator/$1');
+
+    // Performance Outputs routes within indicators
+    $routes->get('indicators/(:num)/outputs', 'PerformanceOutputsController::indexByIndicator/$1');
+    $routes->get('indicators/(:num)/outputs/new', 'PerformanceOutputsController::newByIndicator/$1');
+    $routes->post('indicators/(:num)/outputs/create', 'PerformanceOutputsController::createByIndicator/$1');
+});
+
+// Performance Output routes (for KRA and indicators)
+$routes->group('performance-output', ['filter' => 'auth'], static function ($routes) {
+    // KRA routes
+    $routes->get('(:num)/kra', 'PerformanceIndicatorsKraController::indexKra/$1');
+    $routes->get('(:num)/kra/new', 'PerformanceIndicatorsKraController::newKra/$1');
+    $routes->post('(:num)/kra/create', 'PerformanceIndicatorsKraController::createKra/$1');
+
+    // Performance Indicators routes within KRA
+    $routes->get('kra/(:num)/indicators', 'PerformanceIndicatorsKraController::indexIndicators/$1');
+    $routes->get('kra/(:num)/indicators/new', 'PerformanceIndicatorsKraController::newIndicator/$1');
+    $routes->post('kra/(:num)/indicators/create', 'PerformanceIndicatorsKraController::createIndicator/$1');
+
+    // Performance Outputs routes within indicators
+    $routes->get('indicators/(:num)/outputs', 'PerformanceOutputsController::indexByIndicator/$1');
+    $routes->get('indicators/(:num)/outputs/new', 'PerformanceOutputsController::newByIndicator/$1');
+    $routes->post('indicators/(:num)/outputs/create', 'PerformanceOutputsController::createByIndicator/$1');
+});
+
+// Performance Indicators KRA routes (direct access)
+$routes->group('performance-indicators-kra', ['filter' => 'auth'], static function ($routes) {
+    $routes->get('(:num)', 'PerformanceIndicatorsKraController::show/$1');
+    $routes->get('(:num)/edit', 'PerformanceIndicatorsKraController::edit/$1');
+    $routes->post('(:num)/update', 'PerformanceIndicatorsKraController::update/$1');
+    $routes->get('(:num)/delete', 'PerformanceIndicatorsKraController::delete/$1');
+});
+
+// Performance Outputs routes (direct access)
+$routes->group('performance-outputs', ['filter' => 'auth'], static function ($routes) {
+    $routes->get('(:num)', 'PerformanceOutputsController::show/$1');
+    $routes->get('(:num)/edit', 'PerformanceOutputsController::edit/$1');
+    $routes->post('(:num)/update', 'PerformanceOutputsController::update/$1');
+    $routes->get('(:num)/delete', 'PerformanceOutputsController::delete/$1');
+    $routes->post('(:num)/status', 'PerformanceOutputsController::updateStatus/$1');
 });
 
 // MTDP Reports routes

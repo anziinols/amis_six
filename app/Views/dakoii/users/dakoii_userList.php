@@ -55,8 +55,8 @@
                                         </span>
                                     </td>
                                     <td>
-                                        <span class="badge bg-<?= $user['is_active'] ? 'success' : 'secondary' ?>">
-                                            <?= $user['is_active'] ? 'Active' : 'Inactive' ?>
+                                        <span class="badge bg-<?= $user['dakoii_user_status'] == 1 ? 'success' : 'secondary' ?>">
+                                            <?= $user['dakoii_user_status'] == 1 ? 'Active' : 'Inactive' ?>
                                         </span>
                                     </td>
                                     <td><?= date('Y-m-d', strtotime($user['created_at'])) ?></td>

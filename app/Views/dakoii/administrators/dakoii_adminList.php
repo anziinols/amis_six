@@ -3,9 +3,9 @@
 <?= $this->section('content') ?>
 <div class="container-fluid">
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h4 class="mb-0">System Administrators</h4>
+        <h4 class="mb-0">System Users Management</h4>
         <a href="<?= base_url('dakoii/administrators/create') ?>" class="btn btn-primary">
-            <i class="fas fa-plus"></i> Add New Administrator
+            <i class="fas fa-plus"></i> Add New User
         </a>
     </div>
 
@@ -18,7 +18,10 @@
                             <th>Name</th>
                             <th>Email</th>
                             <th>Phone</th>
-                            <th>Employee Number</th>
+                            <th>Role</th>
+                            <th>Admin</th>
+                            <th>Supervisor</th>
+                            <th>Evaluator</th>
                             <th>Status</th>
                             <th>Actions</th>
                         </tr>
@@ -26,7 +29,7 @@
                     <tbody>
                         <?php if (empty($administrators)): ?>
                             <tr>
-                                <td colspan="6" class="text-center">No administrators found</td>
+                                <td colspan="9" class="text-center">No users found</td>
                             </tr>
                         <?php else: ?>
                             <?php foreach ($administrators as $admin): ?>
@@ -34,7 +37,20 @@
                                     <td><?= esc($admin['fname'] . ' ' . $admin['lname']) ?></td>
                                     <td><?= esc($admin['email']) ?></td>
                                     <td><?= esc($admin['phone']) ?></td>
-                                    <td><?= esc($admin['employee_number']) ?></td>
+                                    <td>
+                                        <span class="badge bg-info">
+                                            <?= esc(ucfirst($admin['role'] ?? 'user')) ?>
+                                        </span>
+                                    </td>
+                                    <td class="text-center">
+                                        <?= $admin['is_admin'] ? '<i class="fas fa-check text-success"></i>' : '<i class="fas fa-times text-danger"></i>' ?>
+                                    </td>
+                                    <td class="text-center">
+                                        <?= $admin['is_supervisor'] ? '<i class="fas fa-check text-success"></i>' : '<i class="fas fa-times text-danger"></i>' ?>
+                                    </td>
+                                    <td class="text-center">
+                                        <?= $admin['is_evaluator'] ? '<i class="fas fa-check text-success"></i>' : '<i class="fas fa-times text-danger"></i>' ?>
+                                    </td>
                                     <td>
                                         <span class="badge <?= $admin['user_status'] ? 'bg-success' : 'bg-danger' ?>">
                                             <?= $admin['user_status'] ? 'Active' : 'Inactive' ?>
@@ -46,7 +62,7 @@
                                                class="btn btn-sm btn-primary">
                                                 <i class="fas fa-edit"></i>
                                             </a>
-                                            <button type="button" 
+                                            <button type="button"
                                                     class="btn btn-sm btn-danger"
                                                     onclick="confirmDelete(<?= $admin['id'] ?>)">
                                                 <i class="fas fa-trash"></i>
@@ -72,7 +88,7 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
-                Are you sure you want to delete this administrator?
+                Are you sure you want to delete this user?
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>

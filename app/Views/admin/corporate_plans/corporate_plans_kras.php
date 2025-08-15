@@ -50,6 +50,9 @@ $this->section('content');
                                         </a>
                                         <button type="button" class="btn btn-sm btn-warning edit-kra"
                                             data-id="<?= $kra['id'] ?>"
+                                            data-code="<?= htmlspecialchars($kra['code']) ?>"
+                                            data-title="<?= htmlspecialchars($kra['title']) ?>"
+                                            data-remarks="<?= htmlspecialchars($kra['remarks']) ?>"
                                             data-bs-toggle="modal" data-bs-target="#editKraModal">
                                             <i class="fas fa-edit"></i><span class="d-none d-md-inline"> Edit</span>
                                         </button>
@@ -77,7 +80,7 @@ $this->section('content');
                 <h5 class="modal-title" id="addKraModalLabel">Add KRA</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <form id="addKraForm" action="<?= base_url('admin/corporate-plans/kras') ?>">
+            <form id="addKraForm" action="<?= base_url('admin/corporate-plans/kras') ?>" method="post">
                 <div class="modal-body">
                     <?= csrf_field() ?>
                     <input type="hidden" name="parent_id" value="<?= $parentObj['id'] ?>">
@@ -111,7 +114,7 @@ $this->section('content');
                 <h5 class="modal-title" id="editKraModalLabel">Edit KRA</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <form id="editKraForm" action="<?= base_url('admin/corporate-plans/kras') ?>">
+            <form id="editKraForm" action="<?= base_url('admin/corporate-plans/kras') ?>" method="post">
                 <div class="modal-body">
                     <?= csrf_field() ?>
                     <input type="hidden" id="edit_id" name="id">
@@ -143,127 +146,41 @@ $(document).ready(function() {
     // Initialize DataTable
     $('#krasTable').DataTable();
 
-    // Add KRA
-    $('#addKraForm').on('submit', function(e) {
-        e.preventDefault();
-
-        $.ajax({
-            url: '<?= base_url('admin/corporate-plans/kras') ?>',
-            type: 'POST',
-            data: $(this).serialize(),
-            dataType: 'json',
-            success: function(response) {
-                if (response.status === 'success') {
-                    // Show success message
-                    toastr.success(response.message);
-                    // Close modal
-                    var modal = bootstrap.Modal.getInstance(document.getElementById('addKraModal'));
-                    modal.hide();
-                    // Add delay before reload to allow toastr to display
-                    setTimeout(function() {
-                        location.reload();
-                    }, 2000); // 2 second delay
-                } else {
-                    // Show error message
-                    toastr.error(response.message);
-                }
-            },
-            error: function() {
-                toastr.error('An error occurred while processing your request.');
-            }
-        });
-    });
-
-    // Edit KRA - fetch data via AJAX
+    // Edit KRA - populate form data
     $('.edit-kra').on('click', function() {
         const id = $(this).data('id');
+        const code = $(this).data('code');
+        const title = $(this).data('title');
+        const remarks = $(this).data('remarks');
 
-        // Fetch the latest data from the server
-        $.ajax({
-            url: '<?= base_url('admin/corporate-plans/kras/') ?>' + id + '/edit',
-            type: 'GET',
-            dataType: 'json',
-            success: function(response) {
-                if (response.status === 'success') {
-                    const kra = response.data;
+        $('#edit_id').val(id);
+        $('#edit_code').val(code);
+        $('#edit_title').val(title);
+        $('#edit_remarks').val(remarks);
 
-                    $('#edit_id').val(kra.id);
-                    $('#edit_code').val(kra.code);
-                    $('#edit_title').val(kra.title);
-                    $('#edit_remarks').val(kra.remarks);
-
-                    // Update the form action to include the ID
-                    $('#editKraForm').attr('action',
-                        '<?= base_url('admin/corporate-plans/kras/') ?>' + kra.id);
-                } else {
-                    toastr.error(response.message || 'Failed to load KRA data');
-                }
-            },
-            error: function() {
-                toastr.error('An error occurred while retrieving KRA data.');
-            }
-        });
+        // Update the form action to include the ID
+        $('#editKraForm').attr('action', '<?= base_url('admin/corporate-plans/kras/') ?>' + id);
     });
 
-    // Update KRA
-    $('#editKraForm').on('submit', function(e) {
-        e.preventDefault();
-        const id = $('#edit_id').val();
-
-        $.ajax({
-            url: '<?= base_url('admin/corporate-plans/kras/') ?>' + id,
-            type: 'POST',
-            data: $(this).serialize(),
-            dataType: 'json',
-            success: function(response) {
-                if (response.status === 'success') {
-                    // Show success message
-                    toastr.success(response.message);
-                    // Close modal
-                    var modal = bootstrap.Modal.getInstance(document.getElementById('editKraModal'));
-                    modal.hide();
-                    // Add delay before reload to allow toastr to display
-                    setTimeout(function() {
-                        location.reload();
-                    }, 2000); // 2 second delay
-                } else {
-                    // Show error message
-                    toastr.error(response.message);
-                }
-            },
-            error: function() {
-                toastr.error('An error occurred while processing your request.');
-            }
-        });
-    });
-
-    // Toggle Status
+    // Toggle Status - use form submission
     $('.toggle-status').on('click', function() {
         if (confirm('Are you sure you want to change the status of this KRA?')) {
             const id = $(this).data('id');
 
-            $.ajax({
-                url: '<?= base_url('admin/corporate-plans/kras/') ?>' + id + '/toggle-status',
-                type: 'POST',
-                data: { <?= csrf_token() ?>: '<?= csrf_hash() ?>' },
-                dataType: 'json',
-                success: function(response) {
-                    if (response.status === 'success') {
-                        // Show success message
-                        toastr.success(response.message);
-                        // Add delay before reload to allow toastr to display
-                        setTimeout(function() {
-                            location.reload();
-                        }, 2000); // 2 second delay
-                    } else {
-                        // Show error message
-                        toastr.error(response.message);
-                    }
-                },
-                error: function() {
-                    toastr.error('An error occurred while processing your request.');
-                }
+            // Create a form and submit it
+            const form = $('<form>', {
+                'method': 'POST',
+                'action': '<?= base_url('admin/corporate-plans/kras/') ?>' + id + '/toggle-status'
             });
+
+            form.append($('<input>', {
+                'type': 'hidden',
+                'name': '<?= csrf_token() ?>',
+                'value': '<?= csrf_hash() ?>'
+            }));
+
+            $('body').append(form);
+            form.submit();
         }
     });
 });

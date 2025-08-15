@@ -24,7 +24,6 @@ class WorkplanCorporatePlanLinkModel extends Model
     protected $allowedFields    = [
         'workplan_activity_id',
         'corporate_plan_id',
-        'overarching_objective_id',
         'objective_id',
         'kra_id',
         'strategies_id',
@@ -44,7 +43,6 @@ class WorkplanCorporatePlanLinkModel extends Model
     protected $validationRules = [
         'workplan_activity_id'       => 'required|integer',
         'corporate_plan_id' => 'required|integer',
-        'overarching_objective_id' => 'permit_empty|integer',
         'objective_id'      => 'permit_empty|integer',
         'kra_id'            => 'permit_empty|integer',
         'strategies_id'     => 'permit_empty|integer',

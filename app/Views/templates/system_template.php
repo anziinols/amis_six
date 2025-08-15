@@ -428,15 +428,7 @@
                 </li>
                 <?php endif; ?>
 
-                <!-- Proposal Menu - For Admin and Supervisor -->
-                <?php if (canAccessMenu('proposals', $userRole)): ?>
-                <li class="nav-item">
-                    <a class="nav-link <?= strpos(current_url(), 'proposals') !== false ? 'active' : '' ?>" href="<?= base_url('proposals') ?>">
-                        <i class="fas fa-lightbulb"></i>
-                        <span class="nav-text">Proposal</span>
-                    </a>
-                </li>
-                <?php endif; ?>
+
 
                 <!-- Evaluation Menu - For Admin and Supervisor -->
                 <?php if (canAccessMenu('evaluation', $userRole)): ?>
@@ -448,22 +440,46 @@
                 </li>
                 <?php endif; ?>
 
+                <!-- Duty Instructions Menu - For Admin and Supervisor -->
+                <?php if (canAccessMenu('duty_instructions', $userRole)): ?>
+                <li class="nav-item">
+                    <a class="nav-link <?= strpos(current_url(), 'duty-instructions') !== false ? 'active' : '' ?>" href="<?= base_url('duty-instructions') ?>">
+                        <i class="fas fa-tasks"></i>
+                        <span class="nav-text">Duty Instructions</span>
+                    </a>
+                </li>
+                <?php endif; ?>
+
+                <!-- Workplan Period Menu - For Admin and Supervisor -->
+                <?php if (canAccessMenu('workplan_period', $userRole)): ?>
+                <li class="nav-item">
+                    <a class="nav-link <?= (strpos(current_url(), 'workplan-period') !== false || strpos(current_url(), 'performance-output') !== false) ? 'active' : '' ?>" href="<?= base_url('workplan-period') ?>">
+                        <i class="fas fa-calendar-alt"></i>
+                        <span class="nav-text">Workplan Period</span>
+                    </a>
+                </li>
+                <?php endif; ?>
+
+                <!-- My Activities Menu - For Admin and Supervisor -->
+                <?php if (canAccessMenu('my_activities', $userRole)): ?>
+                <li class="nav-item">
+                    <a class="nav-link <?= (current_url() == base_url('activities') || strpos(current_url(), base_url('activities/')) !== false) ? 'active' : '' ?>" href="<?= base_url('activities') ?>">
+                        <i class="fas fa-clipboard-list"></i>
+                        <span class="nav-text">My Activities</span>
+                    </a>
+                </li>
+                <?php endif; ?>
+
                 <!-- Activities Menu - For Admin, Supervisor, and User -->
                 <?php if (canAccessMenu('activities', $userRole)): ?>
                 <li class="nav-item">
-                    <a class="nav-link <?= ((current_url() == base_url('activities') || strpos(current_url(), base_url('activities/')) !== false) || strpos(current_url(), 'documents') !== false || strpos(current_url(), 'meetings') !== false || strpos(current_url(), 'agreements') !== false) ? 'active' : '' ?>" href="#activitiesSubmenu" data-bs-toggle="collapse">
-                        <i class="fas fa-clipboard-list"></i>
+                    <a class="nav-link <?= (strpos(current_url(), 'documents') !== false || strpos(current_url(), 'meetings') !== false || strpos(current_url(), 'agreements') !== false) ? 'active' : '' ?>" href="#activitiesSubmenu" data-bs-toggle="collapse">
+                        <i class="fas fa-folder-open"></i>
                         <span class="nav-text">Activities</span>
                         <i class="fas fa-chevron-down ms-auto"></i>
                     </a>
-                    <div class="collapse <?= ((current_url() == base_url('activities') || strpos(current_url(), base_url('activities/')) !== false) || strpos(current_url(), 'documents') !== false || strpos(current_url(), 'meetings') !== false || strpos(current_url(), 'agreements') !== false) ? 'show' : '' ?>" id="activitiesSubmenu">
+                    <div class="collapse <?= (strpos(current_url(), 'documents') !== false || strpos(current_url(), 'meetings') !== false || strpos(current_url(), 'agreements') !== false) ? 'show' : '' ?>" id="activitiesSubmenu">
                         <ul class="nav flex-column ms-3">
-                            <li class="nav-item">
-                                <a class="nav-link <?= (current_url() == base_url('activities') || strpos(current_url(), base_url('activities/')) !== false) ? 'active' : '' ?>" href="<?= base_url('activities') ?>">
-                                    <i class="fas fa-tasks"></i>
-                                    <span class="nav-text">My Activities</span>
-                                </a>
-                            </li>
                             <li class="nav-item">
                                 <a class="nav-link <?= strpos(current_url(), 'documents') !== false ? 'active' : '' ?>" href="<?= base_url('documents') ?>">
                                     <i class="fas fa-file-alt"></i>

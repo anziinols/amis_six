@@ -9,8 +9,8 @@ $this->section('content');
         <div class="card-header d-flex justify-content-between align-items-center">
             <h5 class="mb-0"><?= $title ?></h5>
             <div>
-                <a href="<?= base_url('admin/corporate-plans/overarching-objectives/' . $parentObj['parent_id']) ?>" class="btn btn-secondary mr-2">
-                    <i class="fas fa-arrow-left"></i> Back to Overarching Objectives
+                <a href="<?= base_url('admin/corporate-plans') ?>" class="btn btn-secondary mr-2">
+                    <i class="fas fa-arrow-left"></i> Back to Corporate Plans
                 </a>
                 <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addObjectiveModal">
                     <i class="fas fa-plus"></i> Add Objective
@@ -18,7 +18,30 @@ $this->section('content');
             </div>
         </div>
         <div class="card-body">
+            <?php if (session()->getFlashdata('success')): ?>
+                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                    <?= session()->getFlashdata('success') ?>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            <?php endif; ?>
 
+            <?php if (session()->getFlashdata('error')): ?>
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    <?= session()->getFlashdata('error') ?>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            <?php endif; ?>
+
+            <?php if (session()->getFlashdata('errors')): ?>
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    <ul class="mb-0">
+                        <?php foreach (session()->getFlashdata('errors') as $error): ?>
+                            <li><?= esc($error) ?></li>
+                        <?php endforeach; ?>
+                    </ul>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            <?php endif; ?>
 
             <div class="table-responsive">
                 <table class="table table-bordered table-striped" id="objectivesTable">
@@ -50,6 +73,9 @@ $this->section('content');
                                         </a>
                                         <button type="button" class="btn btn-sm btn-warning edit-objective"
                                             data-id="<?= $objective['id'] ?>"
+                                            data-code="<?= htmlspecialchars($objective['code']) ?>"
+                                            data-title="<?= htmlspecialchars($objective['title']) ?>"
+                                            data-remarks="<?= htmlspecialchars($objective['remarks']) ?>"
                                             data-bs-toggle="modal" data-bs-target="#editObjectiveModal">
                                             <i class="fas fa-edit"></i><span class="d-none d-md-inline"> Edit</span>
                                         </button>
@@ -77,10 +103,10 @@ $this->section('content');
                 <h5 class="modal-title" id="addObjectiveModalLabel">Add Objective</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <form id="addObjectiveForm" action="<?= base_url('admin/corporate-plans/objectives') ?>">
+            <form id="addObjectiveForm" action="<?= base_url('admin/corporate-plans/objectives') ?>" method="post">
                 <div class="modal-body">
                     <?= csrf_field() ?>
-                    <input type="hidden" name="parent_id" value="<?= $parentObj['id'] ?>">
+                    <input type="hidden" name="parent_id" value="<?= $parentPlan['id'] ?>">
 
                     <div class="form-group mb-3">
                         <label for="code">Code</label>
@@ -114,7 +140,7 @@ $this->section('content');
                 <h5 class="modal-title" id="editObjectiveModalLabel">Edit Objective</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <form id="editObjectiveForm" action="<?= base_url('admin/corporate-plans/objectives') ?>">
+            <form id="editObjectiveForm" action="<?= base_url('admin/corporate-plans/objectives') ?>" method="post">
                 <div class="modal-body">
                     <?= csrf_field() ?>
                     <input type="hidden" id="edit_id" name="id">
@@ -154,116 +180,41 @@ $(document).ready(function() {
         "order": [[ 0, "asc" ]]
     });
 
-    // Add Objective
-    $('#addObjectiveForm').on('submit', function(e) {
-        e.preventDefault();
-
-        $.ajax({
-            url: '<?= base_url('admin/corporate-plans/objectives') ?>',
-            type: 'POST',
-            data: $(this).serialize(),
-            dataType: 'json',
-            success: function(response) {
-                if (response.status === 'success') {
-                    // Close modal and reload page to show updated data
-                    $('#addObjectiveModal').modal('hide');
-                    toastr.success(response.message);
-                    setTimeout(function() {
-                        window.location.reload();
-                    }, 1000);
-                } else {
-                    toastr.error(response.message || 'Failed to add objective');
-                }
-            },
-            error: function() {
-                toastr.error('An unexpected error occurred');
-            }
-        });
-    });
-
-    // Edit Objective - fetch data via AJAX
+    // Edit Objective - populate form data
     $('.edit-objective').on('click', function() {
         const id = $(this).data('id');
+        const code = $(this).data('code');
+        const title = $(this).data('title');
+        const remarks = $(this).data('remarks');
 
-        // Fetch the latest data from the server
-        $.ajax({
-            url: '<?= base_url('admin/corporate-plans/objectives/') ?>' + id + '/edit',
-            type: 'GET',
-            dataType: 'json',
-            success: function(response) {
-                if (response.status === 'success') {
-                    const objective = response.data;
+        $('#edit_id').val(id);
+        $('#edit_code').val(code);
+        $('#edit_title').val(title);
+        $('#edit_remarks').val(remarks);
 
-                    $('#edit_id').val(objective.id);
-                    $('#edit_code').val(objective.code);
-                    $('#edit_title').val(objective.title);
-                    $('#edit_remarks').val(objective.remarks);
-
-                    // Update the form action to include the ID
-                    $('#editObjectiveForm').attr('action',
-                        '<?= base_url('admin/corporate-plans/objectives/') ?>' + objective.id);
-                } else {
-                    toastr.error(response.message || 'Failed to load objective data');
-                }
-            },
-            error: function() {
-                toastr.error('An unexpected error occurred');
-            }
-        });
+        // Update the form action to include the ID
+        $('#editObjectiveForm').attr('action', '<?= base_url('admin/corporate-plans/objectives/') ?>' + id);
     });
 
-    // Update Objective
-    $('#editObjectiveForm').on('submit', function(e) {
-        e.preventDefault();
-        const id = $('#edit_id').val();
-
-        $.ajax({
-            url: '<?= base_url('admin/corporate-plans/objectives/') ?>' + id,
-            type: 'POST',
-            data: $(this).serialize(),
-            dataType: 'json',
-            success: function(response) {
-                if (response.status === 'success') {
-                    // Close modal and reload page
-                    $('#editObjectiveModal').modal('hide');
-                    toastr.success(response.message);
-                    setTimeout(function() {
-                        window.location.reload();
-                    }, 1000);
-                } else {
-                    toastr.error(response.message || 'Failed to update objective');
-                }
-            },
-            error: function() {
-                toastr.error('An unexpected error occurred');
-            }
-        });
-    });
-
-    // Toggle Status
+    // Toggle Status - use form submission
     $('.toggle-status').on('click', function() {
         if (confirm('Are you sure you want to change the status of this Objective?')) {
             const id = $(this).data('id');
 
-            $.ajax({
-                url: '<?= base_url('admin/corporate-plans/objectives/') ?>' + id + '/toggle-status',
-                type: 'POST',
-                data: { <?= csrf_token() ?>: '<?= csrf_hash() ?>' },
-                dataType: 'json',
-                success: function(response) {
-                    if (response.status === 'success') {
-                        toastr.success(response.message);
-                        setTimeout(function() {
-                            window.location.reload();
-                        }, 1000);
-                    } else {
-                        toastr.error(response.message || 'Failed to update status');
-                    }
-                },
-                error: function() {
-                    toastr.error('An unexpected error occurred');
-                }
+            // Create a form and submit it
+            const form = $('<form>', {
+                'method': 'POST',
+                'action': '<?= base_url('admin/corporate-plans/objectives/') ?>' + id + '/toggle-status'
             });
+
+            form.append($('<input>', {
+                'type': 'hidden',
+                'name': '<?= csrf_token() ?>',
+                'value': '<?= csrf_hash() ?>'
+            }));
+
+            $('body').append(form);
+            form.submit();
         }
     });
 });

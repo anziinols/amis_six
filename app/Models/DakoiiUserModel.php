@@ -114,7 +114,7 @@ class DakoiiUserModel extends Model
                 'name' => $user['name'],
                 'status' => $user['dakoii_user_status'] ?? 'undefined',
             ]));
-            
+
             // Check the status separately to identify this specific issue
             if (isset($user['dakoii_user_status']) && $user['dakoii_user_status'] != 1) {
                 log_message('warning', 'User account inactive: ' . $username . ' (Status: ' . $user['dakoii_user_status'] . ')');

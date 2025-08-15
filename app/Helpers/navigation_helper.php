@@ -20,51 +20,50 @@ if (!function_exists('canAccessMenu')) {
             $userRole = session()->get('role');
         }
 
-        // Special check for evaluation menu - accessible to admin OR is_evaluator
+        // Special check for evaluation menu - accessible to admin capability OR is_evaluator
         if ($menuItem === 'evaluation') {
-            return $userRole === 'admin' || session()->get('is_evaluator') == 1;
+            return session()->get('is_admin') == 1 || session()->get('is_evaluator') == 1;
         }
 
-        // Define menu permissions for each role
-        $menuPermissions = [
-            'admin' => [
-                'dashboard',
-                'admin_panel',
-                'smes',
-                'commodity_boards',
-                'workplans',
-                'proposals',
-                'activities',
-                'reports',
-                'profile',
-                'commodities' // Admin has access to commodities
-            ],
-            'supervisor' => [
-                'dashboard',
-                'workplans',
-                'proposals',
-                'activities',
-                'reports',
-                'profile'
-            ],
-            'user' => [
-                'dashboard',
-                'activities',
-                'reports',
-                'profile'
-            ],
-            'commodity' => [
-                'dashboard',
-                'commodity_boards',
-                'reports',
-                'profile'
-            ]
+        // Pure capability-based access control
+        $isAdmin = session()->get('is_admin') == 1;
+        $isSupervisor = session()->get('is_supervisor') == 1;
+        $isEvaluator = session()->get('is_evaluator') == 1;
+
+        // Define menu access by capabilities
+        $menuCapabilities = [
+            'dashboard' => [], // Available to all
+            'profile' => [], // Available to all
+            'admin_panel' => ['admin'],
+            'smes' => ['admin'],
+            'commodities' => ['admin'],
+            'commodity_boards' => ['admin'], // Only admin can manage commodity boards
+            'workplans' => ['admin', 'supervisor'],
+
+            'activities' => ['admin', 'supervisor'], // Regular users access through direct assignment
+            'workplan_period' => ['admin', 'supervisor'],
+            'my_activities' => ['admin', 'supervisor'], // My Activities as main menu
+            'reports' => ['admin', 'supervisor'],
+            'duty_instructions' => ['admin', 'supervisor'],
+            'evaluation' => ['admin', 'evaluator']
         ];
 
-        // Get allowed menus for the user's role
-        $allowedMenus = $menuPermissions[$userRole] ?? [];
+        // Check if menu requires specific capabilities
+        $requiredCapabilities = $menuCapabilities[$menuItem] ?? [];
 
-        return in_array($menuItem, $allowedMenus);
+        // If no capabilities required, allow access
+        if (empty($requiredCapabilities)) {
+            return true;
+        }
+
+        // Check if user has any of the required capabilities
+        foreach ($requiredCapabilities as $capability) {
+            if ($capability === 'admin' && $isAdmin) return true;
+            if ($capability === 'supervisor' && $isSupervisor) return true;
+            if ($capability === 'evaluator' && $isEvaluator) return true;
+        }
+
+        return false;
     }
 }
 
@@ -77,11 +76,8 @@ if (!function_exists('canAccessAdminPanel')) {
      */
     function canAccessAdminPanel($userRole = null)
     {
-        if ($userRole === null) {
-            $userRole = session()->get('role');
-        }
-
-        return $userRole === 'admin';
+        // Check admin capability instead of role
+        return session()->get('is_admin') == 1;
     }
 }
 
@@ -94,11 +90,8 @@ if (!function_exists('canAccessCommodities')) {
      */
     function canAccessCommodities($userRole = null)
     {
-        if ($userRole === null) {
-            $userRole = session()->get('role');
-        }
-
-        return in_array($userRole, ['admin', 'commodity']);
+        // Only admin capability can access commodities
+        return session()->get('is_admin') == 1;
     }
 }
 
@@ -115,18 +108,24 @@ if (!function_exists('getNavigationMenus')) {
             $userRole = session()->get('role');
         }
 
+        // Get user capabilities
+        $isAdmin = session()->get('is_admin') == 1;
+        $isSupervisor = session()->get('is_supervisor') == 1;
+        $isEvaluator = session()->get('is_evaluator') == 1;
+
         $allMenus = [
             'dashboard' => [
                 'title' => 'Dashboard',
                 'icon' => 'fas fa-tachometer-alt',
                 'url' => 'dashboard',
-                'roles' => ['admin', 'supervisor', 'user', 'commodity']
+                'roles' => ['user', 'guest', 'commodity'], // Basic roles
+                'capabilities' => [] // Available to all
             ],
             'admin_panel' => [
                 'title' => 'Admin Panel',
                 'icon' => 'fas fa-cog',
                 'url' => '#adminSubmenu',
-                'roles' => ['admin'],
+                'capabilities' => ['admin'],
                 'submenu' => true,
                 'submenus' => [
                     'users' => ['title' => 'Users', 'icon' => 'fas fa-users', 'url' => 'admin/users'],
@@ -144,41 +143,46 @@ if (!function_exists('getNavigationMenus')) {
                 'title' => 'SMEs',
                 'icon' => 'fas fa-store',
                 'url' => 'smes',
-                'roles' => ['admin']
+                'capabilities' => ['admin']
             ],
             'commodity_boards' => [
                 'title' => 'Commodity Boards',
                 'icon' => 'fas fa-boxes',
                 'url' => 'commodity-boards',
-                'roles' => ['admin', 'commodity']
+                'capabilities' => ['admin']
             ],
             'workplans' => [
                 'title' => 'Workplans',
                 'icon' => 'fas fa-tasks',
                 'url' => 'workplans',
-                'roles' => ['admin', 'supervisor']
+                'capabilities' => ['admin', 'supervisor']
             ],
-            'proposals' => [
-                'title' => 'Proposal',
-                'icon' => 'fas fa-lightbulb',
-                'url' => 'proposals',
-                'roles' => ['admin', 'supervisor']
-            ],
+
             'evaluation' => [
                 'title' => 'Evaluation',
                 'icon' => 'fas fa-clipboard-check',
                 'url' => 'evaluation',
-                'roles' => ['admin', 'supervisor', 'user'], // Allow all roles, but access controlled by special logic
-                'special_access' => 'admin_or_evaluator'
+                'capabilities' => ['admin', 'evaluator']
+            ],
+            'duty_instructions' => [
+                'title' => 'Duty Instructions',
+                'icon' => 'fas fa-tasks',
+                'url' => 'duty-instructions',
+                'capabilities' => ['admin', 'supervisor']
+            ],
+            'my_activities' => [
+                'title' => 'My Activities',
+                'icon' => 'fas fa-clipboard-list',
+                'url' => 'activities',
+                'capabilities' => ['admin', 'supervisor']
             ],
             'activities' => [
                 'title' => 'Activities',
-                'icon' => 'fas fa-clipboard-list',
+                'icon' => 'fas fa-folder-open',
                 'url' => '#activitiesSubmenu',
-                'roles' => ['admin', 'supervisor', 'user'],
+                'capabilities' => ['admin', 'supervisor'],
                 'submenu' => true,
                 'submenus' => [
-                    'my_activities' => ['title' => 'My Activities', 'icon' => 'fas fa-tasks', 'url' => 'activities'],
                     'documents' => ['title' => 'Documents', 'icon' => 'fas fa-file-alt', 'url' => 'documents'],
                     'meetings' => ['title' => 'Meetings', 'icon' => 'fas fa-calendar-alt', 'url' => 'meetings'],
                     'agreements' => ['title' => 'Agreements', 'icon' => 'fas fa-handshake', 'url' => 'agreements']
@@ -188,7 +192,7 @@ if (!function_exists('getNavigationMenus')) {
                 'title' => 'Reports',
                 'icon' => 'fas fa-chart-bar',
                 'url' => '#reportsSubmenu',
-                'roles' => ['admin', 'supervisor', 'user', 'commodity'],
+                'capabilities' => ['admin', 'supervisor'],
                 'submenu' => true,
                 'submenus' => [
                     'mtdp_report' => ['title' => 'MTDP Report', 'icon' => 'fas fa-file-alt', 'url' => 'reports/mtdp'],
@@ -202,15 +206,36 @@ if (!function_exists('getNavigationMenus')) {
             'profile' => [
                 'title' => 'Profile',
                 'icon' => 'fas fa-user',
-                'url' => 'dashboard/profile',
-                'roles' => ['admin', 'supervisor', 'user', 'commodity']
+                'url' => 'dashboard/profile'
+                // No capabilities required - available to all
             ]
         ];
 
-        // Filter menus based on user role
+        // Filter menus based purely on capabilities
         $allowedMenus = [];
         foreach ($allMenus as $key => $menu) {
-            if (in_array($userRole, $menu['roles'])) {
+            $hasAccess = false;
+
+            // Check if menu requires capabilities
+            if (isset($menu['capabilities'])) {
+                foreach ($menu['capabilities'] as $capability) {
+                    if ($capability === 'admin' && $isAdmin) {
+                        $hasAccess = true;
+                        break;
+                    } elseif ($capability === 'supervisor' && $isSupervisor) {
+                        $hasAccess = true;
+                        break;
+                    } elseif ($capability === 'evaluator' && $isEvaluator) {
+                        $hasAccess = true;
+                        break;
+                    }
+                }
+            } else {
+                // Menu available to all (no capabilities required)
+                $hasAccess = true;
+            }
+
+            if ($hasAccess) {
                 $allowedMenus[$key] = $menu;
             }
         }
@@ -228,11 +253,11 @@ if (!function_exists('shouldShowActivitiesSubmenu')) {
      */
     function shouldShowActivitiesSubmenu($userRole = null)
     {
-        if ($userRole === null) {
-            $userRole = session()->get('role');
-        }
+        // Pure capability-based check
+        $isAdmin = session()->get('is_admin') == 1;
+        $isSupervisor = session()->get('is_supervisor') == 1;
 
-        return in_array($userRole, ['admin', 'supervisor', 'user']);
+        return $isAdmin || $isSupervisor;
     }
 }
 
@@ -245,10 +270,10 @@ if (!function_exists('shouldShowReportsSubmenu')) {
      */
     function shouldShowReportsSubmenu($userRole = null)
     {
-        if ($userRole === null) {
-            $userRole = session()->get('role');
-        }
+        // Pure capability-based check
+        $isAdmin = session()->get('is_admin') == 1;
+        $isSupervisor = session()->get('is_supervisor') == 1;
 
-        return in_array($userRole, ['admin', 'supervisor', 'user', 'commodity']);
+        return $isAdmin || $isSupervisor;
     }
 }

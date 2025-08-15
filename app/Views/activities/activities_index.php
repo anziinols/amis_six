@@ -10,6 +10,9 @@
             <div class="card">
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <h5 class="card-title mb-0"><?= esc($title) ?></h5>
+                    <a href="<?= base_url('activities/new') ?>" class="btn btn-primary">
+                        <i class="fas fa-plus"></i> Create New Activity
+                    </a>
                 </div>
                 <div class="card-body">
                     <?php if (session()->has('success')): ?>
@@ -26,7 +29,7 @@
                         </div>
                     <?php endif; ?>
 
-                    <?php if (empty($proposals)): ?>
+                    <?php if (empty($activities)): ?>
                         <div class="alert alert-info">
                             <i class="fas fa-info-circle me-2"></i>
                             <?= isset($isAdmin) && $isAdmin ? 'No activities found in the system.' : 'No activities assigned to you yet.' ?>
@@ -37,8 +40,8 @@
                                 <thead class="table-light">
                                     <tr>
                                         <th>#</th>
-                                        <th>Workplan</th>
-                                        <th>Activity</th>
+                                        <th>Activity Title</th>
+                                        <th>Performance Output</th>
                                         <th>Type</th>
                                         <th>Location</th>
                                         <th>Date Range</th>
@@ -51,68 +54,117 @@
                                 </thead>
                                 <tbody>
                                     <?php $counter = 1; ?>
-                                    <?php foreach ($proposals as $proposal): ?>
+                                    <?php foreach ($activities as $activity): ?>
                                         <tr>
                                             <td><?= $counter++ ?></td>
-                                            <td><?= esc($proposal['workplan_title']) ?></td>
-                                            <td><?= esc($proposal['activity_title']) ?></td>
+                                            <td>
+                                                <strong><?= esc($activity['activity_title']) ?></strong>
+                                            </td>
+                                            <td><?= esc($activity['performance_output_title'] ?? 'N/A') ?></td>
                                             <td>
                                                 <?php
                                                 $typeClass = '';
-                                                switch ($proposal['activity_type']) {
-                                                    case 'training':
+                                                switch ($activity['type']) {
+                                                    case 'trainings':
                                                         $typeClass = 'bg-info';
                                                         break;
                                                     case 'inputs':
                                                         $typeClass = 'bg-success';
                                                         break;
-                                                    case 'infrastructure':
+                                                    case 'infrastructures':
                                                         $typeClass = 'bg-warning';
+                                                        break;
+                                                    case 'documents':
+                                                        $typeClass = 'bg-primary';
+                                                        break;
+                                                    case 'meetings':
+                                                        $typeClass = 'bg-secondary';
+                                                        break;
+                                                    case 'agreements':
+                                                        $typeClass = 'bg-dark';
+                                                        break;
+                                                    case 'outputs':
+                                                        $typeClass = 'bg-danger';
                                                         break;
                                                 }
                                                 ?>
-                                                <span class="badge <?= $typeClass ?>"><?= ucfirst(esc($proposal['activity_type'])) ?></span>
+                                                <span class="badge <?= $typeClass ?>"><?= ucfirst(esc($activity['type'])) ?></span>
                                             </td>
                                             <td>
-                                                <?= esc($proposal['location']) ?><br>
-                                                <small class="text-muted"><?= esc($proposal['district_name']) ?>, <?= esc($proposal['province_name']) ?></small>
+                                                <?= esc($activity['location'] ?? 'N/A') ?><br>
+                                                <small class="text-muted"><?= esc($activity['district_name'] ?? 'N/A') ?>, <?= esc($activity['province_name'] ?? 'N/A') ?></small>
                                             </td>
                                             <td>
-                                                <?= date('d M Y', strtotime($proposal['date_start'])) ?> -
-                                                <?= date('d M Y', strtotime($proposal['date_end'])) ?>
+                                                <?= date('d M Y', strtotime($activity['date_start'])) ?> -
+                                                <?= date('d M Y', strtotime($activity['date_end'])) ?>
                                             </td>
                                             <?php if (isset($isAdmin) && $isAdmin): ?>
-                                            <td><?= esc($proposal['officer_name'] ?? 'Not Assigned') ?></td>
+                                            <td><?= esc($activity['action_officer_name'] ?? 'Not Assigned') ?></td>
                                             <?php endif; ?>
                                             <td>
                                                 <?php
                                                 $statusBadgeClass = 'bg-secondary';
-                                                switch ($proposal['status']) {
+                                                switch ($activity['status']) {
                                                     case 'pending':
                                                         $statusBadgeClass = 'bg-warning text-dark';
+                                                        break;
+                                                    case 'active':
+                                                        $statusBadgeClass = 'bg-success';
                                                         break;
                                                     case 'submitted':
                                                         $statusBadgeClass = 'bg-info text-dark';
                                                         break;
                                                     case 'approved':
-                                                        $statusBadgeClass = 'bg-success';
+                                                        $statusBadgeClass = 'bg-primary';
                                                         break;
                                                     case 'rated':
-                                                        $statusBadgeClass = 'bg-primary';
+                                                        $statusBadgeClass = 'bg-dark';
                                                         break;
                                                 }
                                                 ?>
-                                                <span class="badge <?= $statusBadgeClass ?>"><?= ucfirst(esc($proposal['status'])) ?></span>
+                                                <span class="badge <?= $statusBadgeClass ?>"><?= ucfirst(esc($activity['status'])) ?></span>
                                             </td>
                                             <td>
-                                                <a href="<?= base_url('activities/' . $proposal['id']) ?>" class="btn btn-info btn-sm" title="View">
-                                                    <i class="fas fa-eye"></i>
-                                                </a>
-                                                <?php if ($proposal['status'] === 'pending'): ?>
-                                                <a href="<?= base_url('activities/' . $proposal['id'] . '/implement') ?>" class="btn btn-primary btn-sm" title="Implement">
-                                                    Implement <i class="fas fa-tasks"></i>
-                                                </a>
-                                                <?php endif; ?>
+                                                <div class="btn-group" role="group">
+                                                    <?php if ($activity['status'] === 'submitted'): ?>
+                                                        <?php
+                                                        // Show supervise button only for admin or assigned supervisor
+                                                        $canSupervise = (session()->get('is_admin') == 1) ||
+                                                                       (session()->get('user_id') == $activity['supervisor_id']);
+                                                        ?>
+                                                        <?php if ($canSupervise): ?>
+                                                        <a href="<?= base_url('activities/' . $activity['id'] . '/supervise') ?>" class="btn btn-sm btn-outline-info" title="Supervise">
+                                                            <i class="fas fa-check-circle"></i> Supervise
+                                                        </a>
+                                                        <?php endif; ?>
+                                                    <?php elseif ($activity['status'] === 'approved'): ?>
+                                                        <a href="<?= base_url('activities/' . $activity['id'] . '/view') ?>" class="btn btn-sm btn-outline-success" title="View Activity">
+                                                            <i class="fas fa-eye"></i> View
+                                                        </a>
+                                                        <a href="<?= base_url('activities/' . $activity['id'] . '/evaluate') ?>" class="btn btn-sm btn-outline-warning" title="Evaluate Activity">
+                                                            <i class="fas fa-star"></i> Evaluate
+                                                        </a>
+                                                    <?php elseif ($activity['status'] === 'rated'): ?>
+                                                        <a href="<?= base_url('activities/' . $activity['id'] . '/view') ?>" class="btn btn-sm btn-outline-success" title="View Activity">
+                                                            <i class="fas fa-eye"></i> View
+                                                        </a>
+                                                        <span class="badge bg-warning text-dark">
+                                                            <i class="fas fa-star me-1"></i>Rated: <?= esc($activity['rating_score'] ?? 'N/A') ?>/10
+                                                        </span>
+                                                    <?php else: ?>
+                                                        <a href="<?= base_url('activities/' . $activity['id']) ?>" class="btn btn-sm btn-outline-primary" title="View Details">
+                                                            <i class="fas fa-eye"></i>
+                                                        </a>
+                                                        <a href="<?= base_url('activities/' . $activity['id'] . '/edit') ?>" class="btn btn-sm btn-outline-warning" title="Edit">
+                                                            <i class="fas fa-edit"></i>
+                                                        </a>
+                                                        <?php if (in_array($activity['status'], ['pending', 'active'])): ?>
+                                                        <a href="<?= base_url('activities/' . $activity['id'] . '/implement') ?>" class="btn btn-sm btn-outline-success" title="Implement">
+                                                            <i class="fas fa-tasks"></i>
+                                                        </a>
+                                                        <?php endif; ?>
+                                                    <?php endif; ?>
+                                                </div>
                                             </td>
                                         </tr>
                                     <?php endforeach; ?>

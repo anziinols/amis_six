@@ -1,6 +1,6 @@
 <IfModule mod_rewrite.c>
     RewriteEngine On
-    #RewriteBase /amis_five/
+    #RewriteBase /amis_six/
 
     # Redirect requests for /public/anything to /anything
     RewriteCond %{THE_REQUEST} /public/([^\s?]*) [NC]

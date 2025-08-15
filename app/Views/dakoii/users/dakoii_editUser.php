@@ -63,14 +63,14 @@
                         </div>
 
                         <div class="mb-3">
-                            <label for="is_active" class="form-label">Status</label>
-                            <select class="form-select bg-dark text-white" id="is_active" name="is_active" required>
-                                <option value="1" class="bg-dark text-white" 
-                                        <?= (old('is_active', $user['is_active']) == 1) ? 'selected' : '' ?>>
+                            <label for="dakoii_user_status" class="form-label">Status</label>
+                            <select class="form-select bg-dark text-white" id="dakoii_user_status" name="dakoii_user_status" required>
+                                <option value="1" class="bg-dark text-white"
+                                        <?= (old('dakoii_user_status', $user['dakoii_user_status']) == 1) ? 'selected' : '' ?>>
                                     Active
                                 </option>
-                                <option value="0" class="bg-dark text-white" 
-                                        <?= (old('is_active', $user['is_active']) == 0) ? 'selected' : '' ?>>
+                                <option value="0" class="bg-dark text-white"
+                                        <?= (old('dakoii_user_status', $user['dakoii_user_status']) == 0) ? 'selected' : '' ?>>
                                     Inactive
                                 </option>
                             </select>

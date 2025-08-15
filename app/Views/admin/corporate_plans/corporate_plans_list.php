@@ -39,12 +39,17 @@ $this->section('content');
                                 </td>
                                 <td>
                                     <div class="btn-group flex-wrap" role="group" aria-label="Plan Actions">
-                                        <a href="<?= base_url('admin/corporate-plans/overarching-objectives/' . $plan['id']) ?>"
+                                        <a href="<?= base_url('admin/corporate-plans/objectives/' . $plan['id']) ?>"
                                            class="btn btn-sm btn-primary">
-                                            <i class="fas fa-eye"></i><span class="d-none d-md-inline"> View Overarching Objectives</span>
+                                            <i class="fas fa-eye"></i><span class="d-none d-md-inline"> View Objectives</span>
                                         </a>
                                         <button type="button" class="btn btn-sm btn-warning edit-plan"
                                             data-id="<?= $plan['id'] ?>"
+                                            data-code="<?= htmlspecialchars($plan['code']) ?>"
+                                            data-title="<?= htmlspecialchars($plan['title']) ?>"
+                                            data-date-from="<?= $plan['date_from'] ?>"
+                                            data-date-to="<?= $plan['date_to'] ?>"
+                                            data-remarks="<?= htmlspecialchars($plan['remarks']) ?>"
                                             data-bs-toggle="modal" data-bs-target="#editCorporatePlanModal">
                                             <i class="fas fa-edit"></i><span class="d-none d-md-inline"> Edit</span>
                                         </button>
@@ -78,7 +83,7 @@ $this->section('content');
                 <h5 class="modal-title" id="addCorporatePlanModalLabel">Add Corporate Plan</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <form id="addCorporatePlanForm">
+            <form id="addCorporatePlanForm" action="<?= base_url('admin/corporate-plans') ?>" method="post">
                 <div class="modal-body">
                     <?= csrf_field() ?>
                     <div class="form-group mb-3">
@@ -119,7 +124,7 @@ $this->section('content');
                 <h5 class="modal-title" id="editCorporatePlanModalLabel">Edit Corporate Plan</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <form id="editCorporatePlanForm">
+            <form id="editCorporatePlanForm" action="<?= base_url('admin/corporate-plans') ?>" method="post">
                 <div class="modal-body">
                     <?= csrf_field() ?>
                     <input type="hidden" id="edit_id" name="id">
@@ -165,127 +170,45 @@ $(document).ready(function() {
         }
     });
 
-    // Add Corporate Plan
-    $('#addCorporatePlanForm').on('submit', function(e) {
-        e.preventDefault();
-
-        $.ajax({
-            url: '<?= base_url('admin/corporate-plans') ?>',
-            type: 'POST',
-            data: $(this).serialize(),
-            dataType: 'json',
-            success: function(response) {
-                if (response.status === 'success') {
-                    // Show success message
-                    toastr.success(response.message);
-                    // Close modal
-                    $('#addCorporatePlanModal').modal('hide');
-                    // Add delay before reload to allow toastr to display
-                    setTimeout(function() {
-                        location.reload();
-                    }, 2000); // 2 second delay
-                } else {
-                    // Show error message
-                    toastr.error(response.message);
-                }
-            },
-            error: function() {
-                toastr.error('An error occurred while processing your request.');
-            }
-        });
-    });
-
-    // Edit Corporate Plan - fetch data via AJAX instead of data attributes
+    // Edit Corporate Plan - populate form data
     $('.edit-plan').on('click', function() {
         const id = $(this).data('id');
+        const code = $(this).data('code');
+        const title = $(this).data('title');
+        const dateFrom = $(this).data('date-from');
+        const dateTo = $(this).data('date-to');
+        const remarks = $(this).data('remarks');
 
-        // Fetch the latest data from the server
-        $.ajax({
-            url: '<?= base_url('admin/corporate-plans/') ?>' + id + '/edit',
-            type: 'GET',
-            dataType: 'json',
-            success: function(response) {
-                if (response.status === 'success') {
-                    const plan = response.data;
+        $('#edit_id').val(id);
+        $('#edit_code').val(code);
+        $('#edit_title').val(title);
+        $('#edit_date_from').val(dateFrom);
+        $('#edit_date_to').val(dateTo);
+        $('#edit_remarks').val(remarks);
 
-                    // Format dates for input field (YYYY-MM-DD)
-                    const formattedDateFrom = new Date(plan.date_from).toISOString().split('T')[0];
-                    const formattedDateTo = new Date(plan.date_to).toISOString().split('T')[0];
-
-                    $('#edit_id').val(plan.id);
-                    $('#edit_code').val(plan.code);
-                    $('#edit_title').val(plan.title);
-                    $('#edit_date_from').val(formattedDateFrom);
-                    $('#edit_date_to').val(formattedDateTo);
-                    $('#edit_remarks').val(plan.remarks);
-                } else {
-                    toastr.error(response.message || 'Failed to load corporate plan data');
-                }
-            },
-            error: function() {
-                toastr.error('An error occurred while retrieving the corporate plan data.');
-            }
-        });
+        // Update the form action to include the ID
+        $('#editCorporatePlanForm').attr('action', '<?= base_url('admin/corporate-plans/') ?>' + id);
     });
 
-    // Update Corporate Plan
-    $('#editCorporatePlanForm').on('submit', function(e) {
-        e.preventDefault();
-        const id = $('#edit_id').val();
-
-        $.ajax({
-            url: '<?= base_url('admin/corporate-plans/') ?>' + id,
-            type: 'POST', // Using POST as a fallback for better form compatibility
-            data: $(this).serialize(),
-            dataType: 'json',
-            success: function(response) {
-                if (response.status === 'success') {
-                    // Show success message
-                    toastr.success(response.message);
-                    // Close modal
-                    $('#editCorporatePlanModal').modal('hide');
-                    // Add delay before reload to allow toastr to display
-                    setTimeout(function() {
-                        location.reload();
-                    }, 2000); // 2 second delay
-                } else {
-                    // Show error message
-                    toastr.error(response.message);
-                }
-            },
-            error: function() {
-                toastr.error('An error occurred while processing your request.');
-            }
-        });
-    });
-
-    // Toggle Status
+    // Toggle Status - use form submission
     $('.toggle-status').on('click', function() {
         if (confirm('Are you sure you want to change the status of this Corporate Plan?')) {
             const id = $(this).data('id');
 
-            $.ajax({
-                url: '<?= base_url('admin/corporate-plans/') ?>' + id + '/toggle-status',
-                type: 'POST',
-                data: { <?= csrf_token() ?>: '<?= csrf_hash() ?>' },
-                dataType: 'json',
-                success: function(response) {
-                    if (response.status === 'success') {
-                        // Show success message
-                        toastr.success(response.message);
-                        // Add delay before reload to allow toastr to display
-                        setTimeout(function() {
-                            location.reload();
-                        }, 2000); // 2 second delay
-                    } else {
-                        // Show error message
-                        toastr.error(response.message);
-                    }
-                },
-                error: function() {
-                    toastr.error('An error occurred while processing your request.');
-                }
+            // Create a form and submit it
+            const form = $('<form>', {
+                'method': 'POST',
+                'action': '<?= base_url('admin/corporate-plans/') ?>' + id + '/toggle-status'
             });
+
+            form.append($('<input>', {
+                'type': 'hidden',
+                'name': '<?= csrf_token() ?>',
+                'value': '<?= csrf_hash() ?>'
+            }));
+
+            $('body').append(form);
+            form.submit();
         }
     });
 });

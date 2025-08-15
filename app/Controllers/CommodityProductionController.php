@@ -30,19 +30,13 @@ class CommodityProductionController extends BaseController
     }
 
     /**
-     * Check if user has commodity role access and has assigned commodity
+     * Check if user has admin capability to access commodity management
      */
     private function checkCommodityAccess()
     {
-        $userRole = session()->get('role');
-        if ($userRole !== 'commodity') {
-            session()->setFlashdata('error', 'Access denied. This section is only available for commodity board users.');
-            return redirect()->to(base_url('dashboard'));
-        }
-
-        $userCommodityId = session()->get('commodity_id');
-        if (empty($userCommodityId)) {
-            session()->setFlashdata('error', 'Access denied. You must have an assigned commodity to access this section. Please contact your administrator.');
+        $isAdmin = session()->get('is_admin');
+        if ($isAdmin != 1) {
+            session()->setFlashdata('error', 'Access denied. This section requires administrator privileges.');
             return redirect()->to(base_url('dashboard'));
         }
 

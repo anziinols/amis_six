@@ -5,19 +5,19 @@ namespace App\Controllers\Admin;
 use App\Controllers\BaseController;
 use App\Models\UserModel;
 use App\Models\BranchesModel;
-use App\Models\CommoditiesModel;
+
 
 class UsersController extends BaseController
 {
     protected $userModel;
     protected $branchesModel;
-    protected $commoditiesModel;
+
 
     public function __construct()
     {
         $this->userModel = new UserModel();
         $this->branchesModel = new BranchesModel();
-        $this->commoditiesModel = new CommoditiesModel();
+
         helper(['email']);
     }
 
@@ -45,14 +45,12 @@ class UsersController extends BaseController
         // Get supervisors for dropdown (users with is_supervisor capability)
         $supervisors = $this->userModel->getUsersBySupervisorCapability();
 
-        // Get commodities for dropdown
-        $commodities = $this->commoditiesModel->getActiveCommodities();
+
 
         $data = [
             'title' => 'Add New User',
             'branches' => $branches,
-            'supervisors' => $supervisors,
-            'commodities' => $commodities
+            'supervisors' => $supervisors
         ];
 
         return view('admin/users/admin_users_create', $data);
@@ -69,14 +67,10 @@ class UsersController extends BaseController
         // Get supervisors for dropdown (users with is_supervisor capability)
         $supervisors = $this->userModel->getUsersBySupervisorCapability();
 
-        // Get commodities for dropdown
-        $commodities = $this->commoditiesModel->getActiveCommodities();
-
         $data = [
             'title' => 'Add New User',
             'branches' => $branches,
-            'supervisors' => $supervisors,
-            'commodities' => $commodities
+            'supervisors' => $supervisors
         ];
 
         return view('admin/users/admin_users_create', $data);
@@ -153,17 +147,35 @@ class UsersController extends BaseController
         if (!isset($userData['is_evaluator'])) {
             $userData['is_evaluator'] = '0';
         }
-
-        // Handle commodity_id based on role
-        if ($userData['role'] !== 'commodity') {
-            // If role is not 'commodity', clear the commodity_id
-            $userData['commodity_id'] = null;
-        } else {
-            // If role is 'commodity', set to null if empty
-            if (empty($userData['commodity_id'])) {
-                $userData['commodity_id'] = null;
-            }
+        if (!isset($userData['is_supervisor'])) {
+            $userData['is_supervisor'] = '0';
         }
+        if (!isset($userData['is_admin'])) {
+            $userData['is_admin'] = '0';
+        }
+
+        // Handle file upload for ID photo
+        $file = $this->request->getFile('id_photo_filepath');
+        if ($file && $file->isValid() && !$file->hasMoved()) {
+            $newName = $file->getRandomName();
+            $file->move(WRITEPATH . 'uploads/user_photos/', $newName);
+            $userData['id_photo_filepath'] = 'uploads/user_photos/' . $newName;
+        }
+        if (!isset($userData['is_supervisor'])) {
+            $userData['is_supervisor'] = '0';
+        }
+        if (!isset($userData['is_admin'])) {
+            $userData['is_admin'] = '0';
+        }
+        if (!isset($userData['is_supervisor'])) {
+            $userData['is_supervisor'] = '0';
+        }
+        if (!isset($userData['is_admin'])) {
+            $userData['is_admin'] = '0';
+        }
+
+        // Clear commodity_id - commodity management is now admin-only
+        $userData['commodity_id'] = null;
 
         // Generate activation token for email-based activation
         $activationToken = $this->userModel->generateActivationToken();
@@ -221,15 +233,11 @@ class UsersController extends BaseController
         // Get supervisors for dropdown (users with is_supervisor capability)
         $supervisors = $this->userModel->getUsersBySupervisorCapability();
 
-        // Get commodities for dropdown
-        $commodities = $this->commoditiesModel->getActiveCommodities();
-
         $data = [
             'title' => 'Edit User',
             'user' => $this->userModel->find($id),
             'branches' => $branches,
-            'supervisors' => $supervisors,
-            'commodities' => $commodities
+            'supervisors' => $supervisors
         ];
 
         if (empty($data['user'])) {
@@ -289,17 +297,26 @@ class UsersController extends BaseController
             if (!isset($userData['is_evaluator'])) {
                 $userData['is_evaluator'] = '0';
             }
-
-            // Handle commodity_id based on role
-            if ($userData['role'] !== 'commodity') {
-                // If role is not 'commodity', clear the commodity_id
-                $userData['commodity_id'] = null;
-            } else {
-                // If role is 'commodity', set to null if empty
-                if (empty($userData['commodity_id'])) {
-                    $userData['commodity_id'] = null;
-                }
+            if (!isset($userData['is_supervisor'])) {
+                $userData['is_supervisor'] = '0';
             }
+            if (!isset($userData['is_admin'])) {
+                $userData['is_admin'] = '0';
+            }
+
+            // Handle file upload for ID photo
+            $file = $this->request->getFile('id_photo_filepath');
+            if ($file && $file->isValid() && !$file->hasMoved()) {
+                $newName = $file->getRandomName();
+                $file->move(WRITEPATH . 'uploads/user_photos/', $newName);
+                $userData['id_photo_filepath'] = 'uploads/user_photos/' . $newName;
+            } else {
+                // Keep existing photo if no new file uploaded
+                $userData['id_photo_filepath'] = $user['id_photo_filepath'];
+            }
+
+            // Clear commodity_id - commodity management is now admin-only
+            $userData['commodity_id'] = null;
 
             // Manual check for email uniqueness
             $emailToCheck = $userData['email'];
@@ -348,17 +365,15 @@ class UsersController extends BaseController
             }
         }
 
-        // Get branches, supervisors, and commodities for the form if validation fails
+        // Get branches and supervisors for the form if validation fails
         $branches = $this->branchesModel->getBranchesForDropdown();
         $supervisors = $this->userModel->getUsersBySupervisorCapability();
-        $commodities = $this->commoditiesModel->getActiveCommodities();
 
         return view('admin/users/admin_users_edit', [
             'title' => 'Edit User',
             'user' => $user,
             'branches' => $branches,
             'supervisors' => $supervisors,
-            'commodities' => $commodities,
             'validation' => $this->validator
         ]);
     }
@@ -418,8 +433,10 @@ class UsersController extends BaseController
             'lname' => $userData['lname'],
             'email' => $userData['email'],
             'role' => $userData['role'],
+            'is_admin' => $userData['is_admin'] ?? 0,
+            'is_supervisor' => $userData['is_supervisor'] ?? 0,
             'is_evaluator' => $userData['is_evaluator'] ?? 0,
-            'commodity_id' => ($userData['role'] === 'commodity') ? ($userData['commodity_id'] ?? null) : null
+            'commodity_id' => null // Commodity management is admin-only
         ];
 
         session()->set($sessionData);

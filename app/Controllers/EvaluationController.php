@@ -46,15 +46,15 @@ class EvaluationController extends BaseController
 
     /**
      * Check if user has evaluator access
-     * Accessible to admin users OR users with is_evaluator = 1
+     * Accessible to users with admin capability OR users with is_evaluator = 1
      */
     private function checkEvaluatorAccess()
     {
-        $userRole = session()->get('role');
+        $isAdmin = session()->get('is_admin');
         $isEvaluator = session()->get('is_evaluator');
 
-        if ($userRole !== 'admin' && $isEvaluator != 1) {
-            throw new \CodeIgniter\Exceptions\PageNotFoundException('Access denied. Evaluation module requires admin role or evaluator privileges.');
+        if ($isAdmin != 1 && $isEvaluator != 1) {
+            throw new \CodeIgniter\Exceptions\PageNotFoundException('Access denied. Evaluation module requires admin capability or evaluator privileges.');
         }
     }
 

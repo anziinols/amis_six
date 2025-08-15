@@ -8,7 +8,11 @@ use App\Models\WorkplanModel;
 use App\Models\BranchesModel;
 use App\Models\UserModel;
 use App\Models\GovStructureModel;
-use App\Models\ProposalModel;
+use App\Models\ActivitiesModel;
+use App\Models\ActivitiesDocumentsModel;
+use App\Models\ActivitiesTrainingModel;
+use App\Models\WorkplanPeriodModel;
+use App\Models\PerformanceOutputsModel;
 use App\Models\WorkplanTrainingActivityModel;
 use App\Models\WorkplanInputActivityModel;
 use App\Models\WorkplanInfrastructureActivityModel;
@@ -23,7 +27,11 @@ class ActivitiesController extends ResourceController
     protected $branchModel;
     protected $userModel;
     protected $govStructureModel;
-    protected $proposalModel;
+    protected $activitiesModel;
+    protected $workplanPeriodModel;
+    protected $performanceOutputsModel;
+    protected $activitiesDocumentsModel;
+    protected $activitiesTrainingModel;
     protected $workplanTrainingActivityModel;
     protected $workplanInputActivityModel;
     protected $workplanInfrastructureActivityModel;
@@ -37,7 +45,11 @@ class ActivitiesController extends ResourceController
         $this->branchModel = new BranchesModel();
         $this->userModel = new UserModel();
         $this->govStructureModel = new GovStructureModel();
-        $this->proposalModel = new ProposalModel();
+        $this->activitiesModel = new ActivitiesModel();
+        $this->workplanPeriodModel = new WorkplanPeriodModel();
+        $this->performanceOutputsModel = new PerformanceOutputsModel();
+        $this->activitiesDocumentsModel = new ActivitiesDocumentsModel();
+        $this->activitiesTrainingModel = new ActivitiesTrainingModel();
         $this->workplanTrainingActivityModel = new WorkplanTrainingActivityModel();
         $this->workplanInputActivityModel = new WorkplanInputActivityModel();
         $this->workplanInfrastructureActivityModel = new WorkplanInfrastructureActivityModel();
@@ -56,6 +68,7 @@ class ActivitiesController extends ResourceController
             ROOTPATH . 'public/uploads/training',
             ROOTPATH . 'public/uploads/inputs',
             ROOTPATH . 'public/uploads/infrastructure',
+            ROOTPATH . 'public/uploads/documents',
             ROOTPATH . 'public/uploads/signing_sheets'
         ];
 
@@ -76,122 +89,171 @@ class ActivitiesController extends ResourceController
         $userId = session()->get('user_id');
         $userRole = session()->get('role');
 
-        // Build the base query
-        $query = $this->proposalModel
-            ->select('
-                proposal.*,
-                workplans.title as workplan_title,
-                workplan_activities.title as activity_title,
-                workplan_activities.activity_type,
-                workplan_activities.description,
-                provinces.name as province_name,
-                districts.name as district_name,
-                CONCAT(supervisors.fname, " ", supervisors.lname) as supervisor_name,
-                CONCAT(officers.fname, " ", officers.lname) as officer_name
-            ')
-            ->join('workplans', 'workplans.id = proposal.workplan_id', 'left')
-            ->join('workplan_activities', 'workplan_activities.id = proposal.activity_id', 'left')
-            ->join('gov_structure as provinces', 'provinces.id = proposal.province_id', 'left')
-            ->join('gov_structure as districts', 'districts.id = proposal.district_id', 'left')
-            ->join('users as supervisors', 'supervisors.id = proposal.supervisor_id', 'left')
-            ->join('users as officers', 'officers.id = proposal.action_officer_id', 'left');
+        // Filter activities based on user capabilities
+        $isAdmin = session()->get('is_admin');
+        $isSupervisor = session()->get('is_supervisor');
 
-        // Filter activities based on user role
-        if ($userRole === 'admin') {
-            // Admin can see all activities
-            $proposals = $query->findAll();
+        if ($isAdmin == 1) {
+            // Admin capability can see all activities
+            $activities = $this->activitiesModel->getAllWithDetails();
             $title = 'All Activities';
-        } elseif ($userRole === 'supervisor') {
-            // Supervisors can see activities they supervise
-            $proposals = $query->where('proposal.supervisor_id', $userId)->findAll();
+        } elseif ($isSupervisor == 1) {
+            // Supervisor capability can see activities they supervise
+            $activities = $this->activitiesModel->getBySupervisor($userId);
             $title = 'Activities I Supervise';
         } else {
             // Regular users can see only their assigned activities (as action officers)
-            $proposals = $query->where('proposal.action_officer_id', $userId)->findAll();
+            $activities = $this->activitiesModel->getByActionOfficer($userId);
             $title = 'My Assigned Activities';
         }
 
         $data = [
             'title' => $title,
-            'proposals' => $proposals,
-            'isAdmin' => ($userRole === 'admin')
+            'activities' => $activities,
+            'isAdmin' => (session()->get('is_admin') == 1)
         ];
 
         return view('activities/activities_index', $data);
     }
 
     /**
+     * Show form for creating new activity
+     *
+     * @return mixed
+     */
+    public function new()
+    {
+        // Get dropdown data
+        $workplanPeriods = $this->workplanPeriodModel->getByStatus('approved');
+        $provinces = $this->govStructureModel->getByLevel('province');
+        $supervisors = $this->userModel->where('is_supervisor', 1)->findAll();
+        $users = $this->userModel->findAll();
+        $activityTypes = $this->activitiesModel->getActivityTypes();
+
+        $data = [
+            'title' => 'Create New Activity',
+            'workplan_periods' => $workplanPeriods,
+            'provinces' => $provinces,
+            'supervisors' => $supervisors,
+            'users' => $users,
+            'activity_types' => $activityTypes,
+            'validation' => \Config\Services::validation()
+        ];
+
+        return view('activities/activities_create', $data);
+    }
+
+    /**
+     * Store new activity
+     *
+     * @return mixed
+     */
+    public function create()
+    {
+        $userId = session()->get('user_id');
+
+        // Validation rules
+        $rules = [
+            'workplan_period_id' => 'required|integer',
+            'performance_output_id' => 'required|integer',
+            'activity_title' => 'required|max_length[500]',
+            'activity_description' => 'required',
+            'province_id' => 'required|integer',
+            'district_id' => 'required|integer',
+            'date_start' => 'required|valid_date',
+            'date_end' => 'required|valid_date',
+            'type' => 'required|in_list[documents,trainings,meetings,agreements,inputs,infrastructures,outputs]',
+            'total_cost' => 'permit_empty|decimal',
+            'location' => 'permit_empty|max_length[255]',
+            'supervisor_id' => 'permit_empty|integer',
+            'action_officer_id' => 'permit_empty|integer'
+        ];
+
+        if (!$this->validate($rules)) {
+            return redirect()->back()->withInput()->with('errors', $this->validator->getErrors());
+        }
+
+        // Prepare data for saving
+        $data = [
+            'workplan_period_id' => $this->request->getPost('workplan_period_id'),
+            'performance_output_id' => $this->request->getPost('performance_output_id'),
+            'supervisor_id' => $this->request->getPost('supervisor_id') ?: null,
+            'action_officer_id' => $this->request->getPost('action_officer_id') ?: null,
+            'activity_title' => $this->request->getPost('activity_title'),
+            'activity_description' => $this->request->getPost('activity_description'),
+            'province_id' => $this->request->getPost('province_id'),
+            'district_id' => $this->request->getPost('district_id'),
+            'date_start' => $this->request->getPost('date_start'),
+            'date_end' => $this->request->getPost('date_end'),
+            'total_cost' => $this->request->getPost('total_cost') ?: null,
+            'location' => $this->request->getPost('location'),
+            'type' => $this->request->getPost('type'),
+            'created_by' => $userId
+        ];
+
+        // Save the activity
+        if ($this->activitiesModel->save($data)) {
+            return redirect()->to('/activities')->with('success', 'Activity created successfully.');
+        } else {
+            return redirect()->back()->withInput()->with('errors', $this->activitiesModel->errors());
+        }
+    }
+
+    /**
      * Display the specified activity details
      *
-     * @param int $id Proposal ID
+     * @param int $id Activity ID
      * @return mixed
      */
     public function show($id = null)
     {
         $userId = session()->get('user_id');
 
-        // Get the proposal with all related details
-        $proposal = $this->proposalModel
-            ->select('
-                proposal.*,
-                workplans.title as workplan_title,
-                workplan_activities.title as activity_title,
-                workplan_activities.activity_type,
-                workplan_activities.description,
-                provinces.name as province_name,
-                districts.name as district_name,
-                CONCAT(supervisors.fname, " ", supervisors.lname) as supervisor_name,
-                CONCAT(officers.fname, " ", officers.lname) as officer_name,
-                branches.name as branch_name
-            ')
-            ->join('workplans', 'workplans.id = proposal.workplan_id', 'left')
-            ->join('workplan_activities', 'workplan_activities.id = proposal.activity_id', 'left')
-            ->join('gov_structure as provinces', 'provinces.id = proposal.province_id', 'left')
-            ->join('gov_structure as districts', 'districts.id = proposal.district_id', 'left')
-            ->join('users as supervisors', 'supervisors.id = proposal.supervisor_id', 'left')
-            ->join('users as officers', 'officers.id = proposal.action_officer_id', 'left')
-            ->join('branches', 'branches.id = workplan_activities.branch_id', 'left')
-            ->find($id);
+        // Get the activity with all related details
+        $activity = $this->activitiesModel->getActivityWithDetails($id);
 
-        if (!$proposal) {
+        if (!$activity) {
             return redirect()->to('/activities')->with('error', 'Activity not found.');
         }
 
         // Check if the user is authorized to view this activity
-        $userRole = session()->get('role');
-        if ($userRole !== 'admin' &&
-            $proposal['action_officer_id'] != $userId &&
-            $proposal['supervisor_id'] != $userId) {
+        $isAdmin = session()->get('is_admin');
+        if ($isAdmin != 1 &&
+            $activity['action_officer_id'] != $userId &&
+            $activity['supervisor_id'] != $userId) {
             return redirect()->to('/activities')->with('error', 'You are not authorized to view this activity.');
         }
 
         // Check if there's already an implementation record based on activity type
         $implementationData = null;
 
-        if ($proposal['activity_type'] === 'training') {
-            $implementationData = $this->workplanTrainingActivityModel
-                ->where('proposal_id', $proposal['id'])
-                ->where('activity_id', $proposal['activity_id'])
+        if ($activity['type'] === 'documents') {
+            $implementationData = $this->activitiesDocumentsModel
+                ->where('activity_id', $activity['id'])
                 ->first();
 
             if ($implementationData) {
-                // Decode JSON fields
-                if (isset($implementationData['trainees'])) {
-                    $implementationData['trainees'] = is_string($implementationData['trainees'])
-                        ? json_decode($implementationData['trainees'], true)
-                        : $implementationData['trainees'];
+                // Decode JSON fields - document_files should already be decoded by model
+                if (isset($implementationData['document_files']) && is_string($implementationData['document_files'])) {
+                    $implementationData['document_files'] = json_decode($implementationData['document_files'], true);
                 }
 
-                if (isset($implementationData['training_images'])) {
-                    $implementationData['training_images'] = is_string($implementationData['training_images'])
-                        ? json_decode($implementationData['training_images'], true)
-                        : $implementationData['training_images'];
+                // Get created by user name
+                if ($implementationData['created_by']) {
+                    $createdByUser = $this->userModel->find($implementationData['created_by']);
+                    $implementationData['created_by_name'] = $createdByUser ? $createdByUser['fname'] . ' ' . $createdByUser['lname'] : 'N/A';
                 }
             }
-        } elseif ($proposal['activity_type'] === 'inputs') {
+        } elseif ($activity['type'] === 'trainings') {
+            $implementationData = $this->activitiesTrainingModel
+                ->where('activity_id', $activity['id'])
+                ->first();
+
+            // ActivitiesTrainingModel automatically decodes JSON fields via afterFind callback
+            // No manual JSON decoding needed
+        } elseif ($activity['type'] === 'inputs') {
             $implementationData = $this->workplanInputActivityModel
-                ->where('proposal_id', $proposal['id'])
-                ->where('activity_id', $proposal['activity_id'])
+                ->where('activity_id', $activity['id'])
                 ->first();
 
             if ($implementationData) {
@@ -208,10 +270,9 @@ class ActivitiesController extends ResourceController
                         : $implementationData['input_images'];
                 }
             }
-        } elseif ($proposal['activity_type'] === 'infrastructure') {
+        } elseif ($activity['type'] === 'infrastructures') {
             $implementationData = $this->workplanInfrastructureActivityModel
-                ->where('proposal_id', $proposal['id'])
-                ->where('activity_id', $proposal['activity_id'])
+                ->where('activity_id', $activity['id'])
                 ->first();
 
             if ($implementationData && isset($implementationData['infrastructure_images'])) {
@@ -223,7 +284,7 @@ class ActivitiesController extends ResourceController
 
         $data = [
             'title' => 'Activity Details',
-            'proposal' => $proposal,
+            'activity' => $activity,
             'implementationData' => $implementationData
         ];
 
@@ -231,77 +292,208 @@ class ActivitiesController extends ResourceController
     }
 
     /**
+     * Show form for editing activity
+     *
+     * @param int $id Activity ID
+     * @return mixed
+     */
+    public function edit($id = null)
+    {
+        $userId = session()->get('user_id');
+
+        // Get the activity
+        $activity = $this->activitiesModel->find($id);
+
+        if (!$activity) {
+            return redirect()->to('/activities')->with('error', 'Activity not found.');
+        }
+
+        // Check if the user is authorized to edit this activity
+        $isAdmin = session()->get('is_admin');
+        if ($isAdmin != 1 && $activity['created_by'] != $userId) {
+            return redirect()->to('/activities')->with('error', 'You are not authorized to edit this activity.');
+        }
+
+        // Get dropdown data
+        $workplanPeriods = $this->workplanPeriodModel->getByStatus('approved');
+        $performanceOutputs = $this->performanceOutputsModel->getByPerformancePeriod($activity['workplan_period_id']);
+        $provinces = $this->govStructureModel->getByLevel('province');
+        $districts = $this->govStructureModel->where('level', 'district')
+                                            ->where('parent_id', $activity['province_id'])
+                                            ->findAll();
+        $supervisors = $this->userModel->where('is_supervisor', 1)->findAll();
+        $users = $this->userModel->findAll();
+        $activityTypes = $this->activitiesModel->getActivityTypes();
+
+        $data = [
+            'title' => 'Edit Activity',
+            'activity' => $activity,
+            'workplan_periods' => $workplanPeriods,
+            'performance_outputs' => $performanceOutputs,
+            'provinces' => $provinces,
+            'districts' => $districts,
+            'supervisors' => $supervisors,
+            'users' => $users,
+            'activity_types' => $activityTypes,
+            'validation' => \Config\Services::validation()
+        ];
+
+        return view('activities/activities_edit', $data);
+    }
+
+    /**
+     * Update activity
+     *
+     * @param int $id Activity ID
+     * @return mixed
+     */
+    public function update($id = null)
+    {
+        $userId = session()->get('user_id');
+
+        // Get the activity
+        $activity = $this->activitiesModel->find($id);
+
+        if (!$activity) {
+            return redirect()->to('/activities')->with('error', 'Activity not found.');
+        }
+
+        // Check if the user is authorized to update this activity
+        $isAdmin = session()->get('is_admin');
+        if ($isAdmin != 1 && $activity['created_by'] != $userId) {
+            return redirect()->to('/activities')->with('error', 'You are not authorized to update this activity.');
+        }
+
+        // Validation rules
+        $rules = [
+            'workplan_period_id' => 'required|integer',
+            'performance_output_id' => 'required|integer',
+            'activity_title' => 'required|max_length[500]',
+            'activity_description' => 'required',
+            'province_id' => 'required|integer',
+            'district_id' => 'required|integer',
+            'date_start' => 'required|valid_date',
+            'date_end' => 'required|valid_date',
+            'type' => 'required|in_list[documents,trainings,meetings,agreements,inputs,infrastructures,outputs]',
+            'total_cost' => 'permit_empty|decimal',
+            'location' => 'permit_empty|max_length[255]',
+            'supervisor_id' => 'permit_empty|integer',
+            'action_officer_id' => 'permit_empty|integer'
+        ];
+
+        if (!$this->validate($rules)) {
+            return redirect()->back()->withInput()->with('errors', $this->validator->getErrors());
+        }
+
+        // Prepare data for updating
+        $data = [
+            'id' => $id,
+            'workplan_period_id' => $this->request->getPost('workplan_period_id'),
+            'performance_output_id' => $this->request->getPost('performance_output_id'),
+            'supervisor_id' => $this->request->getPost('supervisor_id') ?: null,
+            'action_officer_id' => $this->request->getPost('action_officer_id') ?: null,
+            'activity_title' => $this->request->getPost('activity_title'),
+            'activity_description' => $this->request->getPost('activity_description'),
+            'province_id' => $this->request->getPost('province_id'),
+            'district_id' => $this->request->getPost('district_id'),
+            'date_start' => $this->request->getPost('date_start'),
+            'date_end' => $this->request->getPost('date_end'),
+            'total_cost' => $this->request->getPost('total_cost') ?: null,
+            'location' => $this->request->getPost('location'),
+            'type' => $this->request->getPost('type'),
+            'updated_by' => $userId
+        ];
+
+        // Update the activity
+        if ($this->activitiesModel->save($data)) {
+            return redirect()->to('/activities/' . $id)->with('success', 'Activity updated successfully.');
+        } else {
+            return redirect()->back()->withInput()->with('errors', $this->activitiesModel->errors());
+        }
+    }
+
+    /**
+     * Delete activity
+     *
+     * @param int $id Activity ID
+     * @return mixed
+     */
+    public function delete($id = null)
+    {
+        $userId = session()->get('user_id');
+
+        // Get the activity
+        $activity = $this->activitiesModel->find($id);
+
+        if (!$activity) {
+            return redirect()->to('/activities')->with('error', 'Activity not found.');
+        }
+
+        // Check if the user is authorized to delete this activity
+        $isAdmin = session()->get('is_admin');
+        if ($isAdmin != 1 && $activity['created_by'] != $userId) {
+            return redirect()->to('/activities')->with('error', 'You are not authorized to delete this activity.');
+        }
+
+        // Soft delete the activity
+        if ($this->activitiesModel->delete($id)) {
+            return redirect()->to('/activities')->with('success', 'Activity deleted successfully.');
+        } else {
+            return redirect()->to('/activities')->with('error', 'Failed to delete activity.');
+        }
+    }
+
+    /**
      * Show the form for implementing an activity
      *
-     * @param int $id Proposal ID
+     * @param int $id Activity ID
      * @return mixed
      */
     public function implement($id = null)
     {
         $userId = session()->get('user_id');
 
-        // Get the proposal with all related details
-        $proposal = $this->proposalModel
-            ->select('
-                proposal.*,
-                workplans.title as workplan_title,
-                workplan_activities.title as activity_title,
-                workplan_activities.activity_type,
-                workplan_activities.description,
-                provinces.name as province_name,
-                districts.name as district_name,
-                CONCAT(supervisors.fname, " ", supervisors.lname) as supervisor_name
-            ')
-            ->join('workplans', 'workplans.id = proposal.workplan_id', 'left')
-            ->join('workplan_activities', 'workplan_activities.id = proposal.activity_id', 'left')
-            ->join('gov_structure as provinces', 'provinces.id = proposal.province_id', 'left')
-            ->join('gov_structure as districts', 'districts.id = proposal.district_id', 'left')
-            ->join('users as supervisors', 'supervisors.id = proposal.supervisor_id', 'left')
-            ->find($id);
+        // Get the activity with all related details
+        $activity = $this->activitiesModel->getActivityWithDetails($id);
 
-        if (!$proposal) {
+        if (!$activity) {
             return redirect()->to('/activities')->with('error', 'Activity not found.');
         }
 
         // Check if the user is authorized to implement this activity
         // Only action officers can implement activities (admin can implement all)
         $userRole = session()->get('role');
-        if ($userRole !== 'admin' && $proposal['action_officer_id'] != $userId) {
+        if ($userRole !== 'admin' && $activity['action_officer_id'] != $userId) {
             return redirect()->to('/activities')->with('error', 'You are not authorized to implement this activity.');
         }
 
-        // Check if the proposal status is pending
-        if ($proposal['status'] !== 'pending') {
-            return redirect()->to('/activities/' . $id)->with('error', 'Only activities with pending status can be implemented.');
+        // Check if the activity status is pending or active
+        if (!in_array($activity['status'], ['pending', 'active'])) {
+            return redirect()->to('/activities/' . $id)->with('error', 'Only activities with pending or active status can be implemented.');
         }
 
         // Check if there's already an implementation record based on activity type
         $implementationData = null;
 
-        if ($proposal['activity_type'] === 'training') {
-            $implementationData = $this->workplanTrainingActivityModel
-                ->where('proposal_id', $proposal['id'])
-                ->where('activity_id', $proposal['activity_id'])
+        if ($activity['type'] === 'documents') {
+            $implementationData = $this->activitiesDocumentsModel
+                ->where('activity_id', $activity['id'])
                 ->first();
 
             if ($implementationData) {
-                // Decode JSON fields
-                if (isset($implementationData['trainees'])) {
-                    $implementationData['trainees'] = is_string($implementationData['trainees'])
-                        ? json_decode($implementationData['trainees'], true)
-                        : $implementationData['trainees'];
-                }
-
-                if (isset($implementationData['training_images'])) {
-                    $implementationData['training_images'] = is_string($implementationData['training_images'])
-                        ? json_decode($implementationData['training_images'], true)
-                        : $implementationData['training_images'];
-                }
+                // document_files is already decoded by the model's afterFind callback
+                // No additional decoding needed
             }
-        } elseif ($proposal['activity_type'] === 'inputs') {
+        } elseif ($activity['type'] === 'trainings') {
+            $implementationData = $this->activitiesTrainingModel
+                ->where('activity_id', $activity['id'])
+                ->first();
+
+            // ActivitiesTrainingModel automatically decodes JSON fields via afterFind callback
+            // No manual JSON decoding needed
+        } elseif ($activity['type'] === 'inputs') {
             $implementationData = $this->workplanInputActivityModel
-                ->where('proposal_id', $proposal['id'])
-                ->where('activity_id', $proposal['activity_id'])
+                ->where('activity_id', $activity['id'])
                 ->first();
 
             if ($implementationData) {
@@ -318,10 +510,9 @@ class ActivitiesController extends ResourceController
                         : $implementationData['input_images'];
                 }
             }
-        } elseif ($proposal['activity_type'] === 'infrastructure') {
+        } elseif ($activity['type'] === 'infrastructures') {
             $implementationData = $this->workplanInfrastructureActivityModel
-                ->where('proposal_id', $proposal['id'])
-                ->where('activity_id', $proposal['activity_id'])
+                ->where('activity_id', $activity['id'])
                 ->first();
 
             if ($implementationData && isset($implementationData['infrastructure_images'])) {
@@ -329,10 +520,9 @@ class ActivitiesController extends ResourceController
                     ? json_decode($implementationData['infrastructure_images'], true)
                     : $implementationData['infrastructure_images'];
             }
-        } elseif ($proposal['activity_type'] === 'output') {
+        } elseif ($activity['type'] === 'outputs') {
             $implementationData = $this->workplanOutputActivityModel
-                ->where('proposal_id', $proposal['id'])
-                ->where('activity_id', $proposal['activity_id'])
+                ->where('activity_id', $activity['id'])
                 ->first();
 
             if ($implementationData) {
@@ -359,59 +549,67 @@ class ActivitiesController extends ResourceController
 
         $data = [
             'title' => 'Implement Activity',
-            'proposal' => $proposal,
+            'activity' => $activity,
             'implementationData' => $implementationData,
             'validation' => \Config\Services::validation()
         ];
 
-        return view('activities/activities_implement', $data);
+        // Route to specific implementation view based on activity type
+        $viewMap = [
+            'documents' => 'activities/implementations/documents_implementation',
+            'trainings' => 'activities/implementations/trainings_implementation',
+            'inputs' => 'activities/implementations/inputs_implementation',
+            'infrastructures' => 'activities/implementations/infrastructures_implementation',
+            'meetings' => 'activities/implementations/meetings_implementation',
+            'agreements' => 'activities/implementations/agreements_implementation',
+            'outputs' => 'activities/implementations/outputs_implementation'
+        ];
+
+        $viewFile = $viewMap[$activity['type']] ?? 'activities/activities_implement';
+
+        return view($viewFile, $data);
     }
 
     /**
      * Process the implementation form submission
      *
-     * @param int $id Proposal ID
+     * @param int $id Activity ID
      * @return mixed
      */
     public function saveImplementation($id = null)
     {
         $userId = session()->get('user_id');
 
-        // Get the proposal
-        $proposal = $this->proposalModel->find($id);
+        // Get the activity
+        $activity = $this->activitiesModel->find($id);
 
-        if (!$proposal) {
+        if (!$activity) {
             return redirect()->to('/activities')->with('error', 'Activity not found.');
         }
 
         // Check if the user is authorized to implement this activity
         // Only action officers can implement activities (admin can implement all)
         $userRole = session()->get('role');
-        if ($userRole !== 'admin' && $proposal['action_officer_id'] != $userId) {
+        if ($userRole !== 'admin' && $activity['action_officer_id'] != $userId) {
             return redirect()->to('/activities')->with('error', 'You are not authorized to implement this activity.');
         }
 
-        // Check if the proposal status is pending
-        if ($proposal['status'] !== 'pending') {
-            return redirect()->to('/activities/' . $id)->with('error', 'Only activities with pending status can be implemented.');
-        }
-
-        // Get the activity details
-        $activity = $this->workplanActivityModel->find($proposal['activity_id']);
-
-        if (!$activity) {
-            return redirect()->to('/activities')->with('error', 'Activity details not found.');
+        // Check if the activity status is pending or active
+        if (!in_array($activity['status'], ['pending', 'active'])) {
+            return redirect()->to('/activities/' . $id)->with('error', 'Only activities with pending or active status can be implemented.');
         }
 
         // Process based on activity type
-        if ($activity['activity_type'] === 'training') {
-            return $this->saveTrainingImplementation($proposal, $activity);
-        } elseif ($activity['activity_type'] === 'inputs') {
-            return $this->saveInputImplementation($proposal, $activity);
-        } elseif ($activity['activity_type'] === 'infrastructure') {
-            return $this->saveInfrastructureImplementation($proposal, $activity);
-        } elseif ($activity['activity_type'] === 'output') {
-            return $this->saveOutputImplementation($proposal, $activity);
+        if ($activity['type'] === 'documents') {
+            return $this->saveDocumentImplementation($activity);
+        } elseif ($activity['type'] === 'trainings') {
+            return $this->saveTrainingImplementation($activity);
+        } elseif ($activity['type'] === 'inputs') {
+            return $this->saveInputImplementation($activity);
+        } elseif ($activity['type'] === 'infrastructures') {
+            return $this->saveInfrastructureImplementation($activity);
+        } elseif ($activity['type'] === 'outputs') {
+            return $this->saveOutputImplementation($activity);
         }
 
         return redirect()->to('/activities')->with('error', 'Invalid activity type.');
@@ -420,11 +618,10 @@ class ActivitiesController extends ResourceController
     /**
      * Save training implementation data
      *
-     * @param array $proposal
      * @param array $activity
      * @return mixed
      */
-    private function saveTrainingImplementation($proposal, $activity)
+    private function saveTrainingImplementation($activity)
     {
         $userId = session()->get('user_id');
 
@@ -438,6 +635,11 @@ class ActivitiesController extends ResourceController
         if (!$this->validate($rules)) {
             return redirect()->back()->withInput()->with('errors', $this->validator->getErrors());
         }
+
+        // Check if there's an existing record
+        $existingRecord = $this->activitiesTrainingModel
+            ->where('activity_id', $activity['id'])
+            ->first();
 
         // Process trainees data
         $trainees = [];
@@ -482,15 +684,50 @@ class ActivitiesController extends ResourceController
             }
         }
 
+        // Handle training files
+        $trainingFiles = [];
+
+        // Get existing training files if updating
+        if ($existingRecord) {
+            $trainingFiles = $existingRecord['training_files'] ?? [];
+
+            // Handle removals
+            $filesToRemove = json_decode($this->request->getPost('training_files_to_remove') ?? '[]', true) ?? [];
+            foreach ($filesToRemove as $indexToRemove) {
+                unset($trainingFiles[$indexToRemove]);
+            }
+            $trainingFiles = array_values($trainingFiles); // Re-index array
+
+            // Handle caption updates
+            $filesToUpdate = json_decode($this->request->getPost('training_files_to_update') ?? '{}', true) ?? [];
+            foreach ($filesToUpdate as $index => $updates) {
+                if (isset($trainingFiles[$index]) && isset($updates['caption'])) {
+                    $trainingFiles[$index]['caption'] = $updates['caption'];
+                }
+            }
+        }
+
+        // Add new uploaded files
+        if (isset($files['training_files'])) {
+            $captions = $this->request->getPost('training_file_captions') ?? [];
+            foreach ($files['training_files'] as $index => $file) {
+                if ($file->isValid() && !$file->hasMoved()) {
+                    $newName = $file->getRandomName();
+                    $file->move(ROOTPATH . 'public/uploads/training_files', $newName);
+                    $trainingFiles[] = [
+                        'caption' => $captions[$index] ?? '',
+                        'original_name' => $file->getClientName(),
+                        'file_path' => 'public/uploads/training_files/' . $newName
+                    ];
+                }
+            }
+        }
+
         // Handle signing sheet file upload
         $signingSheetFilepath = null;
         $signingSheetFile = $this->request->getFile('signing_sheet');
 
-        // Check if there's an existing record to get the current signing sheet filepath
-        $existingRecord = $this->workplanTrainingActivityModel
-            ->where('proposal_id', $proposal['id'])
-            ->where('activity_id', $activity['id'])
-            ->first();
+
 
         if ($existingRecord && !empty($existingRecord['signing_sheet_filepath'])) {
             $signingSheetFilepath = $existingRecord['signing_sheet_filepath'];
@@ -505,14 +742,12 @@ class ActivitiesController extends ResourceController
 
         // Prepare data for saving
         $data = [
-            'workplan_id' => $proposal['workplan_id'],
-            'proposal_id' => $proposal['id'],
             'activity_id' => $activity['id'],
             'trainers' => $this->request->getPost('trainers'),
             'topics' => $this->request->getPost('topics'),
-            'trainees' => json_encode($trainees),
-            'training_images' => json_encode($trainingImages),
-            'training_files' => json_encode([]), // No files for now
+            'trainees' => $trainees,
+            'training_images' => $trainingImages,
+            'training_files' => $trainingFiles,
             'gps_coordinates' => $this->request->getPost('gps_coordinates'),
             'signing_sheet_filepath' => $signingSheetFilepath,
             'created_by' => $userId,
@@ -520,20 +755,15 @@ class ActivitiesController extends ResourceController
         ];
 
         // Check if record already exists
-        $existingRecord = $this->workplanTrainingActivityModel
-            ->where('proposal_id', $proposal['id'])
-            ->where('activity_id', $activity['id'])
-            ->first();
-
         if ($existingRecord) {
             $data['id'] = $existingRecord['id'];
         }
 
         // Save the data
-        if ($this->workplanTrainingActivityModel->save($data)) {
-            return redirect()->to('/activities/' . $proposal['id'])->with('success', 'Training activity implementation saved successfully.');
+        if ($this->activitiesTrainingModel->save($data)) {
+            return redirect()->to('/activities/' . $activity['id'])->with('success', 'Training activity implementation saved successfully.');
         } else {
-            return redirect()->back()->withInput()->with('error', 'Failed to save training activity implementation: ' . implode(', ', $this->workplanTrainingActivityModel->errors()));
+            return redirect()->back()->withInput()->with('error', 'Failed to save training activity implementation: ' . implode(', ', $this->activitiesTrainingModel->errors()));
         }
     }
 
@@ -885,32 +1115,45 @@ class ActivitiesController extends ResourceController
     }
 
     /**
+     * Get performance outputs by workplan period ID (AJAX)
+     *
+     * @param int $workplanPeriodId
+     * @return mixed
+     */
+    public function getPerformanceOutputs($workplanPeriodId = null)
+    {
+        $performanceOutputs = $this->performanceOutputsModel->getByPerformancePeriod($workplanPeriodId);
+
+        return $this->response->setJSON($performanceOutputs);
+    }
+
+    /**
      * Submit an activity for supervision
      *
-     * @param int $id Proposal ID
+     * @param int $id Activity ID
      * @return mixed
      */
     public function submitForSupervision($id = null)
     {
         $userId = session()->get('user_id');
 
-        // Get the proposal
-        $proposal = $this->proposalModel->find($id);
+        // Get the activity
+        $activity = $this->activitiesModel->find($id);
 
-        if (!$proposal) {
+        if (!$activity) {
             return redirect()->to('/activities')->with('error', 'Activity not found.');
         }
 
         // Check if the user is authorized to submit this activity
         // Only action officers can submit activities (admin can submit all)
-        $userRole = session()->get('role');
-        if ($userRole !== 'admin' && $proposal['action_officer_id'] != $userId) {
+        $isAdmin = session()->get('is_admin');
+        if ($isAdmin != 1 && $activity['action_officer_id'] != $userId) {
             return redirect()->to('/activities')->with('error', 'You are not authorized to submit this activity.');
         }
 
-        // Update the proposal status to "submitted"
+        // Update the activity status to "submitted"
         $remarks = 'Activity submitted for supervision by action officer.';
-        $result = $this->proposalModel->updateStatus($id, 'submitted', $userId, $remarks);
+        $result = $this->activitiesModel->updateStatus($id, 'submitted', $remarks);
 
         if ($result) {
             // Send email notification to supervisor and action officer
@@ -919,6 +1162,390 @@ class ActivitiesController extends ResourceController
             return redirect()->to('/activities/' . $id)->with('success', 'Activity has been submitted for supervision successfully.');
         } else {
             return redirect()->to('/activities/' . $id)->with('error', 'Failed to submit activity for supervision.');
+        }
+    }
+
+    /**
+     * Show supervision view for an activity
+     *
+     * @param int $id Activity ID
+     * @return mixed
+     */
+    public function supervise($id = null)
+    {
+        $userId = session()->get('user_id');
+
+        // Get the activity with all related details
+        $activity = $this->activitiesModel->getActivityWithDetails($id);
+
+        if (!$activity) {
+            return redirect()->to('/activities')->with('error', 'Activity not found.');
+        }
+
+        // Check if the activity is in submitted status
+        if ($activity['status'] !== 'submitted') {
+            return redirect()->to('/activities')->with('error', 'Activity is not in submitted status and cannot be supervised.');
+        }
+
+        // Check if the user is authorized to supervise this activity
+        // Only supervisors assigned to this activity or admin can supervise
+        $isAdmin = session()->get('is_admin');
+        if ($isAdmin != 1 && $activity['supervisor_id'] != $userId) {
+            return redirect()->to('/activities')->with('error', 'You are not authorized to supervise this activity.');
+        }
+
+        // Get implementation data based on activity type
+        $implementationData = null;
+        if ($activity['type'] === 'documents') {
+            $implementationData = $this->activitiesDocumentsModel
+                ->where('activity_id', $activity['id'])
+                ->first();
+
+            if ($implementationData) {
+                // Decode JSON fields - document_files should already be decoded by model
+                if (isset($implementationData['document_files']) && is_string($implementationData['document_files'])) {
+                    $implementationData['document_files'] = json_decode($implementationData['document_files'], true);
+                }
+            }
+        } elseif ($activity['type'] === 'trainings') {
+            $implementationData = $this->activitiesTrainingModel
+                ->where('activity_id', $activity['id'])
+                ->first();
+            // ActivitiesTrainingModel automatically decodes JSON fields via afterFind callback
+        } elseif ($activity['type'] === 'inputs') {
+            $implementationData = $this->workplanInputActivityModel
+                ->where('activity_id', $activity['id'])
+                ->first();
+        } elseif ($activity['type'] === 'infrastructures') {
+            $implementationData = $this->workplanInfrastructureActivityModel
+                ->where('activity_id', $activity['id'])
+                ->first();
+
+            if ($implementationData && isset($implementationData['infrastructure_images'])) {
+                $implementationData['infrastructure_images'] = is_string($implementationData['infrastructure_images'])
+                    ? json_decode($implementationData['infrastructure_images'], true)
+                    : $implementationData['infrastructure_images'];
+            }
+        } elseif ($activity['type'] === 'outputs') {
+            $implementationData = $this->workplanOutputActivityModel
+                ->where('activity_id', $activity['id'])
+                ->first();
+        }
+
+        $data = [
+            'title' => 'Supervise Activity',
+            'activity' => $activity,
+            'implementationData' => $implementationData,
+            'validation' => \Config\Services::validation()
+        ];
+
+        // Route to specific supervision view based on activity type
+        $viewMap = [
+            'documents' => 'activities/supervisions/documents_supervise',
+            'trainings' => 'activities/supervisions/trainings_supervise',
+            'inputs' => 'activities/supervisions/inputs_supervise',
+            'infrastructures' => 'activities/supervisions/infrastructures_supervise',
+            'meetings' => 'activities/supervisions/meetings_supervise',
+            'agreements' => 'activities/supervisions/agreements_supervise',
+            'outputs' => 'activities/supervisions/outputs_supervise'
+        ];
+
+        $view = $viewMap[$activity['type']] ?? 'activities/activities_show';
+        return view($view, $data);
+    }
+
+    /**
+     * Process supervision decision (approve or resend)
+     *
+     * @param int $id Activity ID
+     * @return mixed
+     */
+    public function processSupervision($id = null)
+    {
+        $userId = session()->get('user_id');
+
+        // Get the activity
+        $activity = $this->activitiesModel->find($id);
+
+        if (!$activity) {
+            return redirect()->to('/activities')->with('error', 'Activity not found.');
+        }
+
+        // Check if the activity is in submitted status
+        if ($activity['status'] !== 'submitted') {
+            return redirect()->to('/activities')->with('error', 'Activity is not in submitted status and cannot be supervised.');
+        }
+
+        // Check if the user is authorized to supervise this activity
+        $isAdmin = session()->get('is_admin');
+        if ($isAdmin != 1 && $activity['supervisor_id'] != $userId) {
+            return redirect()->to('/activities')->with('error', 'You are not authorized to supervise this activity.');
+        }
+
+        // Validate input
+        $rules = [
+            'supervision_decision' => 'required|in_list[approve,resend]',
+            'status_remarks' => 'permit_empty|string'
+        ];
+
+        if (!$this->validate($rules)) {
+            return redirect()->back()->withInput()->with('errors', $this->validator->getErrors());
+        }
+
+        $decision = $this->request->getPost('supervision_decision');
+        $remarks = $this->request->getPost('status_remarks') ?? '';
+
+        // Determine new status based on decision
+        $newStatus = ($decision === 'approve') ? 'approved' : 'active';
+        $defaultRemarks = ($decision === 'approve')
+            ? 'Activity approved by supervisor.'
+            : 'Activity resent for re-implementation by supervisor.';
+
+        $finalRemarks = !empty($remarks) ? $remarks : $defaultRemarks;
+
+        // Update the activity status
+        $result = $this->activitiesModel->updateStatus($id, $newStatus, $finalRemarks);
+
+        if ($result) {
+            $message = ($decision === 'approve')
+                ? 'Activity has been approved successfully.'
+                : 'Activity has been resent for re-implementation.';
+            return redirect()->to('/activities')->with('success', $message);
+        } else {
+            return redirect()->back()->with('error', 'Failed to process supervision decision.');
+        }
+    }
+
+    /**
+     * View approved activity with implementation details
+     *
+     * @param int $id Activity ID
+     * @return mixed
+     */
+    public function viewActivity($id = null)
+    {
+        $userId = session()->get('user_id');
+
+        // Get the activity with all related details
+        $activity = $this->activitiesModel->getActivityWithDetails($id);
+
+        if (!$activity) {
+            return redirect()->to('/activities')->with('error', 'Activity not found.');
+        }
+
+        // Check if the user is authorized to view this activity
+        $isAdmin = session()->get('is_admin');
+        if ($isAdmin != 1 &&
+            $activity['action_officer_id'] != $userId &&
+            $activity['supervisor_id'] != $userId) {
+            return redirect()->to('/activities')->with('error', 'You are not authorized to view this activity.');
+        }
+
+        // Get implementation data based on activity type
+        $implementationData = null;
+        if ($activity['type'] === 'documents') {
+            $implementationData = $this->activitiesDocumentsModel
+                ->where('activity_id', $activity['id'])
+                ->first();
+
+            if ($implementationData) {
+                // Decode JSON fields - document_files should already be decoded by model
+                if (isset($implementationData['document_files']) && is_string($implementationData['document_files'])) {
+                    $implementationData['document_files'] = json_decode($implementationData['document_files'], true);
+                }
+            }
+        } elseif ($activity['type'] === 'trainings') {
+            $implementationData = $this->activitiesTrainingModel
+                ->where('activity_id', $activity['id'])
+                ->first();
+            // ActivitiesTrainingModel automatically decodes JSON fields via afterFind callback
+        } elseif ($activity['type'] === 'inputs') {
+            $implementationData = $this->workplanInputActivityModel
+                ->where('activity_id', $activity['id'])
+                ->first();
+        } elseif ($activity['type'] === 'infrastructures') {
+            $implementationData = $this->workplanInfrastructureActivityModel
+                ->where('activity_id', $activity['id'])
+                ->first();
+
+            if ($implementationData && isset($implementationData['infrastructure_images'])) {
+                $implementationData['infrastructure_images'] = is_string($implementationData['infrastructure_images'])
+                    ? json_decode($implementationData['infrastructure_images'], true)
+                    : $implementationData['infrastructure_images'];
+            }
+        } elseif ($activity['type'] === 'outputs') {
+            $implementationData = $this->workplanOutputActivityModel
+                ->where('activity_id', $activity['id'])
+                ->first();
+        }
+
+        $data = [
+            'title' => 'View Activity',
+            'activity' => $activity,
+            'implementationData' => $implementationData
+        ];
+
+        // Route to specific view based on activity type
+        $viewMap = [
+            'documents' => 'activities/views/documents_view',
+            'trainings' => 'activities/views/trainings_view',
+            'inputs' => 'activities/views/inputs_view',
+            'infrastructures' => 'activities/views/infrastructures_view',
+            'meetings' => 'activities/views/meetings_view',
+            'agreements' => 'activities/views/agreements_view',
+            'outputs' => 'activities/views/outputs_view'
+        ];
+
+        $view = $viewMap[$activity['type']] ?? 'activities/activities_show';
+        return view($view, $data);
+    }
+
+    /**
+     * Show evaluation view for an approved activity
+     *
+     * @param int $id Activity ID
+     * @return mixed
+     */
+    public function evaluate($id = null)
+    {
+        $userId = session()->get('user_id');
+
+        // Get the activity with all related details
+        $activity = $this->activitiesModel->getActivityWithDetails($id);
+
+        if (!$activity) {
+            return redirect()->to('/activities')->with('error', 'Activity not found.');
+        }
+
+        // Check if the activity is in approved status
+        if ($activity['status'] !== 'approved') {
+            return redirect()->to('/activities')->with('error', 'Only approved activities can be evaluated.');
+        }
+
+        // Check if the user is authorized to evaluate this activity
+        // Only supervisors assigned to this activity or admin can evaluate
+        $isAdmin = session()->get('is_admin');
+        if ($isAdmin != 1 && $activity['supervisor_id'] != $userId) {
+            return redirect()->to('/activities')->with('error', 'You are not authorized to evaluate this activity.');
+        }
+
+        // Get implementation data based on activity type
+        $implementationData = null;
+        if ($activity['type'] === 'documents') {
+            $implementationData = $this->activitiesDocumentsModel
+                ->where('activity_id', $activity['id'])
+                ->first();
+
+            if ($implementationData) {
+                // Decode JSON fields - document_files should already be decoded by model
+                if (isset($implementationData['document_files']) && is_string($implementationData['document_files'])) {
+                    $implementationData['document_files'] = json_decode($implementationData['document_files'], true);
+                }
+            }
+        } elseif ($activity['type'] === 'trainings') {
+            $implementationData = $this->activitiesTrainingModel
+                ->where('activity_id', $activity['id'])
+                ->first();
+            // ActivitiesTrainingModel automatically decodes JSON fields via afterFind callback
+        } elseif ($activity['type'] === 'inputs') {
+            $implementationData = $this->workplanInputActivityModel
+                ->where('activity_id', $activity['id'])
+                ->first();
+        } elseif ($activity['type'] === 'infrastructures') {
+            $implementationData = $this->workplanInfrastructureActivityModel
+                ->where('activity_id', $activity['id'])
+                ->first();
+
+            if ($implementationData && isset($implementationData['infrastructure_images'])) {
+                $implementationData['infrastructure_images'] = is_string($implementationData['infrastructure_images'])
+                    ? json_decode($implementationData['infrastructure_images'], true)
+                    : $implementationData['infrastructure_images'];
+            }
+        } elseif ($activity['type'] === 'outputs') {
+            $implementationData = $this->workplanOutputActivityModel
+                ->where('activity_id', $activity['id'])
+                ->first();
+        }
+
+        $data = [
+            'title' => 'Evaluate Activity',
+            'activity' => $activity,
+            'implementationData' => $implementationData,
+            'validation' => \Config\Services::validation()
+        ];
+
+        // Route to specific evaluation view based on activity type
+        $viewMap = [
+            'documents' => 'activities/evaluations/documents_evaluate',
+            'trainings' => 'activities/evaluations/trainings_evaluate',
+            'inputs' => 'activities/evaluations/inputs_evaluate',
+            'infrastructures' => 'activities/evaluations/infrastructures_evaluate',
+            'meetings' => 'activities/evaluations/meetings_evaluate',
+            'agreements' => 'activities/evaluations/agreements_evaluate',
+            'outputs' => 'activities/evaluations/outputs_evaluate'
+        ];
+
+        $view = $viewMap[$activity['type']] ?? 'activities/activities_show';
+        return view($view, $data);
+    }
+
+    /**
+     * Process evaluation (rate the activity)
+     *
+     * @param int $id Activity ID
+     * @return mixed
+     */
+    public function processEvaluation($id = null)
+    {
+        $userId = session()->get('user_id');
+
+        // Get the activity
+        $activity = $this->activitiesModel->find($id);
+
+        if (!$activity) {
+            return redirect()->to('/activities')->with('error', 'Activity not found.');
+        }
+
+        // Check if the activity is in approved status
+        if ($activity['status'] !== 'approved') {
+            return redirect()->to('/activities')->with('error', 'Only approved activities can be evaluated.');
+        }
+
+        // Check if the user is authorized to evaluate this activity
+        $isAdmin = session()->get('is_admin');
+        if ($isAdmin != 1 && $activity['supervisor_id'] != $userId) {
+            return redirect()->to('/activities')->with('error', 'You are not authorized to evaluate this activity.');
+        }
+
+        // Validate input
+        $rules = [
+            'rating_score' => 'required|decimal|greater_than[0]|less_than_equal_to[10]',
+            'rate_remarks' => 'permit_empty|string'
+        ];
+
+        if (!$this->validate($rules)) {
+            return redirect()->back()->withInput()->with('errors', $this->validator->getErrors());
+        }
+
+        $ratingScore = $this->request->getPost('rating_score');
+        $remarks = $this->request->getPost('rate_remarks') ?? '';
+
+        // Update the activity with rating information
+        $data = [
+            'status' => 'rated',
+            'rating_score' => $ratingScore,
+            'rated_at' => date('Y-m-d H:i:s'),
+            'rated_by' => $userId,
+            'rate_remarks' => $remarks,
+            'updated_by' => $userId
+        ];
+
+        $result = $this->activitiesModel->update($id, $data);
+
+        if ($result) {
+            return redirect()->to('/activities')->with('success', 'Activity has been rated successfully.');
+        } else {
+            return redirect()->back()->with('error', 'Failed to rate activity.');
         }
     }
 
@@ -1152,5 +1779,116 @@ class ActivitiesController extends ResourceController
             log_message('error', 'Exception sending activity submission notification email: ' . $e->getMessage());
             return false;
         }
+    }
+
+    /**
+     * Save document implementation data
+     *
+     * @param array $activity
+     * @return mixed
+     */
+    private function saveDocumentImplementation($activity)
+    {
+        $userId = session()->get('user_id');
+
+        // Check if this is an update to existing implementation
+        $existingImplementation = $this->activitiesDocumentsModel
+            ->where('activity_id', $activity['id'])
+            ->first();
+
+        // Validation rules - different for new vs update
+        if ($existingImplementation) {
+            // For updates, files and captions are optional (only if adding new documents)
+            $rules = [
+                'remarks' => 'required'
+            ];
+
+            // Only validate new files/captions if they are being uploaded
+            $uploadedFiles = $this->request->getFiles();
+            if (isset($uploadedFiles['document_files']) && !empty($uploadedFiles['document_files'][0]->getName())) {
+                $rules['document_files'] = 'uploaded[document_files]';
+                $rules['document_captions.*'] = 'required';
+            }
+        } else {
+            // For new implementations, files and captions are required
+            $rules = [
+                'remarks' => 'required',
+                'document_files' => 'uploaded[document_files]',
+                'document_captions.*' => 'required'
+            ];
+        }
+
+        if (!$this->validate($rules)) {
+            return redirect()->back()->withInput()->with('errors', $this->validator->getErrors());
+        }
+
+        $documentsData = [];
+
+        // Handle existing documents updates and removals
+        if ($existingImplementation) {
+            // document_files is already decoded by the model's afterFind callback
+            $existingDocuments = $existingImplementation['document_files'] ?? [];
+            $documentsToRemove = json_decode($this->request->getPost('documents_to_remove') ?? '[]', true) ?? [];
+            $documentsToUpdate = json_decode($this->request->getPost('documents_to_update') ?? '{}', true) ?? [];
+
+            // Process existing documents (keep, update, or remove)
+            foreach ($existingDocuments as $index => $document) {
+                if (!in_array($index, $documentsToRemove)) {
+                    // Keep this document, but check for caption updates
+                    if (isset($documentsToUpdate[$index])) {
+                        $document['caption'] = $documentsToUpdate[$index]['caption'];
+                    }
+                    $documentsData[] = $document;
+                }
+            }
+        }
+
+        // Handle new file uploads with captions
+        $uploadedFiles = $this->request->getFiles();
+        $captions = $this->request->getPost('document_captions');
+
+        if (isset($uploadedFiles['document_files']) && is_array($captions)) {
+            foreach ($uploadedFiles['document_files'] as $index => $file) {
+                if ($file->isValid() && !$file->hasMoved()) {
+                    $newName = $file->getRandomName();
+                    $file->move(WRITEPATH . '../public/uploads/documents', $newName);
+                    $documentsData[] = [
+                        'file_path' => 'public/uploads/documents/' . $newName,
+                        'caption' => $captions[$index] ?? '',
+                        'original_name' => $file->getClientName()
+                    ];
+                }
+            }
+        }
+
+        // Prepare data for ActivitiesDocumentsModel
+        $documentData = [
+            'activity_id' => $activity['id'],
+            'document_files' => $documentsData, // This will be JSON encoded by the model
+            'remarks' => $this->request->getPost('remarks')
+        ];
+
+        // Save or update to activities_documents table
+        if ($existingImplementation) {
+            // Update existing implementation
+            $documentData['updated_by'] = $userId;
+            if (!$this->activitiesDocumentsModel->update($existingImplementation['id'], $documentData)) {
+                return redirect()->back()->withInput()->with('error', 'Failed to update document implementation.');
+            }
+        } else {
+            // Create new implementation
+            $documentData['created_by'] = $userId;
+            if (!$this->activitiesDocumentsModel->insert($documentData)) {
+                return redirect()->back()->withInput()->with('error', 'Failed to save document implementation.');
+            }
+        }
+
+        // Update activity status to 'active'
+        $this->activitiesModel->update($activity['id'], [
+            'status' => 'active',
+            'updated_by' => $userId
+        ]);
+
+        return redirect()->to('/activities/' . $activity['id'])->with('success', 'Document implementation saved successfully.');
     }
 }

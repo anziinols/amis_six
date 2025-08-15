@@ -191,7 +191,8 @@ class DakoiiController extends ResourceController
         $data = [
             'name' => $this->request->getPost('name'),
             'username' => $this->request->getPost('username'),
-            'role' => $this->request->getPost('role')
+            'role' => $this->request->getPost('role'),
+            'dakoii_user_status' => $this->request->getPost('dakoii_user_status')
         ];
 
         // Only update password if provided and hash it
@@ -419,7 +420,7 @@ class DakoiiController extends ResourceController
     }
 
     /**
-     * List all system administrators
+     * List all system users
      */
     public function administrators()
     {
@@ -427,23 +428,22 @@ class DakoiiController extends ResourceController
             return $this->verifyLoggedIn();
         }
 
-        // Check if current user is admin
+        // Check if current user has admin role in Dakoii system
         if (session()->get('dakoii_role') !== 'admin') {
             return redirect()->to('dakoii/dashboard')
-                           ->with('error', 'Access denied. Admin privileges required.');
+                           ->with('error', 'Access denied. Administrator role required.');
         }
-        
+
         $data = [
-            'title' => 'System Administrators',
-            'administrators' => $this->userModel->where('role', 'admin')
-                                              ->findAll()
+            'title' => 'System Users Management',
+            'administrators' => $this->userModel->findAll()
         ];
-        
+
         return view('dakoii/administrators/dakoii_adminList', $data);
     }
 
     /**
-     * Show create administrator form
+     * Show create user form
      */
     public function create()
     {
@@ -451,14 +451,14 @@ class DakoiiController extends ResourceController
             return $this->verifyLoggedIn();
         }
 
-        // Check if current user is admin
+        // Check if current user has admin role in Dakoii system
         if (session()->get('dakoii_role') !== 'admin') {
             return redirect()->to('dakoii/dashboard')
-                           ->with('error', 'Access denied. Admin privileges required.');
+                           ->with('error', 'Access denied. Administrator role required.');
         }
 
         $data = [
-            'title' => 'Add New Administrator',
+            'title' => 'Add New System User',
             'validation' => \Config\Services::validation()
         ];
 
@@ -474,29 +474,32 @@ class DakoiiController extends ResourceController
             return $this->verifyLoggedIn();
         }
 
-        // Check if current user is admin
+        // Check if current user has admin role in Dakoii system
         if (session()->get('dakoii_role') !== 'admin') {
             return redirect()->to('dakoii/dashboard')
-                           ->with('error', 'Access denied. Admin privileges required.');
+                           ->with('error', 'Access denied. Administrator role required.');
         }
 
-        // Simple data preparation with explicit password hashing
+        // Prepare data with capability fields
         $password = $this->request->getPost('password');
         $data = [
+            'ucode' => $this->request->getPost('ucode') ?: uniqid(),
             'email' => $this->request->getPost('email'),
-            'password' => password_hash($password, PASSWORD_DEFAULT), // Hash password explicitly
+            'password' => password_hash($password, PASSWORD_DEFAULT),
+            'phone' => $this->request->getPost('phone'),
             'fname' => $this->request->getPost('fname'),
             'lname' => $this->request->getPost('lname'),
-            'role' => 'admin',
+            'role' => $this->request->getPost('role') ?: 'user',
+            'is_admin' => $this->request->getPost('is_admin') ? 1 : 0,
+            'is_supervisor' => $this->request->getPost('is_supervisor') ? 1 : 0,
+            'is_evaluator' => $this->request->getPost('is_evaluator') ? 1 : 0,
             'user_status' => 1,
             'created_by' => session()->get('dakoii_user_id')
         ];
 
         // Simple validation
         if (empty($data['email']) || empty($data['password']) || empty($data['fname']) || empty($data['lname'])) {
-            return redirect()->back()
-                           ->withInput()
-                           ->with('error', 'Please fill in all required fields (Email, Password, First Name, Last Name)');
+            return redirect()->back()->withInput()->with('error', 'Please fill in all required fields');
         }
 
         // Check email uniqueness for new users
@@ -507,14 +510,14 @@ class DakoiiController extends ResourceController
                            ->with('error', 'This email address is already registered');
         }
 
-        // Insert with model (model will handle password hashing)
+        // Insert with model
         if ($this->userModel->insert($data)) {
             return redirect()->to('dakoii/administrators')
-                           ->with('success', 'Administrator created successfully');
+                           ->with('success', 'System user created successfully');
         } else {
             return redirect()->back()
                            ->withInput()
-                           ->with('error', 'Failed to create administrator. Please try again.');
+                           ->with('error', 'Failed to create user. Please try again.');
         }
     }
 
@@ -527,22 +530,21 @@ class DakoiiController extends ResourceController
             return $this->verifyLoggedIn();
         }
 
-        // Check if current user is admin
+        // Check if current user has admin role in Dakoii system
         if (session()->get('dakoii_role') !== 'admin') {
             return redirect()->to('dakoii/dashboard')
-                           ->with('error', 'Access denied. Admin privileges required.');
+                           ->with('error', 'Access denied. Administrator role required.');
         }
 
-        $admin = $this->userModel->where('role', 'admin')
-                               ->find($id);
+        $admin = $this->userModel->find($id);
 
         if (!$admin) {
             return redirect()->to('dakoii/administrators')
-                           ->with('error', 'Administrator not found');
+                           ->with('error', 'User not found');
         }
 
         $data = [
-            'title' => 'Edit Administrator',
+            'title' => 'Edit System User',
             'admin' => $admin,
             'validation' => \Config\Services::validation()
         ];
@@ -559,60 +561,42 @@ class DakoiiController extends ResourceController
             return $this->verifyLoggedIn();
         }
 
-        // Check if current user is admin
+        // Check if current user has admin role in Dakoii system
         if (session()->get('dakoii_role') !== 'admin') {
             return redirect()->to('dakoii/dashboard')
-                           ->with('error', 'Access denied. Admin privileges required.');
+                           ->with('error', 'Access denied. Administrator role required.');
         }
 
-        // Check if administrator exists
-        $admin = $this->userModel->where('role', 'admin')->find($id);
+        // Check if user exists
+        $admin = $this->userModel->find($id);
         if (!$admin) {
             return redirect()->to('dakoii/administrators')
-                           ->with('error', 'Administrator not found');
+                           ->with('error', 'User not found');
         }
 
         // Simple data preparation
         $data = [
             'email' => $this->request->getPost('email'),
+            'phone' => $this->request->getPost('phone'),
             'fname' => $this->request->getPost('fname'),
             'lname' => $this->request->getPost('lname'),
-            'role' => 'admin',
-            'user_status' => 1,
-            'updated_by' => session()->get('dakoii_user_id')
+            'role' => $this->request->getPost('role'),
+            'is_admin' => $this->request->getPost('is_admin') ? 1 : 0,
+            'is_supervisor' => $this->request->getPost('is_supervisor') ? 1 : 0,
+            'is_evaluator' => $this->request->getPost('is_evaluator') ? 1 : 0,
+            'user_status' => $this->request->getPost('user_status')
         ];
 
-        // Add password if provided - hash it explicitly
-        $password = $this->request->getPost('password');
-        if (!empty($password)) {
-            $data['password'] = password_hash($password, PASSWORD_DEFAULT); // Hash password explicitly
+        if (!empty($this->request->getPost('password'))) {
+            $data['password'] = password_hash($this->request->getPost('password'), PASSWORD_DEFAULT);
         }
 
-        // Simple validation
-        if (empty($data['email']) || empty($data['fname']) || empty($data['lname'])) {
-            return redirect()->back()
-                           ->withInput()
-                           ->with('error', 'Please fill in all required fields (Email, First Name, Last Name)');
-        }
-
-        // Check email uniqueness for updates (exclude current user)
-        $existingUser = $this->userModel->where('email', $data['email'])
-                                       ->where('id !=', $id)
-                                       ->first();
-        if ($existingUser) {
-            return redirect()->back()
-                           ->withInput()
-                           ->with('error', 'This email address is already registered by another user');
-        }
-
-        // Update with model (model will handle password hashing)
-        if ($this->userModel->update($id, $data)) {
-            return redirect()->to('dakoii/administrators')
-                           ->with('success', 'Administrator updated successfully');
+        // Direct database update - bypass model validation
+        $db = \Config\Database::connect();
+        if ($db->table('users')->where('id', $id)->update($data)) {
+            return redirect()->to('dakoii/administrators')->with('success', 'User updated successfully');
         } else {
-            return redirect()->back()
-                           ->withInput()
-                           ->with('error', 'Failed to update administrator. Please try again.');
+            return redirect()->back()->withInput()->with('error', 'Failed to update user. Please try again.');
         }
     }
 
@@ -625,18 +609,17 @@ class DakoiiController extends ResourceController
             return $this->verifyLoggedIn();
         }
 
-        // Check if current user is admin
+        // Check if current user has admin role in Dakoii system
         if (session()->get('dakoii_role') !== 'admin') {
             return redirect()->to('dakoii/dashboard')
-                           ->with('error', 'Access denied. Admin privileges required.');
+                           ->with('error', 'Access denied. Administrator role required.');
         }
 
-        $admin = $this->userModel->where('role', 'admin')
-                               ->find($id);
+        $admin = $this->userModel->find($id);
 
         if (!$admin) {
             return redirect()->to('dakoii/administrators')
-                           ->with('error', 'Administrator not found');
+                           ->with('error', 'User not found');
         }
 
         if ($this->userModel->delete($id)) {

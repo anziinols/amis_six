@@ -100,6 +100,8 @@ class Home extends ResourceController
             'user_name' => $user['fname'] . ' ' . $user['lname'],
             'user_status' => $user['user_status'],
             'id_photo' => $user['id_photo_filepath'],
+            'is_admin' => $user['is_admin'] ?? 0,
+            'is_supervisor' => $user['is_supervisor'] ?? 0,
             'is_evaluator' => $user['is_evaluator'] ?? 0,
             'commodity_id' => $user['commodity_id'] ?? null,
             'logged_in' => true

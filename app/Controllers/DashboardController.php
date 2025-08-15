@@ -7,7 +7,7 @@ class DashboardController extends BaseController
     protected $userModel;
     protected $workplanModel;
     protected $workplanActivityModel;
-    protected $proposalModel;
+    protected $activitiesModel;
     protected $meetingsModel;
     protected $documentModel;
 
@@ -23,7 +23,7 @@ class DashboardController extends BaseController
         $this->userModel = new \App\Models\UserModel();
         $this->workplanModel = new \App\Models\WorkplanModel();
         $this->workplanActivityModel = new \App\Models\WorkplanActivityModel();
-        $this->proposalModel = new \App\Models\ProposalModel();
+        $this->activitiesModel = new \App\Models\ActivitiesModel();
         $this->meetingsModel = new \App\Models\MeetingsModel();
         $this->documentModel = new \App\Models\DocumentModel();
     }
@@ -66,27 +66,27 @@ class DashboardController extends BaseController
         $completedTasks = 0;
 
         if ($userRole == 'admin' || $userRole == 'supervisor') {
-            // For admin/supervisor: count proposals they need to approve
-            $pendingTasks = $this->proposalModel
+            // For admin/supervisor: count activities they need to approve
+            $pendingTasks = $this->activitiesModel
                 ->where('supervisor_id', $userId)
                 ->where('status', 'submitted')
                 ->where('deleted_at IS NULL')
                 ->countAllResults();
 
-            $completedTasks = $this->proposalModel
+            $completedTasks = $this->activitiesModel
                 ->where('supervisor_id', $userId)
                 ->whereIn('status', ['approved', 'rated'])
                 ->where('deleted_at IS NULL')
                 ->countAllResults();
         } else {
-            // For regular users: count their pending and completed proposals
-            $pendingTasks = $this->proposalModel
+            // For regular users: count their pending and completed activities
+            $pendingTasks = $this->activitiesModel
                 ->where('action_officer_id', $userId)
                 ->whereIn('status', ['pending', 'submitted'])
                 ->where('deleted_at IS NULL')
                 ->countAllResults();
 
-            $completedTasks = $this->proposalModel
+            $completedTasks = $this->activitiesModel
                 ->where('action_officer_id', $userId)
                 ->whereIn('status', ['approved', 'rated'])
                 ->where('deleted_at IS NULL')

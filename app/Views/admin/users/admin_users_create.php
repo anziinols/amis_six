@@ -35,7 +35,7 @@
                         </div>
                     <?php endif; ?>
 
-                    <form action="<?= base_url('admin/users') ?>" method="post" class="needs-validation" novalidate>
+                    <form action="<?= base_url('admin/users') ?>" method="post" enctype="multipart/form-data" class="needs-validation" novalidate>
                         <?= csrf_field() ?>
                         <input type="hidden" name="created_by" value="<?= session()->get('user_id') ?? 1 ?>">
                         <input type="hidden" name="updated_by" value="<?= session()->get('user_id') ?? 1 ?>">
@@ -46,6 +46,17 @@
                             <div class="col-md-6">
                                 <h6 class="mb-3 text-primary">Basic Information</h6>
 
+                                <div class="mb-3">
+                                    <label for="ucode" class="form-label">User Code <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control <?= session()->has('validation') && session('validation')->hasError('ucode') ? 'is-invalid' : '' ?>"
+                                           id="ucode" name="ucode" value="<?= old('ucode') ?>" placeholder="e.g., USR-2024-0001" required>
+                                    <div class="form-text">Unique identifier for the user</div>
+                                    <?php if (session()->has('validation') && session('validation')->hasError('ucode')): ?>
+                                        <div class="invalid-feedback">
+                                            <?= session('validation')->getError('ucode') ?>
+                                        </div>
+                                    <?php endif; ?>
+                                </div>
 
                                 <div class="mb-3">
                                     <label for="email" class="form-label">Email <span class="text-danger">*</span></label>
@@ -66,8 +77,14 @@
                                 </div>
 
                                 <div class="mb-3">
-                                    <label for="phone" class="form-label">Phone</label>
-                                    <input type="tel" class="form-control" id="phone" name="phone">
+                                    <label for="phone" class="form-label">Phone <span class="text-danger">*</span></label>
+                                    <input type="tel" class="form-control <?= session()->has('validation') && session('validation')->hasError('phone') ? 'is-invalid' : '' ?>"
+                                           id="phone" name="phone" value="<?= old('phone') ?>" required>
+                                    <?php if (session()->has('validation') && session('validation')->hasError('phone')): ?>
+                                        <div class="invalid-feedback">
+                                            <?= session('validation')->getError('phone') ?>
+                                        </div>
+                                    <?php endif; ?>
                                 </div>
                             </div>
 
@@ -155,23 +172,36 @@
                                     <label for="role" class="form-label">Role <span class="text-danger">*</span></label>
                                     <select class="form-select" id="role" name="role" required>
                                         <option value="">Select Role</option>
-                                        <option value="admin">Admin</option>
-                                        <option value="supervisor">Supervisor</option>
-                                        <option value="user">User</option>
-                                        <option value="guest">Guest</option>
-                                        <option value="commodity">Commodity</option>
+                                        <option value="user" <?= old('role') == 'user' ? 'selected' : '' ?>>User</option>
+                                        <option value="guest" <?= old('role') == 'guest' ? 'selected' : '' ?>>Guest</option>
                                     </select>
+                                    <div class="form-text">Basic role - capabilities are set separately below</div>
                                 </div>
 
-                                <div class="mb-3" id="commodity_field" style="display: none;">
-                                    <label for="commodity_id" class="form-label">Commodity <span class="text-danger">*</span></label>
-                                    <select class="form-select" id="commodity_id" name="commodity_id">
-                                        <option value="">Select Commodity</option>
-                                        <?php foreach ($commodities as $commodity): ?>
-                                            <option value="<?= $commodity['id'] ?>"><?= esc($commodity['commodity_name']) ?></option>
-                                        <?php endforeach; ?>
-                                    </select>
+                                <!-- Capabilities Section -->
+                                <div class="mb-3">
+                                    <label class="form-label">User Capabilities</label>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="is_admin" name="is_admin" value="1" <?= old('is_admin') ? 'checked' : '' ?>>
+                                        <label class="form-check-label" for="is_admin">
+                                            <strong>Administrator</strong> - Full system access
+                                        </label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="is_supervisor" name="is_supervisor" value="1" <?= old('is_supervisor') ? 'checked' : '' ?>>
+                                        <label class="form-check-label" for="is_supervisor">
+                                            <strong>Supervisor</strong> - Can supervise other users
+                                        </label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="is_evaluator" name="is_evaluator" value="1" <?= old('is_evaluator') ? 'checked' : '' ?>>
+                                        <label class="form-check-label" for="is_evaluator">
+                                            <strong>Evaluator</strong> - Can perform M&E activities
+                                        </label>
+                                    </div>
                                 </div>
+
+
 
                                 <div class="mb-3">
                                     <label for="joined_date" class="form-label">Joined Date</label>
@@ -179,17 +209,14 @@
                                 </div>
 
                                 <div class="mb-3">
-                                    <div class="form-check">
-                                        <input class="form-check-input" type="checkbox" id="is_evaluator" name="is_evaluator" value="1">
-                                        <label class="form-check-label" for="is_evaluator">
-                                            Is Evaluator (M&E)
-                                        </label>
-                                    </div>
+                                    <label for="id_photo_filepath" class="form-label">ID Photo</label>
+                                    <input type="file" class="form-control" id="id_photo_filepath" name="id_photo_filepath" accept="image/*">
+                                    <div class="form-text">Upload user's ID photo (JPG, PNG, GIF - Max: 2MB)</div>
                                 </div>
 
                                 <div class="mb-3">
                                     <label for="address" class="form-label">Address</label>
-                                    <textarea class="form-control" id="address" name="address" rows="3"></textarea>
+                                    <textarea class="form-control" id="address" name="address" rows="3" placeholder="Enter full address"><?= old('address') ?></textarea>
                                 </div>
                             </div>
                         </div>
@@ -222,34 +249,7 @@ document.addEventListener('DOMContentLoaded', function() {
         form.classList.add('was-validated');
     }, false);
 
-    // Show/hide commodity field based on role selection
-    document.getElementById('role').addEventListener('change', function() {
-        const commodityField = document.getElementById('commodity_field');
-        const commoditySelect = document.getElementById('commodity_id');
 
-        if (this.value === 'commodity') {
-            commodityField.style.display = 'block';
-            commoditySelect.setAttribute('required', 'required');
-        } else {
-            commodityField.style.display = 'none';
-            commoditySelect.removeAttribute('required');
-            commoditySelect.value = ''; // Clear the selection when role is not commodity
-        }
-    });
-
-    // Initialize the commodity field visibility on page load
-    document.addEventListener('DOMContentLoaded', function() {
-        const roleSelect = document.getElementById('role');
-        const commodityField = document.getElementById('commodity_field');
-        const commoditySelect = document.getElementById('commodity_id');
-
-        // Trigger the change event to set initial state
-        if (roleSelect.value !== 'commodity') {
-            commodityField.style.display = 'none';
-            commoditySelect.removeAttribute('required');
-            commoditySelect.value = '';
-        }
-    });
 
     // Initialize any select2 dropdowns if needed
     if (typeof $ !== 'undefined' && $.fn.select2) {
@@ -263,10 +263,7 @@ document.addEventListener('DOMContentLoaded', function() {
             allowClear: true
         });
 
-        $('#commodity_id').select2({
-            placeholder: 'Select Commodity',
-            allowClear: true
-        });
+
     }
 });
 </script>

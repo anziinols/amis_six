@@ -35,7 +35,7 @@
                         </div>
                     <?php endif; ?>
 
-                    <form action="<?= base_url('admin/users/' . $user['id']) ?>" method="post" class="needs-validation" novalidate>
+                    <form action="<?= base_url('admin/users/' . $user['id']) ?>" method="post" enctype="multipart/form-data" class="needs-validation" novalidate>
                         <?= csrf_field() ?>
                         <input type="hidden" name="_method" value="PUT">
                         <input type="hidden" name="created_by" value="<?= $user['created_by'] ?>">
@@ -45,6 +45,18 @@
                             <!-- Basic Information -->
                             <div class="col-md-6">
                                 <h6 class="mb-3 text-primary">Basic Information</h6>
+
+                                <div class="mb-3">
+                                    <label for="ucode" class="form-label">User Code <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control <?= isset($validation) && $validation->hasError('ucode') ? 'is-invalid' : '' ?>"
+                                           id="ucode" name="ucode" value="<?= old('ucode', $user['ucode']) ?>" required>
+                                    <div class="form-text">Unique identifier for the user</div>
+                                    <?php if (isset($validation) && $validation->hasError('ucode')): ?>
+                                        <div class="invalid-feedback">
+                                            <?= $validation->getError('ucode') ?>
+                                        </div>
+                                    <?php endif; ?>
+                                </div>
 
                                 <div class="mb-3">
                                     <label for="email" class="form-label">Email <span class="text-danger">*</span></label>
@@ -167,28 +179,39 @@
                                     <select class="form-select <?= isset($validation) && $validation->hasError('role') ? 'is-invalid' : '' ?>"
                                             id="role" name="role" required>
                                         <option value="">Select Role</option>
-                                        <option value="admin" <?= old('role', $user['role']) == 'admin' ? 'selected' : '' ?>>Admin</option>
-                                        <option value="supervisor" <?= old('role', $user['role']) == 'supervisor' ? 'selected' : '' ?>>Supervisor</option>
                                         <option value="user" <?= old('role', $user['role']) == 'user' ? 'selected' : '' ?>>User</option>
                                         <option value="guest" <?= old('role', $user['role']) == 'guest' ? 'selected' : '' ?>>Guest</option>
-                                        <option value="commodity" <?= old('role', $user['role']) == 'commodity' ? 'selected' : '' ?>>Commodity</option>
                                     </select>
+                                    <div class="form-text">Basic role - capabilities are set separately below</div>
                                     <?php if (isset($validation) && $validation->hasError('role')): ?>
                                         <div class="invalid-feedback"><?= $validation->getError('role') ?></div>
                                     <?php endif; ?>
                                 </div>
 
-                                <div class="mb-3" id="commodity_field" style="display: <?= old('role', $user['role']) == 'commodity' ? 'block' : 'none' ?>;">
-                                    <label for="commodity_id" class="form-label">Commodity <span class="text-danger">*</span></label>
-                                    <select class="form-select" id="commodity_id" name="commodity_id" <?= old('role', $user['role']) == 'commodity' ? 'required' : '' ?>>
-                                        <option value="">Select Commodity</option>
-                                        <?php foreach ($commodities as $commodity): ?>
-                                            <option value="<?= $commodity['id'] ?>" <?= old('commodity_id', $user['commodity_id']) == $commodity['id'] ? 'selected' : '' ?>>
-                                                <?= esc($commodity['commodity_name']) ?>
-                                            </option>
-                                        <?php endforeach; ?>
-                                    </select>
+                                <!-- Capabilities Section -->
+                                <div class="mb-3">
+                                    <label class="form-label">User Capabilities</label>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="is_admin" name="is_admin" value="1" <?= old('is_admin', $user['is_admin']) == '1' ? 'checked' : '' ?>>
+                                        <label class="form-check-label" for="is_admin">
+                                            <strong>Administrator</strong> - Full system access
+                                        </label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="is_supervisor" name="is_supervisor" value="1" <?= old('is_supervisor', $user['is_supervisor']) == '1' ? 'checked' : '' ?>>
+                                        <label class="form-check-label" for="is_supervisor">
+                                            <strong>Supervisor</strong> - Can supervise other users
+                                        </label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="is_evaluator" name="is_evaluator" value="1" <?= old('is_evaluator', $user['is_evaluator']) == '1' ? 'checked' : '' ?>>
+                                        <label class="form-check-label" for="is_evaluator">
+                                            <strong>Evaluator</strong> - Can perform M&E activities
+                                        </label>
+                                    </div>
                                 </div>
+
+
 
                                 <div class="mb-3">
                                     <label for="joined_date" class="form-label">Joined Date</label>
@@ -196,17 +219,22 @@
                                 </div>
 
                                 <div class="mb-3">
-                                    <div class="form-check">
-                                        <input class="form-check-input" type="checkbox" id="is_evaluator" name="is_evaluator" value="1" <?= old('is_evaluator', $user['is_evaluator']) == '1' ? 'checked' : '' ?>>
-                                        <label class="form-check-label" for="is_evaluator">
-                                            Is Evaluator (M&E)
-                                        </label>
-                                    </div>
+                                    <label for="id_photo_filepath" class="form-label">ID Photo</label>
+                                    <?php if (!empty($user['id_photo_filepath'])): ?>
+                                        <div class="mb-2">
+                                            <small class="text-muted">Current photo: </small>
+                                            <a href="<?= base_url($user['id_photo_filepath']) ?>" target="_blank" class="btn btn-sm btn-outline-primary">
+                                                <i class="fas fa-eye"></i> View Current Photo
+                                            </a>
+                                        </div>
+                                    <?php endif; ?>
+                                    <input type="file" class="form-control" id="id_photo_filepath" name="id_photo_filepath" accept="image/*">
+                                    <div class="form-text">Upload new ID photo (JPG, PNG, GIF - Max: 2MB). Leave empty to keep current photo.</div>
                                 </div>
 
                                 <div class="mb-3">
                                     <label for="address" class="form-label">Address</label>
-                                    <textarea class="form-control" id="address" name="address" rows="3"><?= old('address', $user['address']) ?></textarea>
+                                    <textarea class="form-control" id="address" name="address" rows="3" placeholder="Enter full address"><?= old('address', $user['address']) ?></textarea>
                                 </div>
 
                                 <!-- Status Information (Read-only) -->
@@ -290,34 +318,7 @@ document.addEventListener('DOMContentLoaded', function() {
         form.classList.add('was-validated');
     }, false);
 
-    // Show/hide commodity field based on role selection
-    document.getElementById('role').addEventListener('change', function() {
-        const commodityField = document.getElementById('commodity_field');
-        const commoditySelect = document.getElementById('commodity_id');
 
-        if (this.value === 'commodity') {
-            commodityField.style.display = 'block';
-            commoditySelect.setAttribute('required', 'required');
-        } else {
-            commodityField.style.display = 'none';
-            commoditySelect.removeAttribute('required');
-            commoditySelect.value = ''; // Clear the selection when role is not commodity
-        }
-    });
-
-    // Initialize the commodity field visibility on page load
-    document.addEventListener('DOMContentLoaded', function() {
-        const roleSelect = document.getElementById('role');
-        const commodityField = document.getElementById('commodity_field');
-        const commoditySelect = document.getElementById('commodity_id');
-
-        // Trigger the change event to set initial state
-        if (roleSelect.value !== 'commodity') {
-            commodityField.style.display = 'none';
-            commoditySelect.removeAttribute('required');
-            commoditySelect.value = '';
-        }
-    });
 
     // Initialize any select2 dropdowns if needed
     if (typeof $ !== 'undefined' && $.fn.select2) {
@@ -331,10 +332,7 @@ document.addEventListener('DOMContentLoaded', function() {
             allowClear: true
         });
 
-        $('#commodity_id').select2({
-            placeholder: 'Select Commodity',
-            allowClear: true
-        });
+
     }
 });
 </script>

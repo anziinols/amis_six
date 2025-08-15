@@ -17,10 +17,12 @@ class UserModel extends Model
     protected $useAutoIncrement = true;
     protected $returnType = 'array';
 
-    // Use timestamps and specify the fields
+    // Use timestamps and soft deletes
     protected $useTimestamps = true;
+    protected $useSoftDeletes = true;
     protected $createdField = 'created_at';
     protected $updatedField = 'updated_at';
+    protected $deletedField = 'deleted_at';
 
     // Fields that can be set during save, insert, update
     protected $allowedFields = [
@@ -41,6 +43,7 @@ class UserModel extends Model
         'report_to_id',
         'is_evaluator',
         'is_supervisor',
+        'is_admin',
         'commodity_id',
         'role',
         'joined_date',
@@ -51,6 +54,7 @@ class UserModel extends Model
         'user_status_by',
         'created_by',
         'updated_by',
+        'deleted_by',
         'activation_token',
         'activation_expires_at',
         'activated_at',
@@ -60,26 +64,62 @@ class UserModel extends Model
     // Simple validation rules - no complex email uniqueness check
     // Password not required for new users (activation workflow)
     protected $validationRules = [
-        'email' => 'required|valid_email',
+        'ucode' => 'required|max_length[200]',
+        'email' => 'required|valid_email|max_length[255]',
+        'phone' => 'permit_empty',
         'fname' => 'required|max_length[255]',
         'lname' => 'required|max_length[255]',
-        'role' => 'required|in_list[admin,supervisor,user,guest,commodity]'
+        'gender' => 'permit_empty|in_list[male,female]',
+        'dobirth' => 'permit_empty|valid_date',
+        'place_birth' => 'permit_empty|max_length[255]',
+        'address' => 'permit_empty',
+        'employee_number' => 'permit_empty|max_length[100]',
+        'branch_id' => 'permit_empty|integer',
+        'designation' => 'permit_empty|max_length[255]',
+        'grade' => 'permit_empty|max_length[100]',
+        'report_to_id' => 'permit_empty|integer',
+        'is_evaluator' => 'permit_empty|in_list[0,1]',
+        'is_supervisor' => 'permit_empty|in_list[0,1]',
+        'is_admin' => 'permit_empty|in_list[0,1]',
+        'commodity_id' => 'permit_empty|integer',
+        'role' => 'required|in_list[user,guest]',
+        'joined_date' => 'permit_empty|valid_date',
+        'id_photo_filepath' => 'permit_empty|max_length[255]',
+        'user_status' => 'permit_empty|in_list[0,1]',
+        'user_status_remarks' => 'permit_empty',
+        'created_by' => 'permit_empty|integer',
+        'updated_by' => 'permit_empty|integer',
+        'deleted_by' => 'permit_empty|integer'
     ];
 
     // Simple validation messages
     protected $validationMessages = [
+        'ucode' => [
+            'required' => 'User code is required',
+            'max_length' => 'User code cannot exceed 200 characters'
+        ],
         'email' => [
             'required' => 'Email address is required',
-            'valid_email' => 'Please enter a valid email address'
+            'valid_email' => 'Please enter a valid email address',
+            'max_length' => 'Email cannot exceed 255 characters'
+        ],
+        'phone' => [
+            'required' => 'Phone number is required'
         ],
         'fname' => [
-            'required' => 'First name is required'
+            'required' => 'First name is required',
+            'max_length' => 'First name cannot exceed 255 characters'
         ],
         'lname' => [
-            'required' => 'Last name is required'
+            'required' => 'Last name is required',
+            'max_length' => 'Last name cannot exceed 255 characters'
+        ],
+        'gender' => [
+            'in_list' => 'Gender must be either male or female'
         ],
         'role' => [
-            'required' => 'User role is required'
+            'required' => 'User role is required',
+            'in_list' => 'Role must be either user or guest'
         ]
     ];
 
@@ -135,23 +175,37 @@ class UserModel extends Model
                    ->findAll();
     }
 
+
+
     /**
-     * Get users by role
+     * Get users by supervisor capability
+     * Returns all users who have is_supervisor = 1
      */
-    public function getUsersByRole($role)
+    public function getUsersBySupervisorCapability()
     {
-        return $this->where('role', $role)
+        return $this->where('is_supervisor', 1)
                    ->where('user_status', 1)
                    ->findAll();
     }
 
     /**
-     * Get users by supervisor capability
-     * Returns all users who have supervisor role (role = 'supervisor')
+     * Get users by admin capability
+     * Returns all users who have is_admin = 1
      */
-    public function getUsersBySupervisorCapability()
+    public function getUsersByAdminCapability()
     {
-        return $this->where('role', 'supervisor')
+        return $this->where('is_admin', 1)
+                   ->where('user_status', 1)
+                   ->findAll();
+    }
+
+    /**
+     * Get users by evaluator capability
+     * Returns all users who have is_evaluator = 1
+     */
+    public function getUsersByEvaluatorCapability()
+    {
+        return $this->where('is_evaluator', 1)
                    ->where('user_status', 1)
                    ->findAll();
     }
@@ -339,5 +393,78 @@ class UserModel extends Model
         $cutoffTime = time() - ($hours * 3600);
 
         return $createdTime > $cutoffTime;
+    }
+
+    /**
+     * Generate unique user code
+     */
+    public function generateUniqueUserCode($prefix = 'USR'): string
+    {
+        do {
+            $code = $prefix . '-' . date('Y') . '-' . str_pad(rand(1, 9999), 4, '0', STR_PAD_LEFT);
+        } while ($this->where('ucode', $code)->first());
+
+        return $code;
+    }
+
+    /**
+     * Get user by user code
+     */
+    public function getUserByUcode($ucode)
+    {
+        return $this->where('ucode', $ucode)
+                   ->where('user_status', 1)
+                   ->first();
+    }
+
+    /**
+     * Update user capabilities (admin, supervisor, evaluator)
+     */
+    public function updateCapabilities($userId, $isAdmin = 0, $isSupervisor = 0, $isEvaluator = 0, $updatedBy = null)
+    {
+        return $this->update($userId, [
+            'is_admin' => $isAdmin,
+            'is_supervisor' => $isSupervisor,
+            'is_evaluator' => $isEvaluator,
+            'updated_by' => $updatedBy ?? session()->get('user_id')
+        ]);
+    }
+
+    /**
+     * Get all users with detailed information including branch and supervisor
+     */
+    public function getAllUsersWithDetails()
+    {
+        $db = \Config\Database::connect();
+
+        $query = $db->table('users u')
+            ->select('u.*,
+                     b.name as branch_name,
+                     CONCAT(s.fname, " ", s.lname) as supervisor_name,
+                     c.commodity_name,
+                     CONCAT(cb.fname, " ", cb.lname) as created_by_name,
+                     CONCAT(ub.fname, " ", ub.lname) as updated_by_name')
+            ->join('branches b', 'u.branch_id = b.id', 'left')
+            ->join('users s', 'u.report_to_id = s.id', 'left')
+            ->join('commodities c', 'u.commodity_id = c.id', 'left')
+            ->join('users cb', 'u.created_by = cb.id', 'left')
+            ->join('users ub', 'u.updated_by = ub.id', 'left')
+            ->where('u.deleted_at', null)
+            ->orderBy('u.fname', 'ASC')
+            ->get();
+
+        return $query->getResultArray();
+    }
+
+    /**
+     * Soft delete user
+     */
+    public function softDeleteUser($userId, $deletedBy = null)
+    {
+        return $this->update($userId, [
+            'deleted_at' => date('Y-m-d H:i:s'),
+            'deleted_by' => $deletedBy ?? session()->get('user_id'),
+            'user_status' => 0
+        ]);
     }
 }

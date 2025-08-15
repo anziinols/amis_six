@@ -31,16 +31,15 @@
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <h5 class="card-title mb-0">Activity Details</h5>
                     <div>
-                        <button onclick="AMISPdf.generateActivityPDF(<?= $proposal['activity_id'] ?>)" class="btn btn-outline-danger me-2">
-                            <i class="fas fa-file-pdf me-1"></i> Export PDF
-                        </button>
-                        <?php if ($proposal['status'] === 'pending'): ?>
-                        <button type="button" id="submitForSupervision" class="btn btn-warning me-2">
-                            <i class="fas fa-paper-plane me-1"></i> Submit for Supervision
-                        </button>
-                        <a href="<?= base_url('activities/' . $proposal['id'] . '/implement') ?>" class="btn btn-primary">
-                            <i class="fas fa-tasks me-1"></i> Implement
-                        </a>
+                        <?php if (in_array($activity['status'], ['pending', 'active'])): ?>
+                            <a href="<?= base_url('activities/' . $activity['id'] . '/implement') ?>" class="btn btn-primary">
+                                <i class="fas fa-tasks me-1"></i> Implement
+                            </a>
+                            <?php if (!empty($implementationData)): ?>
+                            <button type="button" id="submitForSupervision" class="btn btn-warning me-2">
+                                <i class="fas fa-paper-plane me-1"></i> Submit for Supervision
+                            </button>
+                            <?php endif; ?>
                         <?php endif; ?>
                     </div>
                 </div>
@@ -50,40 +49,48 @@
                             <h6 class="fw-bold">Workplan Information</h6>
                             <table class="table table-bordered">
                                 <tr>
-                                    <th style="width: 30%">Workplan Title</th>
-                                    <td><?= esc($proposal['workplan_title']) ?></td>
+                                    <th style="width: 30%">Performance Output</th>
+                                    <td><?= esc($activity['performance_output_title'] ?? 'N/A') ?></td>
                                 </tr>
                                 <tr>
                                     <th>Activity Title</th>
-                                    <td><?= esc($proposal['activity_title']) ?></td>
+                                    <td><?= esc($activity['activity_title']) ?></td>
                                 </tr>
                                 <tr>
                                     <th>Activity Type</th>
                                     <td>
                                         <?php
                                         $typeClass = '';
-                                        switch ($proposal['activity_type']) {
-                                            case 'training':
+                                        switch ($activity['type']) {
+                                            case 'trainings':
                                                 $typeClass = 'bg-info';
                                                 break;
                                             case 'inputs':
                                                 $typeClass = 'bg-success';
                                                 break;
-                                            case 'infrastructure':
+                                            case 'infrastructures':
                                                 $typeClass = 'bg-warning';
+                                                break;
+                                            case 'documents':
+                                                $typeClass = 'bg-primary';
+                                                break;
+                                            case 'meetings':
+                                                $typeClass = 'bg-secondary';
+                                                break;
+                                            case 'agreements':
+                                                $typeClass = 'bg-dark';
+                                                break;
+                                            case 'outputs':
+                                                $typeClass = 'bg-danger';
                                                 break;
                                         }
                                         ?>
-                                        <span class="badge <?= $typeClass ?>"><?= ucfirst(esc($proposal['activity_type'])) ?></span>
+                                        <span class="badge <?= $typeClass ?>"><?= ucfirst(esc($activity['type'])) ?></span>
                                     </td>
                                 </tr>
                                 <tr>
                                     <th>Description</th>
-                                    <td><?= nl2br(esc($proposal['description'])) ?></td>
-                                </tr>
-                                <tr>
-                                    <th>Branch</th>
-                                    <td><?= esc($proposal['branch_name'] ?? 'N/A') ?></td>
+                                    <td><?= nl2br(esc($activity['activity_description'])) ?></td>
                                 </tr>
                                 <?php if (isset($implementationData['gps_coordinates'])): ?>
                                 <tr>
@@ -103,267 +110,78 @@
                                 <?php endif; ?>
                                 <tr>
                                     <th>Total Cost</th>
-                                    <td><?= !empty($proposal['total_cost']) ? CURRENCY_SYMBOL . ' ' . number_format($proposal['total_cost'], 2) : 'N/A' ?></td>
+                                    <td><?= !empty($activity['total_cost']) ? 'USD ' . number_format($activity['total_cost'], 2) : 'N/A' ?></td>
                                 </tr>
                             </table>
                         </div>
                         <div class="col-md-6">
-                            <h6 class="fw-bold">Proposal Information</h6>
+                            <h6 class="fw-bold">Activity Information</h6>
                             <table class="table table-bordered">
                                 <tr>
                                     <th style="width: 30%">Location</th>
                                     <td>
-                                        <?= esc($proposal['location']) ?><br>
-                                        <small class="text-muted"><?= esc($proposal['district_name']) ?>, <?= esc($proposal['province_name']) ?></small>
+                                        <?= esc($activity['location'] ?? 'N/A') ?><br>
+                                        <small class="text-muted"><?= esc($activity['district_name'] ?? 'N/A') ?>, <?= esc($activity['province_name'] ?? 'N/A') ?></small>
                                     </td>
                                 </tr>
                                 <tr>
                                     <th>Date Range</th>
                                     <td>
-                                        <?= date('d M Y', strtotime($proposal['date_start'])) ?> -
-                                        <?= date('d M Y', strtotime($proposal['date_end'])) ?>
+                                        <?= date('d M Y', strtotime($activity['date_start'])) ?> -
+                                        <?= date('d M Y', strtotime($activity['date_end'])) ?>
                                     </td>
                                 </tr>
                                 <tr>
                                     <th>Total Cost</th>
-                                    <td><?= !empty($proposal['total_cost']) ? number_format($proposal['total_cost'], 2) : 'N/A' ?></td>
+                                    <td><?= !empty($activity['total_cost']) ? 'USD ' . number_format($activity['total_cost'], 2) : 'N/A' ?></td>
                                 </tr>
                                 <tr>
                                     <th>Supervisor</th>
-                                    <td><?= esc($proposal['supervisor_name'] ?? 'N/A') ?></td>
+                                    <td><?= esc($activity['supervisor_name'] ?? 'N/A') ?></td>
                                 </tr>
                                 <tr>
                                     <th>Action Officer</th>
-                                    <td><?= esc($proposal['officer_name'] ?? 'N/A') ?></td>
+                                    <td><?= esc($activity['action_officer_name'] ?? 'N/A') ?></td>
                                 </tr>
                                 <tr>
                                     <th>Status</th>
                                     <td>
                                         <?php
                                         $statusBadgeClass = 'bg-secondary';
-                                        switch ($proposal['status']) {
+                                        switch ($activity['status']) {
                                             case 'pending':
                                                 $statusBadgeClass = 'bg-warning text-dark';
+                                                break;
+                                            case 'active':
+                                                $statusBadgeClass = 'bg-success';
                                                 break;
                                             case 'submitted':
                                                 $statusBadgeClass = 'bg-info text-dark';
                                                 break;
                                             case 'approved':
-                                                $statusBadgeClass = 'bg-success';
+                                                $statusBadgeClass = 'bg-primary';
                                                 break;
                                             case 'rated':
-                                                $statusBadgeClass = 'bg-primary';
+                                                $statusBadgeClass = 'bg-dark';
                                                 break;
                                         }
                                         ?>
-                                        <span class="badge <?= $statusBadgeClass ?>"><?= ucfirst(esc($proposal['status'])) ?></span>
+                                        <span class="badge <?= $statusBadgeClass ?>"><?= ucfirst(esc($activity['status'])) ?></span>
                                     </td>
                                 </tr>
-                                <?php if (!empty($proposal['status_remarks'])): ?>
-                                <tr>
-                                    <th>Status Remarks</th>
-                                    <td><?= nl2br(esc($proposal['status_remarks'])) ?></td>
-                                </tr>
-                                <?php endif; ?>
                             </table>
                         </div>
                     </div>
 
-                    <?php if ($implementationData): ?>
-                    <div class="row mt-4">
-                        <div class="col-md-12">
-                            <h6 class="fw-bold">Implementation Details</h6>
 
-                            <?php if ($proposal['activity_type'] === 'training'): ?>
-                                <div class="card mb-3">
-                                    <div class="card-header">
-                                        <h6 class="mb-0">Training Information</h6>
-                                    </div>
-                                    <div class="card-body">
-                                        <div class="row mb-3">
-                                            <div class="col-md-6">
-                                                <p><strong>Trainers:</strong> <?= esc($implementationData['trainers']) ?></p>
-                                                <p><strong>Topics:</strong> <?= esc($implementationData['topics']) ?></p>
-                                            </div>
-                                            <div class="col-md-6">
-                                                <p><strong>GPS Coordinates:</strong> <?= esc($implementationData['gps_coordinates'] ?? 'N/A') ?></p>
-                                                <?php if (!empty($implementationData['signing_sheet_filepath'])): ?>
-                                                <p><strong>Signing Sheet:</strong> <a href="<?= base_url($implementationData['signing_sheet_filepath']) ?>" target="_blank" class="btn btn-sm btn-outline-primary"><i class="fas fa-file-signature me-1"></i> View Signing Sheet</a></p>
-                                                <?php endif; ?>
-                                            </div>
-                                        </div>
 
-                                        <?php if (!empty($implementationData['trainees'])): ?>
-                                        <div class="table-responsive">
-                                            <h6>Trainees</h6>
-                                            <table class="table table-bordered table-striped">
-                                                <thead>
-                                                    <tr>
-                                                        <th>#</th>
-                                                        <th>Full Name</th>
-                                                        <th>Age</th>
-                                                        <th>Gender</th>
-                                                        <th>Phone</th>
-                                                        <th>Email</th>
-                                                        <th>Remarks</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody>
-                                                    <?php $counter = 1; ?>
-                                                    <?php foreach ($implementationData['trainees'] as $trainee): ?>
-                                                    <tr>
-                                                        <td><?= $counter++ ?></td>
-                                                        <td><?= esc($trainee['name'] ?? 'N/A') ?></td>
-                                                        <td><?= esc($trainee['age'] ?? 'N/A') ?></td>
-                                                        <td><?= esc($trainee['gender'] ?? 'N/A') ?></td>
-                                                        <td><?= esc($trainee['phone'] ?? 'N/A') ?></td>
-                                                        <td><?= esc($trainee['email'] ?? 'N/A') ?></td>
-                                                        <td><?= esc($trainee['remarks'] ?? '') ?></td>
-                                                    </tr>
-                                                    <?php endforeach; ?>
-                                                </tbody>
-                                            </table>
-                                        </div>
-                                        <?php endif; ?>
 
-                                        <?php if (!empty($implementationData['training_images'])): ?>
-                                        <div class="mt-4">
-                                            <h6>Training Images</h6>
-                                            <div class="row">
-                                                <?php
-                                                $trainingImages = is_string($implementationData['training_images'])
-                                                    ? json_decode($implementationData['training_images'], true)
-                                                    : $implementationData['training_images'];
-
-                                                foreach ($trainingImages as $image):
-                                                ?>
-                                                <div class="col-md-3 mb-3">
-                                                    <div class="card">
-                                                        <img src="<?= base_url($image) ?>" class="card-img-top img-fluid" alt="Training Image">
-                                                    </div>
-                                                </div>
-                                                <?php endforeach; ?>
-                                            </div>
-                                        </div>
-                                        <?php endif; ?>
-                                    </div>
-                                </div>
-                            <?php elseif ($proposal['activity_type'] === 'inputs'): ?>
-                                <div class="card mb-3">
-                                    <div class="card-header">
-                                        <h6 class="mb-0">Inputs Information</h6>
-                                    </div>
-                                    <div class="card-body">
-                                        <div class="row mb-3">
-                                            <div class="col-md-6">
-                                                <p><strong>GPS Coordinates:</strong> <?= esc($implementationData['gps_coordinates'] ?? 'N/A') ?></p>
-                                            </div>
-                                            <div class="col-md-6">
-                                                <?php if (!empty($implementationData['signing_sheet_filepath'])): ?>
-                                                <p><strong>Signing Sheet:</strong> <a href="<?= base_url($implementationData['signing_sheet_filepath']) ?>" target="_blank" class="btn btn-sm btn-outline-primary"><i class="fas fa-file-signature me-1"></i> View Signing Sheet</a></p>
-                                                <?php endif; ?>
-                                            </div>
-                                        </div>
-
-                                        <?php if (!empty($implementationData['inputs'])): ?>
-                                        <div class="table-responsive">
-                                            <table class="table table-bordered table-striped">
-                                                <thead>
-                                                    <tr>
-                                                        <th>#</th>
-                                                        <th>Input Name</th>
-                                                        <th>Quantity</th>
-                                                        <th>Unit</th>
-                                                        <th>Remarks</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody>
-                                                    <?php $counter = 1; ?>
-                                                    <?php foreach ($implementationData['inputs'] as $input): ?>
-                                                    <tr>
-                                                        <td><?= $counter++ ?></td>
-                                                        <td><?= esc($input['name'] ?? 'N/A') ?></td>
-                                                        <td><?= esc($input['quantity'] ?? 'N/A') ?></td>
-                                                        <td><?= esc($input['unit'] ?? 'N/A') ?></td>
-                                                        <td><?= esc($input['remarks'] ?? '') ?></td>
-                                                    </tr>
-                                                    <?php endforeach; ?>
-                                                </tbody>
-                                            </table>
-                                        </div>
-                                        <?php endif; ?>
-
-                                        <?php if (!empty($implementationData['input_images'])): ?>
-                                        <div class="mt-4">
-                                            <h6>Input Images</h6>
-                                            <div class="row">
-                                                <?php
-                                                $inputImages = is_string($implementationData['input_images'])
-                                                    ? json_decode($implementationData['input_images'], true)
-                                                    : $implementationData['input_images'];
-
-                                                foreach ($inputImages as $image):
-                                                ?>
-                                                <div class="col-md-3 mb-3">
-                                                    <div class="card">
-                                                        <img src="<?= base_url($image) ?>" class="card-img-top img-fluid" alt="Input Image">
-                                                    </div>
-                                                </div>
-                                                <?php endforeach; ?>
-                                            </div>
-                                        </div>
-                                        <?php endif; ?>
-                                    </div>
-                                </div>
-                            <?php elseif ($proposal['activity_type'] === 'infrastructure'): ?>
-                                <div class="card mb-3">
-                                    <div class="card-header">
-                                        <h6 class="mb-0">Infrastructure Information</h6>
-                                    </div>
-                                    <div class="card-body">
-                                        <div class="row mb-3">
-                                            <div class="col-md-6">
-                                                <p><strong>Infrastructure:</strong> <?= esc($implementationData['infrastructure']) ?></p>
-                                                <p><strong>GPS Coordinates:</strong> <?= esc($implementationData['gps_coordinates'] ?? 'N/A') ?></p>
-                                            </div>
-                                            <div class="col-md-6">
-                                                <?php if (!empty($implementationData['signing_sheet_filepath'])): ?>
-                                                <p><strong>Signing Sheet:</strong> <a href="<?= base_url($implementationData['signing_sheet_filepath']) ?>" target="_blank" class="btn btn-sm btn-outline-primary"><i class="fas fa-file-signature me-1"></i> View Signing Sheet</a></p>
-                                                <?php endif; ?>
-                                            </div>
-                                        </div>
-
-                                        <?php if (!empty($implementationData['infrastructure_images'])): ?>
-                                        <div class="mt-4">
-                                            <h6>Infrastructure Images</h6>
-                                            <div class="row">
-                                                <?php
-                                                $infrastructureImages = is_string($implementationData['infrastructure_images'])
-                                                    ? json_decode($implementationData['infrastructure_images'], true)
-                                                    : $implementationData['infrastructure_images'];
-
-                                                foreach ($infrastructureImages as $image):
-                                                ?>
-                                                <div class="col-md-3 mb-3">
-                                                    <div class="card">
-                                                        <img src="<?= base_url($image) ?>" class="card-img-top img-fluid" alt="Infrastructure Image">
-                                                    </div>
-                                                </div>
-                                                <?php endforeach; ?>
-                                            </div>
-                                        </div>
-                                        <?php endif; ?>
-                                    </div>
-                                </div>
-                            <?php endif; ?>
-                        </div>
-                    </div>
-                    <?php endif; ?>
                 </div>
             </div>
         </div>
     </div>
 </div>
+
 
 <!-- Submit for Supervision Modal -->
 <div class="modal fade" id="supervisionModal" tabindex="-1" aria-labelledby="supervisionModalLabel" aria-hidden="true">
@@ -393,6 +211,7 @@
 <?= $this->section('scripts') ?>
 <script>
     $(document).ready(function() {
+
         // Submit for Supervision button click - Show modal
         $('#submitForSupervision').click(function(e) {
             e.preventDefault();
@@ -404,7 +223,7 @@
             // Create a form to submit
             var form = $('<form></form>');
             form.attr('method', 'post');
-            form.attr('action', '<?= base_url('activities/' . $proposal['id'] . '/submit-for-supervision') ?>');
+            form.attr('action', '<?= base_url('activities/' . $activity['id'] . '/submit-for-supervision') ?>');
 
             // Add CSRF token
             form.append($('<input>').attr({
