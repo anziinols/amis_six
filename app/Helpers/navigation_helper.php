@@ -41,9 +41,9 @@ if (!function_exists('canAccessMenu')) {
             'workplans' => ['admin', 'supervisor'],
 
             'activities' => ['admin', 'supervisor'], // Regular users access through direct assignment
-            'workplan_period' => ['admin', 'supervisor'],
-            'my_activities' => ['admin', 'supervisor'], // My Activities as main menu
-            'reports' => ['admin', 'supervisor'],
+            'workplan_period' => ['admin', 'supervisor', 'user'], // Allow ordinary users access
+            'my_activities' => ['admin', 'supervisor', 'user'], // Allow ordinary users access to their activities
+            'reports' => ['admin', 'supervisor', 'user'], // Allow ordinary users access to reports
             'duty_instructions' => ['admin', 'supervisor'],
             'evaluation' => ['admin', 'evaluator']
         ];
@@ -157,6 +157,12 @@ if (!function_exists('getNavigationMenus')) {
                 'url' => 'workplans',
                 'capabilities' => ['admin', 'supervisor']
             ],
+            'workplan_period' => [
+                'title' => 'Workplan Period',
+                'icon' => 'fas fa-calendar-alt',
+                'url' => 'workplan-period',
+                'capabilities' => ['admin', 'supervisor', 'user']
+            ],
 
             'evaluation' => [
                 'title' => 'Evaluation',
@@ -174,7 +180,7 @@ if (!function_exists('getNavigationMenus')) {
                 'title' => 'My Activities',
                 'icon' => 'fas fa-clipboard-list',
                 'url' => 'activities',
-                'capabilities' => ['admin', 'supervisor']
+                'capabilities' => ['admin', 'supervisor', 'user']
             ],
             'activities' => [
                 'title' => 'Activities',
@@ -192,7 +198,7 @@ if (!function_exists('getNavigationMenus')) {
                 'title' => 'Reports',
                 'icon' => 'fas fa-chart-bar',
                 'url' => '#reportsSubmenu',
-                'capabilities' => ['admin', 'supervisor'],
+                'capabilities' => ['admin', 'supervisor', 'user'],
                 'submenu' => true,
                 'submenus' => [
                     'mtdp_report' => ['title' => 'MTDP Report', 'icon' => 'fas fa-file-alt', 'url' => 'reports/mtdp'],
