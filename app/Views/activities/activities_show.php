@@ -172,12 +172,226 @@
                             </table>
                         </div>
                     </div>
-
-
-
-
                 </div>
             </div>
+
+            <!-- Implementation Details Section -->
+            <?php if ($implementationData): ?>
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-tasks me-2"></i>Implementation Details
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <?php if ($activity['type'] === 'documents'): ?>
+                        <!-- Documents Implementation -->
+                        <div class="mb-3">
+                            <strong>General Remarks:</strong>
+                            <p class="text-muted"><?= nl2br(esc($implementationData['remarks'] ?? 'N/A')) ?></p>
+                        </div>
+
+                        <?php if (!empty($implementationData['document_files'])): ?>
+                        <div class="mb-3">
+                            <strong>Uploaded Documents (<?= count($implementationData['document_files']) ?> files):</strong>
+                            <div class="table-responsive">
+                                <table class="table table-sm table-bordered">
+                                    <thead>
+                                        <tr>
+                                            <th>#</th>
+                                            <th>Caption</th>
+                                            <th>Original Name</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <?php foreach ($implementationData['document_files'] as $index => $document): ?>
+                                        <tr>
+                                            <td><?= $index + 1 ?></td>
+                                            <td><?= esc($document['caption']) ?></td>
+                                            <td><?= esc($document['original_name']) ?></td>
+                                            <td>
+                                                <a href="<?= base_url($document['file_path']) ?>" target="_blank" class="btn btn-sm btn-outline-primary">
+                                                    <i class="fas fa-download"></i> Download
+                                                </a>
+                                            </td>
+                                        </tr>
+                                        <?php endforeach; ?>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        <?php endif; ?>
+
+                    <?php elseif ($activity['type'] === 'trainings'): ?>
+                        <!-- Training Implementation -->
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <strong>Trainers:</strong>
+                                    <p class="text-muted"><?= nl2br(esc($implementationData['trainers'] ?? 'N/A')) ?></p>
+                                </div>
+                                <div class="mb-3">
+                                    <strong>Topics:</strong>
+                                    <p class="text-muted"><?= nl2br(esc($implementationData['topics'] ?? 'N/A')) ?></p>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <strong>GPS Coordinates:</strong>
+                                    <p class="text-muted"><?= esc($implementationData['gps_coordinates'] ?? 'N/A') ?></p>
+                                </div>
+                                <?php if (!empty($implementationData['signing_sheet_filepath'])): ?>
+                                <div class="mb-3">
+                                    <strong>Signing Sheet:</strong><br>
+                                    <a href="<?= base_url($implementationData['signing_sheet_filepath']) ?>" target="_blank" class="btn btn-sm btn-outline-primary">
+                                        <i class="fas fa-download"></i> Download Signing Sheet
+                                    </a>
+                                </div>
+                                <?php endif; ?>
+                            </div>
+                        </div>
+
+                        <?php if (!empty($implementationData['trainees'])): ?>
+                        <div class="mb-3">
+                            <strong>Trainees (<?= count($implementationData['trainees']) ?> participants):</strong>
+                            <div class="table-responsive">
+                                <table class="table table-sm table-bordered">
+                                    <thead>
+                                        <tr>
+                                            <th>#</th>
+                                            <th>Name</th>
+                                            <th>Age</th>
+                                            <th>Gender</th>
+                                            <th>Phone</th>
+                                            <th>Email</th>
+                                            <th>Remarks</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <?php foreach ($implementationData['trainees'] as $index => $trainee): ?>
+                                        <tr>
+                                            <td><?= $index + 1 ?></td>
+                                            <td><?= esc($trainee['name']) ?></td>
+                                            <td><?= esc($trainee['age']) ?></td>
+                                            <td><?= esc($trainee['gender']) ?></td>
+                                            <td><?= esc($trainee['phone']) ?></td>
+                                            <td><?= esc($trainee['email']) ?></td>
+                                            <td><?= esc($trainee['remarks']) ?></td>
+                                        </tr>
+                                        <?php endforeach; ?>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        <?php endif; ?>
+
+                    <?php elseif ($activity['type'] === 'meetings'): ?>
+                        <!-- Meeting Implementation -->
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <strong>Meeting Title:</strong>
+                                    <p class="text-muted"><?= esc($implementationData['title'] ?? 'N/A') ?></p>
+                                </div>
+                                <div class="mb-3">
+                                    <strong>Agenda:</strong>
+                                    <p class="text-muted"><?= nl2br(esc($implementationData['agenda'] ?? 'N/A')) ?></p>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <strong>GPS Coordinates:</strong>
+                                    <p class="text-muted"><?= esc($implementationData['gps_coordinates'] ?? 'N/A') ?></p>
+                                </div>
+                                <?php if (!empty($implementationData['signing_sheet_filepath'])): ?>
+                                <div class="mb-3">
+                                    <strong>Signing Sheet:</strong><br>
+                                    <a href="<?= base_url($implementationData['signing_sheet_filepath']) ?>" target="_blank" class="btn btn-sm btn-outline-primary">
+                                        <i class="fas fa-download"></i> Download Signing Sheet
+                                    </a>
+                                </div>
+                                <?php endif; ?>
+                            </div>
+                        </div>
+
+                        <?php if (!empty($implementationData['participants'])): ?>
+                        <div class="mb-3">
+                            <strong>Participants (<?= count($implementationData['participants']) ?> people):</strong>
+                            <div class="table-responsive">
+                                <table class="table table-sm table-bordered">
+                                    <thead>
+                                        <tr>
+                                            <th>#</th>
+                                            <th>Name</th>
+                                            <th>Organization</th>
+                                            <th>Position</th>
+                                            <th>Phone</th>
+                                            <th>Email</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <?php foreach ($implementationData['participants'] as $index => $participant): ?>
+                                        <tr>
+                                            <td><?= $index + 1 ?></td>
+                                            <td><?= esc($participant['name']) ?></td>
+                                            <td><?= esc($participant['organization']) ?></td>
+                                            <td><?= esc($participant['position']) ?></td>
+                                            <td><?= esc($participant['phone']) ?></td>
+                                            <td><?= esc($participant['email']) ?></td>
+                                        </tr>
+                                        <?php endforeach; ?>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        <?php endif; ?>
+
+                        <?php if (!empty($implementationData['minutes'])): ?>
+                        <div class="mb-3">
+                            <strong>Meeting Minutes:</strong>
+                            <div class="table-responsive">
+                                <table class="table table-sm table-bordered">
+                                    <thead>
+                                        <tr>
+                                            <th>#</th>
+                                            <th>Topic</th>
+                                            <th>Discussion</th>
+                                            <th>Action Items</th>
+                                            <th>Responsible Person</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <?php foreach ($implementationData['minutes'] as $index => $minute): ?>
+                                        <tr>
+                                            <td><?= $index + 1 ?></td>
+                                            <td><?= esc($minute['topic']) ?></td>
+                                            <td><?= nl2br(esc($minute['discussion'])) ?></td>
+                                            <td><?= nl2br(esc($minute['action_items'])) ?></td>
+                                            <td><?= esc($minute['responsible_person']) ?></td>
+                                        </tr>
+                                        <?php endforeach; ?>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        <?php endif; ?>
+
+                    <?php else: ?>
+                        <!-- Other Activity Types -->
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle me-2"></i>
+                            Implementation details for <?= ucfirst(esc($activity['type'])) ?> activities are available but the display format is being developed.
+                        </div>
+                    <?php endif; ?>
+
+                    <div class="text-muted mt-3">
+                        <small><i class="fas fa-clock me-1"></i>Implemented on: <?= date('d M Y H:i', strtotime($implementationData['created_at'])) ?></small>
+                    </div>
+                </div>
+            </div>
+            <?php endif; ?>
+
         </div>
     </div>
 </div>

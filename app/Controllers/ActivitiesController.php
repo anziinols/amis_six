@@ -283,6 +283,27 @@ class ActivitiesController extends ResourceController
                     ? json_decode($implementationData['infrastructure_images'], true)
                     : $implementationData['infrastructure_images'];
             }
+        } elseif ($activity['type'] === 'meetings') {
+            $implementationData = $this->activitiesMeetingsModel
+                ->where('activity_id', $activity['id'])
+                ->first();
+
+            // ActivitiesMeetingsModel automatically decodes JSON fields via afterFind callback
+            // No manual JSON decoding needed
+        } elseif ($activity['type'] === 'outputs') {
+            $implementationData = $this->activitiesOutputModel
+                ->where('activity_id', $activity['id'])
+                ->first();
+
+            // ActivitiesOutputModel automatically decodes JSON fields via afterFind callback
+            // No manual JSON decoding needed
+        } elseif ($activity['type'] === 'agreements') {
+            $implementationData = $this->activitiesAgreementsModel
+                ->where('activity_id', $activity['id'])
+                ->first();
+
+            // ActivitiesAgreementsModel automatically decodes JSON fields via afterFind callback
+            // No manual JSON decoding needed
         }
 
         $data = [
