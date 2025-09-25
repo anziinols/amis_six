@@ -34,7 +34,7 @@
                             <th>Email</th>
                             <th>Branch</th>
                             <th>Role</th>
-                            <th>Is M&E</th>
+                            <th>Access Levels</th>
                             <th>Status</th>
                             <th>Activation</th>
                             <th>Actions</th>
@@ -49,13 +49,26 @@
                                 <td><?= $user['branch_name'] ?? '<span class="text-muted">No Branch</span>' ?></td>
                                 <td><?= ucfirst($user['role']) ?></td>
                                 <td>
-                                    <?php if ($user['is_evaluator'] == 1): ?>
-                                        <span class="badge bg-info">
-                                            <i class="fas fa-chart-line me-1"></i>M&E
-                                        </span>
-                                    <?php else: ?>
-                                        <span class="text-muted">-</span>
-                                    <?php endif; ?>
+                                    <div class="d-flex flex-wrap gap-1">
+                                        <?php if ($user['is_admin'] == 1): ?>
+                                            <span class="badge bg-danger">
+                                                <i class="fas fa-user-shield me-1"></i>Admin
+                                            </span>
+                                        <?php endif; ?>
+                                        <?php if ($user['is_supervisor'] == 1): ?>
+                                            <span class="badge bg-warning">
+                                                <i class="fas fa-users me-1"></i>Supervisor
+                                            </span>
+                                        <?php endif; ?>
+                                        <?php if ($user['is_evaluator'] == 1): ?>
+                                            <span class="badge bg-info">
+                                                <i class="fas fa-chart-line me-1"></i>M&E
+                                            </span>
+                                        <?php endif; ?>
+                                        <?php if ($user['is_admin'] != 1 && $user['is_supervisor'] != 1 && $user['is_evaluator'] != 1): ?>
+                                            <span class="text-muted">-</span>
+                                        <?php endif; ?>
+                                    </div>
                                 </td>
                                 <td>
                                     <span class="badge bg-<?= $user['user_status'] ? 'success' : 'danger' ?>">
