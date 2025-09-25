@@ -12,10 +12,16 @@
         <div class="mb-3">
             <strong>Time:</strong>
             <p class="text-muted">
-                <?php if (!empty($implementationData['start_time']) && !empty($implementationData['end_time'])): ?>
+                <?php
+                $startTimeValid = !empty($implementationData['start_time']) && $implementationData['start_time'] !== '0000-00-00 00:00:00';
+                $endTimeValid = !empty($implementationData['end_time']) && $implementationData['end_time'] !== '0000-00-00 00:00:00';
+                ?>
+                <?php if ($startTimeValid && $endTimeValid): ?>
                     <?= date('H:i', strtotime($implementationData['start_time'])) ?> - <?= date('H:i', strtotime($implementationData['end_time'])) ?>
-                <?php elseif (!empty($implementationData['start_time'])): ?>
+                <?php elseif ($startTimeValid): ?>
                     From <?= date('H:i', strtotime($implementationData['start_time'])) ?>
+                <?php elseif ($endTimeValid): ?>
+                    Until <?= date('H:i', strtotime($implementationData['end_time'])) ?>
                 <?php else: ?>
                     N/A
                 <?php endif; ?>
@@ -73,7 +79,7 @@
 </div>
 <?php endif; ?>
 
-<?php if (!empty($implementationData['meeting_minutes'])): ?>
+<?php if (!empty($implementationData['minutes'])): ?>
 <div class="mb-3">
     <strong>Meeting Minutes:</strong>
     <div class="table-responsive">
@@ -86,11 +92,43 @@
                 </tr>
             </thead>
             <tbody>
-                <?php foreach ($implementationData['meeting_minutes'] as $index => $minute): ?>
+                <?php foreach ($implementationData['minutes'] as $index => $minute): ?>
                 <tr>
                     <td><?= $index + 1 ?></td>
                     <td><?= esc($minute['topic']) ?></td>
                     <td><?= nl2br(esc($minute['discussion'])) ?></td>
+                </tr>
+                <?php endforeach; ?>
+            </tbody>
+        </table>
+    </div>
+</div>
+<?php endif; ?>
+
+<?php if (!empty($implementationData['attachments'])): ?>
+<div class="mb-3">
+    <strong>Meeting Attachments:</strong>
+    <div class="table-responsive">
+        <table class="table table-sm table-bordered">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>File Name</th>
+                    <th>Description</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php foreach ($implementationData['attachments'] as $index => $attachment): ?>
+                <tr>
+                    <td><?= $index + 1 ?></td>
+                    <td><?= esc($attachment['original_name'] ?? $attachment['filename'] ?? 'Unknown') ?></td>
+                    <td><?= esc($attachment['filename'] ?? $attachment['description'] ?? 'No description') ?></td>
+                    <td>
+                        <a href="<?= base_url($attachment['path'] ?? $attachment['filepath'] ?? '') ?>" target="_blank" class="btn btn-sm btn-outline-primary">
+                            <i class="fas fa-download"></i> Download
+                        </a>
+                    </td>
                 </tr>
                 <?php endforeach; ?>
             </tbody>
