@@ -343,9 +343,33 @@ class ActivitiesModel extends Model
      */
     public function getBySupervisor($supervisorId)
     {
-        return $this->where('supervisor_id', $supervisorId)
-                    ->orderBy('date_start', 'ASC')
-                    ->findAll();
+        $db = \Config\Database::connect();
+
+        $query = $db->table('activities a')
+            ->select('a.*,
+                     po.output as performance_output_title,
+                     CONCAT(u1.fname, " ", u1.lname) as supervisor_name,
+                     CONCAT(u2.fname, " ", u2.lname) as action_officer_name,
+                     CONCAT(u3.fname, " ", u3.lname) as created_by_name,
+                     CONCAT(u4.fname, " ", u4.lname) as status_by_name,
+                     CONCAT(u5.fname, " ", u5.lname) as rated_by_name,
+                     p.name as province_name,
+                     d.name as district_name')
+            ->join('performance_outputs po', 'a.performance_output_id = po.id', 'left')
+            ->join('users u1', 'a.supervisor_id = u1.id', 'left')
+            ->join('users u2', 'a.action_officer_id = u2.id', 'left')
+            ->join('users u3', 'a.created_by = u3.id', 'left')
+            ->join('users u4', 'a.status_by = u4.id', 'left')
+            ->join('users u5', 'a.rated_by = u5.id', 'left')
+            ->join('gov_structure p', 'a.province_id = p.id AND p.level = "province"', 'left')
+            ->join('gov_structure d', 'a.district_id = d.id AND d.level = "district"', 'left')
+            ->where('a.supervisor_id', $supervisorId)
+            ->where('a.deleted_at', null)
+            ->orderBy('a.date_start', 'ASC')
+            ->orderBy('a.created_at', 'DESC')
+            ->get();
+
+        return $query->getResultArray();
     }
 
     /**
@@ -356,9 +380,33 @@ class ActivitiesModel extends Model
      */
     public function getByActionOfficer($actionOfficerId)
     {
-        return $this->where('action_officer_id', $actionOfficerId)
-                    ->orderBy('date_start', 'ASC')
-                    ->findAll();
+        $db = \Config\Database::connect();
+
+        $query = $db->table('activities a')
+            ->select('a.*,
+                     po.output as performance_output_title,
+                     CONCAT(u1.fname, " ", u1.lname) as supervisor_name,
+                     CONCAT(u2.fname, " ", u2.lname) as action_officer_name,
+                     CONCAT(u3.fname, " ", u3.lname) as created_by_name,
+                     CONCAT(u4.fname, " ", u4.lname) as status_by_name,
+                     CONCAT(u5.fname, " ", u5.lname) as rated_by_name,
+                     p.name as province_name,
+                     d.name as district_name')
+            ->join('performance_outputs po', 'a.performance_output_id = po.id', 'left')
+            ->join('users u1', 'a.supervisor_id = u1.id', 'left')
+            ->join('users u2', 'a.action_officer_id = u2.id', 'left')
+            ->join('users u3', 'a.created_by = u3.id', 'left')
+            ->join('users u4', 'a.status_by = u4.id', 'left')
+            ->join('users u5', 'a.rated_by = u5.id', 'left')
+            ->join('gov_structure p', 'a.province_id = p.id AND p.level = "province"', 'left')
+            ->join('gov_structure d', 'a.district_id = d.id AND d.level = "district"', 'left')
+            ->where('a.action_officer_id', $actionOfficerId)
+            ->where('a.deleted_at', null)
+            ->orderBy('a.date_start', 'ASC')
+            ->orderBy('a.created_at', 'DESC')
+            ->get();
+
+        return $query->getResultArray();
     }
 
     /**
