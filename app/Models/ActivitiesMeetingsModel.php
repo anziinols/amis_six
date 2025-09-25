@@ -21,6 +21,7 @@ class ActivitiesMeetingsModel extends Model
 
     // Fields that can be set during save/insert/update
     protected $allowedFields    = [
+        'activity_id',
         'branch_id',
         'title',
         'agenda',
@@ -32,6 +33,8 @@ class ActivitiesMeetingsModel extends Model
         'status',
         'minutes',
         'attachments',
+        'gps_coordinates',
+        'signing_sheet_filepath',
         'remarks',
         'is_deleted',
         'created_by',
@@ -48,22 +51,25 @@ class ActivitiesMeetingsModel extends Model
 
     // Validation rules
     protected $validationRules = [
-        'branch_id'      => 'required|integer',
-        'title'          => 'required|max_length[255]',
-        'agenda'         => 'permit_empty',
-        'meeting_date'   => 'required|valid_date',
-        'start_time'     => 'permit_empty|valid_date',
-        'end_time'       => 'permit_empty|valid_date',
-        'location'       => 'permit_empty|max_length[255]',
-        'participants'   => 'permit_empty',
-        'status'         => 'permit_empty|in_list[scheduled,in_progress,completed,cancelled]',
-        'minutes'        => 'permit_empty',
-        'attachments'    => 'permit_empty',
-        'remarks'        => 'permit_empty',
-        'is_deleted'     => 'permit_empty|in_list[0,1]',
-        'created_by'     => 'permit_empty|integer',
-        'updated_by'     => 'permit_empty|integer',
-        'deleted_by'     => 'permit_empty|integer'
+        'activity_id'               => 'permit_empty|integer',
+        'branch_id'                 => 'permit_empty|integer',
+        'title'                     => 'required|max_length[255]',
+        'agenda'                    => 'permit_empty',
+        'meeting_date'              => 'required|valid_date',
+        'start_time'                => 'permit_empty|valid_date',
+        'end_time'                  => 'permit_empty|valid_date',
+        'location'                  => 'permit_empty|max_length[255]',
+        'participants'              => 'permit_empty',
+        'status'                    => 'permit_empty|in_list[scheduled,in_progress,completed,cancelled]',
+        'minutes'                   => 'permit_empty',
+        'attachments'               => 'permit_empty',
+        'gps_coordinates'           => 'permit_empty|max_length[255]',
+        'signing_sheet_filepath'    => 'permit_empty|max_length[500]',
+        'remarks'                   => 'permit_empty',
+        'is_deleted'                => 'permit_empty|in_list[0,1]',
+        'created_by'                => 'permit_empty|integer',
+        'updated_by'                => 'permit_empty|integer',
+        'deleted_by'                => 'permit_empty|integer'
     ];
 
     protected $validationMessages   = [];
