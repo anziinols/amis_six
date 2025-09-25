@@ -2019,14 +2019,31 @@ class ActivitiesController extends ResourceController
             $signingSheetFilepath = 'public/uploads/signing_sheets/' . $newName;
         }
 
+        // Process meeting date and times properly
+        $meetingDate = $this->request->getPost('meeting_date');
+        $startTime = $this->request->getPost('start_time');
+        $endTime = $this->request->getPost('end_time');
+
+        // Format start_time and end_time as datetime (combining date with time)
+        $formattedStartTime = null;
+        $formattedEndTime = null;
+
+        if (!empty($startTime)) {
+            $formattedStartTime = date('Y-m-d H:i:s', strtotime("$meetingDate $startTime"));
+        }
+
+        if (!empty($endTime)) {
+            $formattedEndTime = date('Y-m-d H:i:s', strtotime("$meetingDate $endTime"));
+        }
+
         // Prepare data for saving (following activities_meetings table structure)
         $data = [
             'activity_id' => $activity['id'],
             'title' => $this->request->getPost('title'),
             'agenda' => $this->request->getPost('agenda'),
-            'meeting_date' => $this->request->getPost('meeting_date'),
-            'start_time' => $this->request->getPost('start_time') ?: null,
-            'end_time' => $this->request->getPost('end_time') ?: null,
+            'meeting_date' => $meetingDate,
+            'start_time' => $formattedStartTime,
+            'end_time' => $formattedEndTime,
             'location' => $this->request->getPost('location'),
             'participants' => $participants,
             'minutes' => $minutes,

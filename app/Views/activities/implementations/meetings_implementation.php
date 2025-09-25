@@ -58,11 +58,23 @@
                         <div class="row mb-3">
                             <div class="col-md-4">
                                 <label class="form-label">Start Time</label>
-                                <input type="time" class="form-control" name="start_time" value="<?= old('start_time', $implementationData['start_time'] ?? '') ?>">
+                                <?php
+                                $startTimeValue = old('start_time');
+                                if (!$startTimeValue && !empty($implementationData['start_time']) && $implementationData['start_time'] !== '0000-00-00 00:00:00') {
+                                    $startTimeValue = date('H:i', strtotime($implementationData['start_time']));
+                                }
+                                ?>
+                                <input type="time" class="form-control" name="start_time" value="<?= $startTimeValue ?>">
                             </div>
                             <div class="col-md-4">
                                 <label class="form-label">End Time</label>
-                                <input type="time" class="form-control" name="end_time" value="<?= old('end_time', $implementationData['end_time'] ?? '') ?>">
+                                <?php
+                                $endTimeValue = old('end_time');
+                                if (!$endTimeValue && !empty($implementationData['end_time']) && $implementationData['end_time'] !== '0000-00-00 00:00:00') {
+                                    $endTimeValue = date('H:i', strtotime($implementationData['end_time']));
+                                }
+                                ?>
+                                <input type="time" class="form-control" name="end_time" value="<?= $endTimeValue ?>">
                             </div>
                             <div class="col-md-4">
                                 <label class="form-label">Location</label>
