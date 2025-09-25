@@ -18,6 +18,8 @@ use App\Models\WorkplanInputActivityModel;
 use App\Models\WorkplanInfrastructureActivityModel;
 use App\Models\WorkplanOutputActivityModel;
 use App\Models\ActivitiesMeetingsModel;
+use App\Models\ActivitiesOutputModel;
+use App\Models\ActivitiesAgreementsModel;
 use App\Services\PdfService;
 use CodeIgniter\RESTful\ResourceController;
 
@@ -38,6 +40,8 @@ class ActivitiesController extends ResourceController
     protected $workplanInfrastructureActivityModel;
     protected $workplanOutputActivityModel;
     protected $activitiesMeetingsModel;
+    protected $activitiesOutputModel;
+    protected $activitiesAgreementsModel;
     protected $helpers = ['form', 'url', 'file', 'text', 'email'];
 
     public function __construct()
@@ -57,6 +61,8 @@ class ActivitiesController extends ResourceController
         $this->workplanInfrastructureActivityModel = new WorkplanInfrastructureActivityModel();
         $this->workplanOutputActivityModel = new WorkplanOutputActivityModel();
         $this->activitiesMeetingsModel = new ActivitiesMeetingsModel();
+        $this->activitiesOutputModel = new ActivitiesOutputModel();
+        $this->activitiesAgreementsModel = new ActivitiesAgreementsModel();
 
         // Create upload directories if they don't exist
         $this->createUploadDirectories();
