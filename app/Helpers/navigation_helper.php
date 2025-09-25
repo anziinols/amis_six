@@ -61,6 +61,7 @@ if (!function_exists('canAccessMenu')) {
             if ($capability === 'admin' && $isAdmin) return true;
             if ($capability === 'supervisor' && $isSupervisor) return true;
             if ($capability === 'evaluator' && $isEvaluator) return true;
+            if ($capability === 'user') return true; // All logged-in users have 'user' capability
         }
 
         return false;
@@ -232,6 +233,10 @@ if (!function_exists('getNavigationMenus')) {
                         $hasAccess = true;
                         break;
                     } elseif ($capability === 'evaluator' && $isEvaluator) {
+                        $hasAccess = true;
+                        break;
+                    } elseif ($capability === 'user') {
+                        // All logged-in users have 'user' capability
                         $hasAccess = true;
                         break;
                     }
