@@ -2019,6 +2019,40 @@ class ActivitiesController extends ResourceController
             $signingSheetFilepath = 'public/uploads/signing_sheets/' . $newName;
         }
 
+        // Handle meeting attachments upload
+        $attachments = [];
+
+        // Keep existing attachments if updating
+        if ($existingRecord && !empty($existingRecord['attachments'])) {
+            $attachments = is_array($existingRecord['attachments']) ? $existingRecord['attachments'] : (json_decode($existingRecord['attachments'], true) ?: []);
+        }
+
+        // Process new attachment files if uploaded
+        $attachmentFiles = $this->request->getFiles();
+        if (isset($attachmentFiles['meeting_attachments'])) {
+            $attachmentDescriptions = $this->request->getPost('attachment_descriptions') ?: [];
+
+            foreach ($attachmentFiles['meeting_attachments'] as $index => $file) {
+                if ($file && $file->isValid() && !$file->hasMoved()) {
+                    $newName = $file->getRandomName();
+                    $uploadPath = ROOTPATH . 'public/uploads/meeting_attachments';
+
+                    // Create directory if it doesn't exist
+                    if (!is_dir($uploadPath)) {
+                        mkdir($uploadPath, 0777, true);
+                    }
+
+                    $file->move($uploadPath, $newName);
+
+                    $attachments[] = [
+                        'filename' => $attachmentDescriptions[$index] ?? $file->getClientName(),
+                        'original_name' => $file->getClientName(),
+                        'path' => 'public/uploads/meeting_attachments/' . $newName
+                    ];
+                }
+            }
+        }
+
         // Process meeting date and times properly
         $meetingDate = $this->request->getPost('meeting_date');
         $startTime = $this->request->getPost('start_time');
@@ -2047,6 +2081,7 @@ class ActivitiesController extends ResourceController
             'location' => $this->request->getPost('location'),
             'participants' => $participants,
             'minutes' => $minutes,
+            'attachments' => $attachments,
             'gps_coordinates' => $this->request->getPost('gps_coordinates'),
             'signing_sheet_filepath' => $signingSheetFilepath,
             'remarks' => $this->request->getPost('remarks'),

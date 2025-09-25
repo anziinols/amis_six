@@ -51,7 +51,13 @@
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label">Meeting Date <span class="text-danger">*</span></label>
-                                <input type="date" class="form-control" name="meeting_date" required value="<?= old('meeting_date', $implementationData['meeting_date'] ?? '') ?>">
+                                <?php
+                                $meetingDateValue = old('meeting_date');
+                                if (!$meetingDateValue && !empty($implementationData['meeting_date'])) {
+                                    $meetingDateValue = date('Y-m-d', strtotime($implementationData['meeting_date']));
+                                }
+                                ?>
+                                <input type="date" class="form-control" name="meeting_date" required value="<?= $meetingDateValue ?>">
                             </div>
                         </div>
 
@@ -137,7 +143,7 @@
                                 <?php
                                 $existingMinutes = old('minute_topic') ? array_map(null,
                                     old('minute_topic'), old('minute_discussion')
-                                ) : ($implementationData['meeting_minutes'] ?? []);
+                                ) : ($implementationData['minutes'] ?? []);
 
                                 if (empty($existingMinutes)):
                                     $existingMinutes = [['', '']]; // Add one empty row
@@ -180,6 +186,65 @@
                             <?php endif; ?>
                             <input type="file" class="form-control" name="signing_sheet" accept=".pdf,.jpg,.jpeg,.png">
                             <div class="form-text">Upload the signed attendance sheet (PDF or Image format)</div>
+                        </div>
+
+                        <!-- Meeting Attachments Section -->
+                        <div class="mb-3">
+                            <label class="form-label">Meeting Attachments</label>
+
+                            <!-- Display existing attachments -->
+                            <?php if (!empty($implementationData['attachments'])): ?>
+                            <div class="mb-3">
+                                <strong>Current Attachments:</strong>
+                                <div class="table-responsive">
+                                    <table class="table table-sm table-bordered">
+                                        <thead>
+                                            <tr>
+                                                <th>#</th>
+                                                <th>File Name</th>
+                                                <th>Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <?php foreach ($implementationData['attachments'] as $index => $attachment): ?>
+                                            <tr>
+                                                <td><?= $index + 1 ?></td>
+                                                <td><?= esc($attachment['filename'] ?? $attachment['original_name'] ?? 'Unknown') ?></td>
+                                                <td>
+                                                    <a href="<?= base_url($attachment['path'] ?? $attachment['filepath'] ?? '') ?>" target="_blank" class="btn btn-sm btn-outline-primary">
+                                                        <i class="fas fa-download"></i> Download
+                                                    </a>
+                                                </td>
+                                            </tr>
+                                            <?php endforeach; ?>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                            <?php endif; ?>
+
+                            <!-- Upload new attachments -->
+                            <div id="attachmentsContainer">
+                                <div class="attachment-item border p-3 mb-3">
+                                    <div class="row">
+                                        <div class="col-md-8">
+                                            <label class="form-label">Meeting Attachment</label>
+                                            <input type="file" class="form-control" name="meeting_attachments[]" accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.jpg,.jpeg,.png">
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label class="form-label">Description</label>
+                                            <input type="text" class="form-control" name="attachment_descriptions[]" placeholder="File description">
+                                        </div>
+                                    </div>
+                                    <button type="button" class="btn btn-sm btn-danger mt-2 remove-attachment" style="display: none;">
+                                        <i class="fas fa-trash"></i> Remove
+                                    </button>
+                                </div>
+                            </div>
+                            <button type="button" id="addAttachment" class="btn btn-sm btn-outline-primary">
+                                <i class="fas fa-plus"></i> Add Another Attachment
+                            </button>
+                            <div class="form-text">Upload meeting-related documents, presentations, or other files</div>
                         </div>
 
                         <!-- Remarks -->
@@ -227,9 +292,21 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
+    // Update remove buttons visibility for attachments
+    function updateAttachmentRemoveButtons() {
+        const attachmentItems = document.querySelectorAll('.attachment-item');
+        attachmentItems.forEach((item, index) => {
+            const removeBtn = item.querySelector('.remove-attachment');
+            if (removeBtn) {
+                removeBtn.style.display = attachmentItems.length > 1 ? 'inline-block' : 'none';
+            }
+        });
+    }
+
     // Initialize remove buttons
     updateParticipantRemoveButtons();
     updateMinuteRemoveButtons();
+    updateAttachmentRemoveButtons();
 
     // Add participant functionality
     document.getElementById('addParticipant').addEventListener('click', function() {
@@ -297,6 +374,41 @@ document.addEventListener('DOMContentLoaded', function() {
             if (item) {
                 item.remove();
                 updateMinuteRemoveButtons();
+            }
+        }
+    });
+
+    // Add attachment functionality
+    document.getElementById('addAttachment').addEventListener('click', function() {
+        const container = document.getElementById('attachmentsContainer');
+        const newItem = document.createElement('div');
+        newItem.className = 'attachment-item border p-3 mb-3';
+        newItem.innerHTML = `
+            <div class="row">
+                <div class="col-md-8">
+                    <label class="form-label">Meeting Attachment</label>
+                    <input type="file" class="form-control" name="meeting_attachments[]" accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.jpg,.jpeg,.png">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Description</label>
+                    <input type="text" class="form-control" name="attachment_descriptions[]" placeholder="File description">
+                </div>
+            </div>
+            <button type="button" class="btn btn-sm btn-danger mt-2 remove-attachment">
+                <i class="fas fa-trash"></i> Remove
+            </button>
+        `;
+        container.appendChild(newItem);
+        updateAttachmentRemoveButtons();
+    });
+
+    // Remove attachment functionality
+    document.addEventListener('click', function(e) {
+        if (e.target.classList.contains('remove-attachment') || e.target.closest('.remove-attachment')) {
+            const item = e.target.closest('.attachment-item');
+            if (item) {
+                item.remove();
+                updateAttachmentRemoveButtons();
             }
         }
     });
