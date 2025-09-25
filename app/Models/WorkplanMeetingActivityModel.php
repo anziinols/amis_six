@@ -21,8 +21,6 @@ class WorkplanMeetingActivityModel extends Model
 
     // Fields that can be set during save/insert/update
     protected $allowedFields    = [
-        'workplan_id',
-        'proposal_id',
         'activity_id',
         'meeting_title',
         'agenda',

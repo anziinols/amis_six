@@ -1954,11 +1954,8 @@ class ActivitiesController extends ResourceController
             return redirect()->back()->withInput()->with('errors', $this->validator->getErrors());
         }
 
-        // Get proposal data
-        $proposal = $this->activitiesModel->getProposalByActivityId($activity['id']);
-        if (!$proposal) {
-            return redirect()->back()->with('error', 'Proposal not found for this activity.');
-        }
+        // Note: Following the training implementation pattern, we don't need proposal data
+        // The workplan_meeting_activities table will use activity_id as the primary reference
 
         // Process participants
         $participants = [];
@@ -2051,8 +2048,6 @@ class ActivitiesController extends ResourceController
 
         // Prepare data for saving
         $data = [
-            'workplan_id' => $proposal['workplan_id'],
-            'proposal_id' => $proposal['id'],
             'activity_id' => $activity['id'],
             'meeting_title' => $this->request->getPost('meeting_title'),
             'agenda' => $this->request->getPost('agenda'),
@@ -2073,7 +2068,6 @@ class ActivitiesController extends ResourceController
 
         // Check if record already exists
         $existingRecord = $this->workplanMeetingActivityModel
-            ->where('proposal_id', $proposal['id'])
             ->where('activity_id', $activity['id'])
             ->first();
 
