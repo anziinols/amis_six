@@ -76,7 +76,7 @@ class ActivitiesOutputModel extends Model
      */
     protected function encodeJsonFields(array $data)
     {
-        $jsonFields = ['outputs', 'output_images', 'beneficiaries'];
+        $jsonFields = ['outputs', 'output_images', 'output_files', 'beneficiaries'];
         
         foreach ($jsonFields as $field) {
             if (isset($data['data'][$field]) && is_array($data['data'][$field])) {
@@ -92,7 +92,7 @@ class ActivitiesOutputModel extends Model
      */
     protected function decodeJsonFields(array $data)
     {
-        $jsonFields = ['outputs', 'output_images', 'beneficiaries'];
+        $jsonFields = ['outputs', 'output_images', 'output_files', 'beneficiaries'];
         
         if (isset($data['data'])) {
             // Single record

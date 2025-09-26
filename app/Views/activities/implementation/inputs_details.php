@@ -1,58 +1,53 @@
 <!-- Inputs Implementation Details -->
-<div class="row">
-    <div class="col-md-6">
-        <div class="mb-3">
-            <strong>Input Title:</strong>
-            <p class="text-muted"><?= esc($implementationData['title'] ?? 'N/A') ?></p>
-        </div>
-        <div class="mb-3">
-            <strong>Input Type:</strong>
-            <p class="text-muted"><?= esc($implementationData['input_type'] ?? 'N/A') ?></p>
-        </div>
-        <div class="mb-3">
-            <strong>Quantity:</strong>
-            <p class="text-muted"><?= esc($implementationData['quantity'] ?? 'N/A') ?></p>
-        </div>
-    </div>
-    <div class="col-md-6">
-        <div class="mb-3">
-            <strong>Unit:</strong>
-            <p class="text-muted"><?= esc($implementationData['unit'] ?? 'N/A') ?></p>
-        </div>
-        <div class="mb-3">
-            <strong>Cost per Unit:</strong>
-            <p class="text-muted"><?= !empty($implementationData['cost_per_unit']) ? 'KES ' . number_format($implementationData['cost_per_unit'], 2) : 'N/A' ?></p>
-        </div>
-        <div class="mb-3">
-            <strong>Total Cost:</strong>
-            <p class="text-muted"><?= !empty($implementationData['total_cost']) ? 'KES ' . number_format($implementationData['total_cost'], 2) : 'N/A' ?></p>
-        </div>
-    </div>
-</div>
 
-<div class="mb-3">
-    <strong>Description:</strong>
-    <p class="text-muted"><?= nl2br(esc($implementationData['description'] ?? 'N/A')) ?></p>
-</div>
-
-<?php if (!empty($implementationData['supplier_details'])): ?>
-<div class="mb-3">
-    <strong>Supplier Details:</strong>
-    <p class="text-muted"><?= nl2br(esc($implementationData['supplier_details'])) ?></p>
-</div>
-<?php endif; ?>
-
-<?php if (!empty($implementationData['delivery_date'])): ?>
-<div class="mb-3">
-    <strong>Delivery Date:</strong>
-    <p class="text-muted"><?= date('d M Y', strtotime($implementationData['delivery_date'])) ?></p>
-</div>
-<?php endif; ?>
-
+<!-- GPS Coordinates -->
 <?php if (!empty($implementationData['gps_coordinates'])): ?>
 <div class="mb-3">
     <strong>GPS Coordinates:</strong>
     <p class="text-muted"><?= esc($implementationData['gps_coordinates']) ?></p>
+</div>
+<?php endif; ?>
+
+<!-- Input Items Table -->
+<?php if (!empty($implementationData['inputs'])): ?>
+<div class="mb-3">
+    <strong>Input Items (<?= count($implementationData['inputs']) ?> items):</strong>
+    <div class="table-responsive">
+        <table class="table table-sm table-bordered">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Input Name</th>
+                    <th>Quantity</th>
+                    <th>Unit</th>
+                    <th>Remarks</th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php foreach ($implementationData['inputs'] as $index => $input): ?>
+                <tr>
+                    <td><?= $index + 1 ?></td>
+                    <td><?= esc($input['name'] ?? 'N/A') ?></td>
+                    <td><?= esc($input['quantity'] ?? 'N/A') ?></td>
+                    <td><?= esc($input['unit'] ?? 'N/A') ?></td>
+                    <td><?= esc($input['remarks'] ?? 'N/A') ?></td>
+                </tr>
+                <?php endforeach; ?>
+            </tbody>
+        </table>
+    </div>
+</div>
+<?php endif; ?>
+
+<!-- Signing Sheet -->
+<?php if (!empty($implementationData['signing_sheet_filepath'])): ?>
+<div class="mb-3">
+    <strong>Signing Sheet:</strong>
+    <p>
+        <a href="<?= base_url($implementationData['signing_sheet_filepath']) ?>" target="_blank" class="btn btn-sm btn-outline-primary">
+            <i class="fas fa-download"></i> Download Signing Sheet
+        </a>
+    </p>
 </div>
 <?php endif; ?>
 

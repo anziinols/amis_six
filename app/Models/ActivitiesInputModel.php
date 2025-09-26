@@ -27,6 +27,7 @@ class ActivitiesInputModel extends Model
         'inputs',
         'gps_coordinates',
         'signing_sheet_filepath',
+        'remarks',
         'created_by',
         'updated_by',
         'deleted_by'
@@ -47,6 +48,7 @@ class ActivitiesInputModel extends Model
         'inputs'                  => 'permit_empty',
         'gps_coordinates'         => 'permit_empty|max_length[255]',
         'signing_sheet_filepath'  => 'permit_empty|max_length[255]',
+        'remarks'                 => 'permit_empty',
         'created_by'              => 'permit_empty|integer',
         'updated_by'              => 'permit_empty|integer',
         'deleted_by'              => 'permit_empty|integer'

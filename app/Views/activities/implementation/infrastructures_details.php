@@ -1,53 +1,20 @@
-<!-- Infrastructures Implementation Details -->
+<!-- Infrastructure Implementation Details -->
 <div class="row">
     <div class="col-md-6">
         <div class="mb-3">
-            <strong>Infrastructure Title:</strong>
-            <p class="text-muted"><?= esc($implementationData['title'] ?? 'N/A') ?></p>
-        </div>
-        <div class="mb-3">
-            <strong>Infrastructure Type:</strong>
-            <p class="text-muted"><?= esc($implementationData['infrastructure_type'] ?? 'N/A') ?></p>
-        </div>
-        <div class="mb-3">
-            <strong>Location:</strong>
-            <p class="text-muted"><?= esc($implementationData['location'] ?? 'N/A') ?></p>
+            <strong>Infrastructure Description:</strong>
+            <p class="text-muted"><?= nl2br(esc($implementationData['infrastructure'] ?? 'N/A')) ?></p>
         </div>
     </div>
     <div class="col-md-6">
+        <?php if (!empty($implementationData['gps_coordinates'])): ?>
         <div class="mb-3">
-            <strong>Contractor:</strong>
-            <p class="text-muted"><?= esc($implementationData['contractor'] ?? 'N/A') ?></p>
+            <strong>GPS Coordinates:</strong>
+            <p class="text-muted"><?= esc($implementationData['gps_coordinates']) ?></p>
         </div>
-        <div class="mb-3">
-            <strong>Total Cost:</strong>
-            <p class="text-muted"><?= !empty($implementationData['total_cost']) ? 'KES ' . number_format($implementationData['total_cost'], 2) : 'N/A' ?></p>
-        </div>
-        <div class="mb-3">
-            <strong>Completion Date:</strong>
-            <p class="text-muted"><?= !empty($implementationData['completion_date']) ? date('d M Y', strtotime($implementationData['completion_date'])) : 'N/A' ?></p>
-        </div>
+        <?php endif; ?>
     </div>
 </div>
-
-<div class="mb-3">
-    <strong>Description:</strong>
-    <p class="text-muted"><?= nl2br(esc($implementationData['description'] ?? 'N/A')) ?></p>
-</div>
-
-<?php if (!empty($implementationData['specifications'])): ?>
-<div class="mb-3">
-    <strong>Technical Specifications:</strong>
-    <p class="text-muted"><?= nl2br(esc($implementationData['specifications'])) ?></p>
-</div>
-<?php endif; ?>
-
-<?php if (!empty($implementationData['gps_coordinates'])): ?>
-<div class="mb-3">
-    <strong>GPS Coordinates:</strong>
-    <p class="text-muted"><?= esc($implementationData['gps_coordinates']) ?></p>
-</div>
-<?php endif; ?>
 
 <?php if (!empty($implementationData['infrastructure_files'])): ?>
 <div class="mb-3">
@@ -57,7 +24,7 @@
             <thead>
                 <tr>
                     <th>#</th>
-                    <th>Caption</th>
+                    <th>Description</th>
                     <th>Original Name</th>
                     <th>Actions</th>
                 </tr>
@@ -66,10 +33,10 @@
                 <?php foreach ($implementationData['infrastructure_files'] as $index => $file): ?>
                 <tr>
                     <td><?= $index + 1 ?></td>
-                    <td><?= esc($file['caption']) ?></td>
+                    <td><?= esc($file['filename']) ?></td>
                     <td><?= esc($file['original_name']) ?></td>
                     <td>
-                        <a href="<?= base_url($file['file_path']) ?>" target="_blank" class="btn btn-sm btn-outline-primary">
+                        <a href="<?= base_url($file['path']) ?>" target="_blank" class="btn btn-sm btn-outline-primary">
                             <i class="fas fa-download"></i> Download
                         </a>
                     </td>
@@ -99,10 +66,14 @@
 </div>
 <?php endif; ?>
 
-<?php if (!empty($implementationData['remarks'])): ?>
+<?php if (!empty($implementationData['signing_scheet_filepath'])): ?>
 <div class="mb-3">
-    <strong>Remarks:</strong>
-    <p class="text-muted"><?= nl2br(esc($implementationData['remarks'])) ?></p>
+    <strong>Signing Sheet:</strong>
+    <div>
+        <a href="<?= base_url($implementationData['signing_scheet_filepath']) ?>" target="_blank" class="btn btn-sm btn-outline-primary">
+            <i class="fas fa-download"></i> Download Signing Sheet
+        </a>
+    </div>
 </div>
 <?php endif; ?>
 

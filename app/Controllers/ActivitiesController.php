@@ -14,12 +14,14 @@ use App\Models\ActivitiesTrainingModel;
 use App\Models\WorkplanPeriodModel;
 use App\Models\PerformanceOutputsModel;
 use App\Models\WorkplanTrainingActivityModel;
-use App\Models\WorkplanInputActivityModel;
+
 use App\Models\WorkplanInfrastructureActivityModel;
 use App\Models\WorkplanOutputActivityModel;
 use App\Models\ActivitiesMeetingsModel;
 use App\Models\ActivitiesOutputModel;
 use App\Models\ActivitiesAgreementsModel;
+use App\Models\ActivitiesInputModel;
+use App\Models\ActivitiesInfrastructureModel;
 use App\Services\PdfService;
 use CodeIgniter\RESTful\ResourceController;
 
@@ -36,12 +38,14 @@ class ActivitiesController extends ResourceController
     protected $activitiesDocumentsModel;
     protected $activitiesTrainingModel;
     protected $workplanTrainingActivityModel;
-    protected $workplanInputActivityModel;
+
     protected $workplanInfrastructureActivityModel;
     protected $workplanOutputActivityModel;
     protected $activitiesMeetingsModel;
     protected $activitiesOutputModel;
     protected $activitiesAgreementsModel;
+    protected $activitiesInputModel;
+    protected $activitiesInfrastructureModel;
     protected $helpers = ['form', 'url', 'file', 'text', 'email'];
 
     public function __construct()
@@ -57,12 +61,14 @@ class ActivitiesController extends ResourceController
         $this->activitiesDocumentsModel = new ActivitiesDocumentsModel();
         $this->activitiesTrainingModel = new ActivitiesTrainingModel();
         $this->workplanTrainingActivityModel = new WorkplanTrainingActivityModel();
-        $this->workplanInputActivityModel = new WorkplanInputActivityModel();
+
         $this->workplanInfrastructureActivityModel = new WorkplanInfrastructureActivityModel();
         $this->workplanOutputActivityModel = new WorkplanOutputActivityModel();
         $this->activitiesMeetingsModel = new ActivitiesMeetingsModel();
         $this->activitiesOutputModel = new ActivitiesOutputModel();
         $this->activitiesAgreementsModel = new ActivitiesAgreementsModel();
+        $this->activitiesInputModel = new ActivitiesInputModel();
+        $this->activitiesInfrastructureModel = new ActivitiesInfrastructureModel();
 
         // Create upload directories if they don't exist
         $this->createUploadDirectories();
@@ -77,8 +83,13 @@ class ActivitiesController extends ResourceController
             ROOTPATH . 'public/uploads/training',
             ROOTPATH . 'public/uploads/inputs',
             ROOTPATH . 'public/uploads/infrastructure',
+            ROOTPATH . 'public/uploads/infrastructure_images',
+            ROOTPATH . 'public/uploads/infrastructure_files',
             ROOTPATH . 'public/uploads/documents',
-            ROOTPATH . 'public/uploads/signing_sheets'
+            ROOTPATH . 'public/uploads/signing_sheets',
+            ROOTPATH . 'public/uploads/agreement_attachments',
+            ROOTPATH . 'public/uploads/output_images',
+            ROOTPATH . 'public/uploads/output_files'
         ];
 
         foreach ($directories as $dir) {
@@ -261,7 +272,7 @@ class ActivitiesController extends ResourceController
             // ActivitiesTrainingModel automatically decodes JSON fields via afterFind callback
             // No manual JSON decoding needed
         } elseif ($activity['type'] === 'inputs') {
-            $implementationData = $this->workplanInputActivityModel
+            $implementationData = $this->activitiesInputModel
                 ->where('activity_id', $activity['id'])
                 ->first();
 
@@ -280,15 +291,12 @@ class ActivitiesController extends ResourceController
                 }
             }
         } elseif ($activity['type'] === 'infrastructures') {
-            $implementationData = $this->workplanInfrastructureActivityModel
+            $implementationData = $this->activitiesInfrastructureModel
                 ->where('activity_id', $activity['id'])
                 ->first();
 
-            if ($implementationData && isset($implementationData['infrastructure_images'])) {
-                $implementationData['infrastructure_images'] = is_string($implementationData['infrastructure_images'])
-                    ? json_decode($implementationData['infrastructure_images'], true)
-                    : $implementationData['infrastructure_images'];
-            }
+            // ActivitiesInfrastructureModel automatically decodes JSON fields via afterFind callback
+            // No manual JSON decoding needed
         } elseif ($activity['type'] === 'meetings') {
             $implementationData = $this->activitiesMeetingsModel
                 ->where('activity_id', $activity['id'])
@@ -522,7 +530,7 @@ class ActivitiesController extends ResourceController
             // ActivitiesTrainingModel automatically decodes JSON fields via afterFind callback
             // No manual JSON decoding needed
         } elseif ($activity['type'] === 'inputs') {
-            $implementationData = $this->workplanInputActivityModel
+            $implementationData = $this->activitiesInputModel
                 ->where('activity_id', $activity['id'])
                 ->first();
 
@@ -541,46 +549,32 @@ class ActivitiesController extends ResourceController
                 }
             }
         } elseif ($activity['type'] === 'infrastructures') {
-            $implementationData = $this->workplanInfrastructureActivityModel
+            $implementationData = $this->activitiesInfrastructureModel
                 ->where('activity_id', $activity['id'])
                 ->first();
 
-            if ($implementationData && isset($implementationData['infrastructure_images'])) {
-                $implementationData['infrastructure_images'] = is_string($implementationData['infrastructure_images'])
-                    ? json_decode($implementationData['infrastructure_images'], true)
-                    : $implementationData['infrastructure_images'];
-            }
+            // ActivitiesInfrastructureModel automatically decodes JSON fields via afterFind callback
+            // No manual JSON decoding needed
         } elseif ($activity['type'] === 'outputs') {
-            $implementationData = $this->workplanOutputActivityModel
+            $implementationData = $this->activitiesOutputModel
                 ->where('activity_id', $activity['id'])
                 ->first();
 
-            if ($implementationData) {
-                // Decode JSON fields
-                if (isset($implementationData['outputs'])) {
-                    $implementationData['outputs'] = is_string($implementationData['outputs'])
-                        ? json_decode($implementationData['outputs'], true)
-                        : $implementationData['outputs'];
-                }
-
-                if (isset($implementationData['beneficiaries'])) {
-                    $implementationData['beneficiaries'] = is_string($implementationData['beneficiaries'])
-                        ? json_decode($implementationData['beneficiaries'], true)
-                        : $implementationData['beneficiaries'];
-                }
-
-                if (isset($implementationData['output_images'])) {
-                    $implementationData['output_images'] = is_string($implementationData['output_images'])
-                        ? json_decode($implementationData['output_images'], true)
-                        : $implementationData['output_images'];
-                }
-            }
+            // ActivitiesOutputModel automatically decodes JSON fields via afterFind callback
+            // No manual JSON decoding needed
         } elseif ($activity['type'] === 'meetings') {
             $implementationData = $this->activitiesMeetingsModel
                 ->where('activity_id', $activity['id'])
                 ->first();
 
             // ActivitiesMeetingsModel automatically decodes JSON fields via afterFind callback
+            // No manual JSON decoding needed
+        } elseif ($activity['type'] === 'agreements') {
+            $implementationData = $this->activitiesAgreementsModel
+                ->where('activity_id', $activity['id'])
+                ->first();
+
+            // ActivitiesAgreementsModel automatically decodes JSON fields via afterFind callback
             // No manual JSON decoding needed
         }
 
@@ -649,6 +643,8 @@ class ActivitiesController extends ResourceController
             return $this->saveOutputImplementation($activity);
         } elseif ($activity['type'] === 'meetings') {
             return $this->saveMeetingImplementation($activity);
+        } elseif ($activity['type'] === 'agreements') {
+            return $this->saveAgreementImplementation($activity);
         }
 
         return redirect()->to('/activities')->with('error', 'Invalid activity type.');
@@ -809,306 +805,472 @@ class ActivitiesController extends ResourceController
     /**
      * Save input implementation data
      *
-     * @param array $proposal
-     * @param array $activity
+     * @param array $activity Activity data
      * @return mixed
      */
-    private function saveInputImplementation($proposal, $activity)
+    private function saveInputImplementation($activity)
     {
         $userId = session()->get('user_id');
 
         // Validation rules
-        $rules = [
-            'gps_coordinates' => 'required|string',
+        $validationRules = [
+            'gps_coordinates' => 'required|max_length[255]',
+            'remarks' => 'permit_empty',
+            'input_images.*' => 'permit_empty|uploaded[input_images]|max_size[input_images,5120]|is_image[input_images]',
+            'input_files.*' => 'permit_empty|uploaded[input_files]|max_size[input_files,5120]',
+            'signing_sheet' => 'permit_empty|uploaded[signing_sheet]|max_size[signing_sheet,5120]'
         ];
 
-        if (!$this->validate($rules)) {
+        if (!$this->validate($validationRules)) {
             return redirect()->back()->withInput()->with('errors', $this->validator->getErrors());
         }
 
-        // Process inputs data
+        // Check for existing record
+        $existingRecord = $this->activitiesInputModel
+            ->where('activity_id', $activity['id'])
+            ->first();
+
+        // Process input items
         $inputs = [];
-        $inputNames = $this->request->getPost('input_name') ?? [];
-        $inputQuantities = $this->request->getPost('input_quantity') ?? [];
-        $inputUnits = $this->request->getPost('input_unit') ?? [];
-        $inputRemarks = $this->request->getPost('input_remarks') ?? [];
+        $inputNames = $this->request->getPost('input_name') ?: [];
+        $inputQuantities = $this->request->getPost('input_quantity') ?: [];
+        $inputUnits = $this->request->getPost('input_unit') ?: [];
+        $inputRemarks = $this->request->getPost('input_remarks') ?: [];
 
         foreach ($inputNames as $index => $name) {
-            if (!empty($name)) {
+            if (!empty(trim($name))) {
                 $inputs[] = [
-                    'name' => $name,
-                    'quantity' => $inputQuantities[$index] ?? '',
-                    'unit' => $inputUnits[$index] ?? '',
-                    'remarks' => $inputRemarks[$index] ?? ''
+                    'name' => trim($name),
+                    'quantity' => trim($inputQuantities[$index] ?? ''),
+                    'unit' => trim($inputUnits[$index] ?? ''),
+                    'remarks' => trim($inputRemarks[$index] ?? '')
                 ];
             }
         }
 
-        if (empty($inputs)) {
-            return redirect()->back()->withInput()->with('error', 'At least one input item is required.');
-        }
-
-        // Handle existing and new input images
+        // Process file uploads
         $inputImages = [];
-        $files = $this->request->getFiles();
+        $inputFiles = [];
+        $signingSheetFilepath = $existingRecord['signing_sheet_filepath'] ?? null;
 
-        // Keep existing images if selected
-        $keepInputImages = $this->request->getPost('keep_input_images') ?? [];
-        if (!empty($keepInputImages)) {
-            $inputImages = array_merge($inputImages, $keepInputImages);
-        }
-
-        // Add new uploaded images
-        if (isset($files['input_images'])) {
-            foreach ($files['input_images'] as $file) {
-                if ($file->isValid() && !$file->hasMoved()) {
+        // Handle input images
+        $imageFiles = $this->request->getFiles();
+        if (isset($imageFiles['input_images'])) {
+            foreach ($imageFiles['input_images'] as $file) {
+                if ($file && $file->isValid() && !$file->hasMoved()) {
                     $newName = $file->getRandomName();
-                    $file->move(ROOTPATH . 'public/uploads/inputs', $newName);
-                    $inputImages[] = 'public/uploads/inputs/' . $newName;
+                    $uploadPath = ROOTPATH . 'public/uploads/input_images';
+
+                    if (!is_dir($uploadPath)) {
+                        mkdir($uploadPath, 0777, true);
+                    }
+
+                    $file->move($uploadPath, $newName);
+                    $inputImages[] = 'public/uploads/input_images/' . $newName;
                 }
             }
         }
 
-        // Handle signing sheet file upload
-        $signingSheetFilepath = null;
-        $signingSheetFile = $this->request->getFile('signing_sheet');
+        // Handle input files
+        if (isset($imageFiles['input_files'])) {
+            $fileCaptions = $this->request->getPost('file_captions') ?: [];
 
-        // Check if there's an existing record to get the current signing sheet filepath
-        $existingRecord = $this->workplanInputActivityModel
-            ->where('proposal_id', $proposal['id'])
-            ->where('activity_id', $activity['id'])
-            ->first();
+            foreach ($imageFiles['input_files'] as $index => $file) {
+                if ($file && $file->isValid() && !$file->hasMoved()) {
+                    $newName = $file->getRandomName();
+                    $uploadPath = ROOTPATH . 'public/uploads/input_files';
 
-        if ($existingRecord && !empty($existingRecord['signing_sheet_filepath'])) {
-            $signingSheetFilepath = $existingRecord['signing_sheet_filepath'];
+                    if (!is_dir($uploadPath)) {
+                        mkdir($uploadPath, 0777, true);
+                    }
+
+                    $file->move($uploadPath, $newName);
+
+                    $inputFiles[] = [
+                        'caption' => $fileCaptions[$index] ?? $file->getClientName(),
+                        'original_name' => $file->getClientName(),
+                        'file_path' => 'public/uploads/input_files/' . $newName
+                    ];
+                }
+            }
         }
 
-        // Process new signing sheet file if uploaded
+        // Handle signing sheet
+        $signingSheetFile = $this->request->getFile('signing_sheet');
         if ($signingSheetFile && $signingSheetFile->isValid() && !$signingSheetFile->hasMoved()) {
             $newName = $signingSheetFile->getRandomName();
-            $signingSheetFile->move(ROOTPATH . 'public/uploads/signing_sheets', $newName);
+            $uploadPath = ROOTPATH . 'public/uploads/signing_sheets';
+
+            if (!is_dir($uploadPath)) {
+                mkdir($uploadPath, 0777, true);
+            }
+
+            $signingSheetFile->move($uploadPath, $newName);
             $signingSheetFilepath = 'public/uploads/signing_sheets/' . $newName;
         }
 
-        // Prepare data for saving
+        // Prepare data
         $data = [
-            'workplan_id' => $proposal['workplan_id'],
-            'proposal_id' => $proposal['id'],
             'activity_id' => $activity['id'],
-            'inputs' => json_encode($inputs),
-            'input_images' => json_encode($inputImages),
-            'input_files' => json_encode([]), // No files for now
+            'inputs' => $inputs,
+            'input_images' => $inputImages,
+            'input_files' => $inputFiles,
             'gps_coordinates' => $this->request->getPost('gps_coordinates'),
             'signing_sheet_filepath' => $signingSheetFilepath,
+            'remarks' => $this->request->getPost('remarks'),
             'created_by' => $userId,
             'updated_by' => $userId
         ];
-
-        // Check if record already exists
-        $existingRecord = $this->workplanInputActivityModel
-            ->where('proposal_id', $proposal['id'])
-            ->where('activity_id', $activity['id'])
-            ->first();
 
         if ($existingRecord) {
             $data['id'] = $existingRecord['id'];
         }
 
-        // Save the data
-        if ($this->workplanInputActivityModel->save($data)) {
-            return redirect()->to('/activities/' . $proposal['id'])->with('success', 'Input activity implementation saved successfully.');
+        // Save data
+        if ($this->activitiesInputModel->save($data)) {
+            // Update activity status to 'active'
+            $this->activitiesModel->update($activity['id'], [
+                'status' => 'active',
+                'updated_by' => $userId
+            ]);
+
+            return redirect()->to('/activities/' . $activity['id'])
+                ->with('success', 'Input implementation saved successfully.');
         } else {
-            return redirect()->back()->withInput()->with('error', 'Failed to save input activity implementation: ' . implode(', ', $this->workplanInputActivityModel->errors()));
+            return redirect()->back()->withInput()
+                ->with('error', 'Failed to save input implementation: ' .
+                    implode(', ', $this->activitiesInputModel->errors()));
         }
     }
 
     /**
      * Save infrastructure implementation data
      *
-     * @param array $proposal
      * @param array $activity
      * @return mixed
      */
-    private function saveInfrastructureImplementation($proposal, $activity)
+    private function saveInfrastructureImplementation($activity)
     {
         $userId = session()->get('user_id');
 
         // Validation rules
-        $rules = [
-            'infrastructure' => 'required|string',
-            'gps_coordinates' => 'required|string',
+        $validationRules = [
+            'infrastructure' => 'required|max_length[255]',
+            'gps_coordinates' => 'permit_empty|max_length[100]',
+            'signing_sheet' => 'permit_empty|uploaded[signing_sheet]|max_size[signing_sheet,5120]'
         ];
 
-        if (!$this->validate($rules)) {
+        if (!$this->validate($validationRules)) {
             return redirect()->back()->withInput()->with('errors', $this->validator->getErrors());
         }
 
-        // Handle existing and new infrastructure images
-        $infrastructureImages = [];
-        $files = $this->request->getFiles();
+        // Check for existing record
+        $existingRecord = $this->activitiesInfrastructureModel
+            ->where('activity_id', $activity['id'])
+            ->first();
 
-        // Keep existing images if selected
-        $keepInfrastructureImages = $this->request->getPost('keep_infrastructure_images') ?? [];
-        if (!empty($keepInfrastructureImages)) {
-            $infrastructureImages = array_merge($infrastructureImages, $keepInfrastructureImages);
+        // Handle infrastructure images
+        $infrastructureImages = [];
+        if ($existingRecord && !empty($existingRecord['infrastructure_images'])) {
+            $infrastructureImages = is_array($existingRecord['infrastructure_images']) ?
+                $existingRecord['infrastructure_images'] :
+                (json_decode($existingRecord['infrastructure_images'], true) ?: []);
         }
 
-        // Add new uploaded images
-        if (isset($files['infrastructure_images'])) {
-            foreach ($files['infrastructure_images'] as $file) {
-                if ($file->isValid() && !$file->hasMoved()) {
+        $imageFiles = $this->request->getFiles();
+        if (isset($imageFiles['infrastructure_images'])) {
+            foreach ($imageFiles['infrastructure_images'] as $file) {
+                if ($file && $file->isValid() && !$file->hasMoved()) {
                     $newName = $file->getRandomName();
-                    $file->move(ROOTPATH . 'public/uploads/infrastructure', $newName);
-                    $infrastructureImages[] = 'public/uploads/infrastructure/' . $newName;
+                    $uploadPath = ROOTPATH . 'public/uploads/infrastructure_images';
+
+                    if (!is_dir($uploadPath)) {
+                        mkdir($uploadPath, 0777, true);
+                    }
+
+                    $file->move($uploadPath, $newName);
+                    $infrastructureImages[] = 'public/uploads/infrastructure_images/' . $newName;
                 }
             }
         }
 
-        // Handle signing sheet file upload
-        $signingSheetFilepath = null;
-        $signingSheetFile = $this->request->getFile('signing_sheet');
-
-        // Check if there's an existing record to get the current signing sheet filepath
-        $existingRecord = $this->workplanInfrastructureActivityModel
-            ->where('proposal_id', $proposal['id'])
-            ->where('activity_id', $activity['id'])
-            ->first();
-
-        if ($existingRecord && !empty($existingRecord['signing_sheet_filepath'])) {
-            $signingSheetFilepath = $existingRecord['signing_sheet_filepath'];
+        // Handle infrastructure files
+        $infrastructureFiles = [];
+        if ($existingRecord && !empty($existingRecord['infrastructure_files'])) {
+            $infrastructureFiles = is_array($existingRecord['infrastructure_files']) ?
+                $existingRecord['infrastructure_files'] :
+                (json_decode($existingRecord['infrastructure_files'], true) ?: []);
         }
 
-        // Process new signing sheet file if uploaded
+        $documentFiles = $this->request->getFiles();
+        if (isset($documentFiles['infrastructure_files'])) {
+            $fileDescriptions = $this->request->getPost('file_descriptions') ?: [];
+
+            foreach ($documentFiles['infrastructure_files'] as $index => $file) {
+                if ($file && $file->isValid() && !$file->hasMoved()) {
+                    $newName = $file->getRandomName();
+                    $uploadPath = ROOTPATH . 'public/uploads/infrastructure_files';
+
+                    if (!is_dir($uploadPath)) {
+                        mkdir($uploadPath, 0777, true);
+                    }
+
+                    $file->move($uploadPath, $newName);
+
+                    $infrastructureFiles[] = [
+                        'filename' => $fileDescriptions[$index] ?? $file->getClientName(),
+                        'original_name' => $file->getClientName(),
+                        'path' => 'public/uploads/infrastructure_files/' . $newName
+                    ];
+                }
+            }
+        }
+
+        // Handle signing sheet
+        $signingSheetFilepath = $existingRecord['signing_scheet_filepath'] ?? null;
+        $signingSheetFile = $this->request->getFile('signing_sheet');
         if ($signingSheetFile && $signingSheetFile->isValid() && !$signingSheetFile->hasMoved()) {
             $newName = $signingSheetFile->getRandomName();
-            $signingSheetFile->move(ROOTPATH . 'public/uploads/signing_sheets', $newName);
+            $uploadPath = ROOTPATH . 'public/uploads/signing_sheets';
+
+            if (!is_dir($uploadPath)) {
+                mkdir($uploadPath, 0777, true);
+            }
+
+            $signingSheetFile->move($uploadPath, $newName);
             $signingSheetFilepath = 'public/uploads/signing_sheets/' . $newName;
         }
 
-        // Prepare data for saving
+        // Prepare data
         $data = [
-            'workplan_id' => $proposal['workplan_id'],
-            'proposal_id' => $proposal['id'],
             'activity_id' => $activity['id'],
             'infrastructure' => $this->request->getPost('infrastructure'),
             'gps_coordinates' => $this->request->getPost('gps_coordinates'),
-            'infrastructure_images' => json_encode($infrastructureImages),
-            'infrastructure_files' => json_encode([]), // No files for now
-            'signing_sheet_filepath' => $signingSheetFilepath,
+            'infrastructure_images' => $infrastructureImages,
+            'infrastructure_files' => $infrastructureFiles,
+            'signing_scheet_filepath' => $signingSheetFilepath,
             'created_by' => $userId,
             'updated_by' => $userId
         ];
-
-        // Check if record already exists
-        $existingRecord = $this->workplanInfrastructureActivityModel
-            ->where('proposal_id', $proposal['id'])
-            ->where('activity_id', $activity['id'])
-            ->first();
 
         if ($existingRecord) {
             $data['id'] = $existingRecord['id'];
         }
 
-        // Save the data
-        if ($this->workplanInfrastructureActivityModel->save($data)) {
-            return redirect()->to('/activities/' . $proposal['id'])->with('success', 'Infrastructure activity implementation saved successfully.');
+        // Save data
+        if ($this->activitiesInfrastructureModel->save($data)) {
+            $this->activitiesModel->update($activity['id'], [
+                'status' => 'active',
+                'updated_by' => $userId
+            ]);
+
+            return redirect()->to('/activities/' . $activity['id'])
+                ->with('success', 'Infrastructure implementation saved successfully.');
         } else {
-            return redirect()->back()->withInput()->with('error', 'Failed to save infrastructure activity implementation: ' . implode(', ', $this->workplanInfrastructureActivityModel->errors()));
+            return redirect()->back()->withInput()
+                ->with('error', 'Failed to save infrastructure implementation: ' .
+                    implode(', ', $this->activitiesInfrastructureModel->errors()));
         }
     }
 
     /**
      * Save output activity implementation
      *
-     * @param array $proposal
      * @param array $activity
      * @return mixed
      */
-    private function saveOutputImplementation($proposal, $activity)
+    private function saveOutputImplementation($activity)
     {
         $userId = session()->get('user_id');
 
-        // Handle file uploads
-        $outputImages = [];
-        $outputFiles = [];
-        $signingSheetFilepath = '';
+        // Get file for validation
+        $signingSheetFile = $this->request->getFile('signing_sheet');
 
-        // Handle output images upload
-        $outputImageFiles = $this->request->getFiles();
-        if (isset($outputImageFiles['output_images'])) {
-            foreach ($outputImageFiles['output_images'] as $file) {
-                if ($file->isValid() && !$file->hasMoved()) {
-                    $newName = $file->getRandomName();
-                    $file->move(ROOTPATH . 'public/uploads/output_images', $newName);
-                    $outputImages[] = 'public/uploads/output_images/' . $newName;
-                }
+        // Validation rules
+        $validationRules = [
+            'gps_coordinates' => 'required|max_length[255]',
+            'total_value' => 'permit_empty|decimal',
+            'remarks' => 'permit_empty'
+        ];
+
+        // Only validate signing sheet if it's uploaded
+        if ($signingSheetFile && $signingSheetFile->isValid()) {
+            $validationRules['signing_sheet'] = 'uploaded[signing_sheet]|max_size[signing_sheet,5120]';
+        }
+
+        if (!$this->validate($validationRules)) {
+            return redirect()->back()->withInput()->with('errors', $this->validator->getErrors());
+        }
+
+        // Check for existing record
+        $existingRecord = $this->activitiesOutputModel
+            ->where('activity_id', $activity['id'])
+            ->first();
+
+        // Process outputs
+        $outputs = [];
+        $outputNames = $this->request->getPost('output_name') ?: [];
+        $outputQuantities = $this->request->getPost('output_quantity') ?: [];
+        $outputUnits = $this->request->getPost('output_unit') ?: [];
+        $outputDescriptions = $this->request->getPost('output_description') ?: [];
+
+        foreach ($outputNames as $index => $name) {
+            if (!empty(trim($name))) {
+                $outputs[] = [
+                    'name' => trim($name),
+                    'quantity' => trim($outputQuantities[$index] ?? ''),
+                    'unit' => trim($outputUnits[$index] ?? ''),
+                    'description' => trim($outputDescriptions[$index] ?? '')
+                ];
             }
         }
 
-        // Handle existing output images (keep selected ones)
+        // Process beneficiaries
+        $beneficiaries = [];
+        $beneficiaryNames = $this->request->getPost('beneficiary_name') ?: [];
+        $beneficiaryOrganizations = $this->request->getPost('beneficiary_organization') ?: [];
+        $beneficiaryContacts = $this->request->getPost('beneficiary_contact') ?: [];
+        $beneficiaryTypes = $this->request->getPost('beneficiary_type') ?: [];
+
+        foreach ($beneficiaryNames as $index => $name) {
+            if (!empty(trim($name))) {
+                $beneficiaries[] = [
+                    'name' => trim($name),
+                    'organization' => trim($beneficiaryOrganizations[$index] ?? ''),
+                    'contact' => trim($beneficiaryContacts[$index] ?? ''),
+                    'type' => trim($beneficiaryTypes[$index] ?? 'individual')
+                ];
+            }
+        }
+
+        // Handle output images - start with selected existing images
+        $outputImages = [];
+
+        // Get existing images for cleanup comparison
+        $existingImages = [];
+        if ($existingRecord && !empty($existingRecord['output_images'])) {
+            $existingImages = is_array($existingRecord['output_images']) ?
+                $existingRecord['output_images'] :
+                (json_decode($existingRecord['output_images'], true) ?: []);
+        }
+
+        // Keep existing images if selected
         $keepOutputImages = $this->request->getPost('keep_output_images') ?? [];
         if (!empty($keepOutputImages)) {
             $outputImages = array_merge($outputImages, $keepOutputImages);
         }
 
-        // Handle signing sheet upload
-        $signingSheetFile = $this->request->getFile('signing_sheet');
+        // Clean up unselected images from filesystem
+        if (!empty($existingImages)) {
+            foreach ($existingImages as $existingImage) {
+                if (!in_array($existingImage, $keepOutputImages)) {
+                    // Remove unselected image file
+                    $filePath = ROOTPATH . $existingImage;
+                    if (file_exists($filePath)) {
+                        unlink($filePath);
+                        log_message('info', 'Removed output image file: ' . $filePath);
+                    }
+                }
+            }
+        }
+
+        // Handle new output images
+        $imageFiles = $this->request->getFiles();
+        if (isset($imageFiles['output_images'])) {
+            foreach ($imageFiles['output_images'] as $file) {
+                if ($file && $file->isValid() && !$file->hasMoved()) {
+                    $newName = $file->getRandomName();
+                    $uploadPath = ROOTPATH . 'public/uploads/output_images';
+
+                    if (!is_dir($uploadPath)) {
+                        mkdir($uploadPath, 0777, true);
+                    }
+
+                    $file->move($uploadPath, $newName);
+                    $outputImages[] = 'public/uploads/output_images/' . $newName;
+                }
+            }
+        }
+
+        // Handle output files - start with selected existing files
+        $outputFiles = [];
+
+        // Get existing files for cleanup comparison
+        $existingFiles = [];
+        if ($existingRecord && !empty($existingRecord['output_files'])) {
+            $existingFiles = is_array($existingRecord['output_files']) ?
+                $existingRecord['output_files'] :
+                (json_decode($existingRecord['output_files'], true) ?: []);
+        }
+
+        // Keep existing files if selected
+        $keepOutputFiles = $this->request->getPost('keep_output_files') ?? [];
+        if (!empty($keepOutputFiles) && !empty($existingFiles)) {
+            foreach ($keepOutputFiles as $fileIndex) {
+                if (isset($existingFiles[$fileIndex])) {
+                    $outputFiles[] = $existingFiles[$fileIndex];
+                }
+            }
+        }
+
+        // Clean up unselected files from filesystem
+        if (!empty($existingFiles)) {
+            foreach ($existingFiles as $index => $existingFile) {
+                if (!in_array($index, $keepOutputFiles)) {
+                    // Remove unselected file
+                    $filePath = ROOTPATH . $existingFile['path'];
+                    if (file_exists($filePath)) {
+                        unlink($filePath);
+                        log_message('info', 'Removed output file: ' . $filePath);
+                    }
+                }
+            }
+        }
+
+        // Handle new output files
+        if (isset($imageFiles['output_files'])) {
+            $fileDescriptions = $this->request->getPost('file_descriptions') ?: [];
+
+            foreach ($imageFiles['output_files'] as $index => $file) {
+                if ($file && $file->isValid() && !$file->hasMoved()) {
+                    $newName = $file->getRandomName();
+                    $uploadPath = ROOTPATH . 'public/uploads/output_files';
+
+                    if (!is_dir($uploadPath)) {
+                        mkdir($uploadPath, 0777, true);
+                    }
+
+                    $file->move($uploadPath, $newName);
+
+                    $outputFiles[] = [
+                        'filename' => $fileDescriptions[$index] ?? $file->getClientName(),
+                        'original_name' => $file->getClientName(),
+                        'path' => 'public/uploads/output_files/' . $newName
+                    ];
+                }
+            }
+        }
+
+        // Handle signing sheet
+        $signingSheetFilepath = $existingRecord['signing_sheet_filepath'] ?? null;
         if ($signingSheetFile && $signingSheetFile->isValid() && !$signingSheetFile->hasMoved()) {
             $newName = $signingSheetFile->getRandomName();
             $signingSheetFile->move(ROOTPATH . 'public/uploads/signing_sheets', $newName);
             $signingSheetFilepath = 'public/uploads/signing_sheets/' . $newName;
         }
 
-        // Process outputs data
-        $outputNames = $this->request->getPost('output_name') ?? [];
-        $outputQuantities = $this->request->getPost('output_quantity') ?? [];
-        $outputUnits = $this->request->getPost('output_unit') ?? [];
-        $outputRemarks = $this->request->getPost('output_remarks') ?? [];
+        // Ensure we have valid arrays before encoding
+        $outputs = is_array($outputs) ? $outputs : [];
+        $outputImages = is_array($outputImages) ? $outputImages : [];
+        $outputFiles = is_array($outputFiles) ? $outputFiles : [];
+        $beneficiaries = is_array($beneficiaries) ? $beneficiaries : [];
 
-        $outputs = [];
-        for ($i = 0; $i < count($outputNames); $i++) {
-            if (!empty($outputNames[$i])) {
-                $outputs[] = [
-                    'name' => $outputNames[$i],
-                    'quantity' => $outputQuantities[$i] ?? '',
-                    'unit' => $outputUnits[$i] ?? '',
-                    'remarks' => $outputRemarks[$i] ?? ''
-                ];
-            }
-        }
-
-        // Process beneficiaries data
-        $beneficiaryNames = $this->request->getPost('beneficiary_name') ?? [];
-        $beneficiaryAges = $this->request->getPost('beneficiary_age') ?? [];
-        $beneficiaryGenders = $this->request->getPost('beneficiary_gender') ?? [];
-        $beneficiaryPhones = $this->request->getPost('beneficiary_phone') ?? [];
-        $beneficiaryEmails = $this->request->getPost('beneficiary_email') ?? [];
-        $beneficiaryRemarksArray = $this->request->getPost('beneficiary_remarks') ?? [];
-
-        $beneficiaries = [];
-        for ($i = 0; $i < count($beneficiaryNames); $i++) {
-            if (!empty($beneficiaryNames[$i])) {
-                $beneficiaries[] = [
-                    'name' => $beneficiaryNames[$i],
-                    'age' => $beneficiaryAges[$i] ?? '',
-                    'gender' => $beneficiaryGenders[$i] ?? '',
-                    'phone' => $beneficiaryPhones[$i] ?? '',
-                    'email' => $beneficiaryEmails[$i] ?? '',
-                    'remarks' => $beneficiaryRemarksArray[$i] ?? ''
-                ];
-            }
-        }
-
-        // Prepare data for saving
+        // Prepare data - manually encode JSON fields since model callbacks expect different data structure
         $data = [
-            'workplan_id' => $proposal['workplan_id'],
-            'proposal_id' => $proposal['id'],
             'activity_id' => $activity['id'],
             'outputs' => json_encode($outputs),
             'output_images' => json_encode($outputImages),
             'output_files' => json_encode($outputFiles),
-            'delivery_date' => $this->request->getPost('delivery_date') ?: null,
-            'delivery_location' => $this->request->getPost('delivery_location'),
             'beneficiaries' => json_encode($beneficiaries),
             'total_value' => $this->request->getPost('total_value') ?: null,
             'gps_coordinates' => $this->request->getPost('gps_coordinates'),
@@ -1118,21 +1280,35 @@ class ActivitiesController extends ResourceController
             'updated_by' => $userId
         ];
 
-        // Check if record already exists
-        $existingRecord = $this->workplanOutputActivityModel
-            ->where('proposal_id', $proposal['id'])
-            ->where('activity_id', $activity['id'])
-            ->first();
-
         if ($existingRecord) {
             $data['id'] = $existingRecord['id'];
         }
 
-        // Save the data
-        if ($this->workplanOutputActivityModel->save($data)) {
-            return redirect()->to('/activities/' . $proposal['id'])->with('success', 'Output activity implementation saved successfully.');
-        } else {
-            return redirect()->back()->withInput()->with('error', 'Failed to save output activity implementation: ' . implode(', ', $this->workplanOutputActivityModel->errors()));
+        // Save data
+        try {
+            if ($this->activitiesOutputModel->save($data)) {
+                $this->activitiesModel->update($activity['id'], [
+                    'status' => 'active',
+                    'updated_by' => $userId
+                ]);
+
+                return redirect()->to('/activities/' . $activity['id'])
+                    ->with('success', 'Output implementation saved successfully.');
+            } else {
+                $errors = $this->activitiesOutputModel->errors();
+                log_message('error', 'Output implementation save failed: ' . print_r($errors, true));
+                log_message('error', 'Data being saved: ' . print_r($data, true));
+
+                return redirect()->back()->withInput()
+                    ->with('error', 'Failed to save output implementation: ' .
+                        implode(', ', $errors));
+            }
+        } catch (\Exception $e) {
+            log_message('error', 'Exception in saveOutputImplementation: ' . $e->getMessage());
+            log_message('error', 'Data being saved: ' . print_r($data, true));
+
+            return redirect()->back()->withInput()
+                ->with('error', 'An error occurred while saving: ' . $e->getMessage());
         }
     }
 
@@ -1252,21 +1428,18 @@ class ActivitiesController extends ResourceController
                 ->first();
             // ActivitiesTrainingModel automatically decodes JSON fields via afterFind callback
         } elseif ($activity['type'] === 'inputs') {
-            $implementationData = $this->workplanInputActivityModel
+            $implementationData = $this->activitiesInputModel
                 ->where('activity_id', $activity['id'])
                 ->first();
         } elseif ($activity['type'] === 'infrastructures') {
-            $implementationData = $this->workplanInfrastructureActivityModel
+            $implementationData = $this->activitiesInfrastructureModel
                 ->where('activity_id', $activity['id'])
                 ->first();
 
-            if ($implementationData && isset($implementationData['infrastructure_images'])) {
-                $implementationData['infrastructure_images'] = is_string($implementationData['infrastructure_images'])
-                    ? json_decode($implementationData['infrastructure_images'], true)
-                    : $implementationData['infrastructure_images'];
-            }
+            // ActivitiesInfrastructureModel automatically decodes JSON fields via afterFind callback
+            // No manual JSON decoding needed
         } elseif ($activity['type'] === 'outputs') {
-            $implementationData = $this->workplanOutputActivityModel
+            $implementationData = $this->activitiesOutputModel
                 ->where('activity_id', $activity['id'])
                 ->first();
         } elseif ($activity['type'] === 'meetings') {
@@ -1403,25 +1576,26 @@ class ActivitiesController extends ResourceController
                 ->first();
             // ActivitiesTrainingModel automatically decodes JSON fields via afterFind callback
         } elseif ($activity['type'] === 'inputs') {
-            $implementationData = $this->workplanInputActivityModel
+            $implementationData = $this->activitiesInputModel
                 ->where('activity_id', $activity['id'])
                 ->first();
         } elseif ($activity['type'] === 'infrastructures') {
-            $implementationData = $this->workplanInfrastructureActivityModel
+            $implementationData = $this->activitiesInfrastructureModel
                 ->where('activity_id', $activity['id'])
                 ->first();
 
-            if ($implementationData && isset($implementationData['infrastructure_images'])) {
-                $implementationData['infrastructure_images'] = is_string($implementationData['infrastructure_images'])
-                    ? json_decode($implementationData['infrastructure_images'], true)
-                    : $implementationData['infrastructure_images'];
-            }
+            // ActivitiesInfrastructureModel automatically decodes JSON fields via afterFind callback
+            // No manual JSON decoding needed
         } elseif ($activity['type'] === 'outputs') {
             $implementationData = $this->workplanOutputActivityModel
                 ->where('activity_id', $activity['id'])
                 ->first();
         } elseif ($activity['type'] === 'meetings') {
             $implementationData = $this->activitiesMeetingsModel
+                ->where('activity_id', $activity['id'])
+                ->first();
+        } elseif ($activity['type'] === 'inputs') {
+            $implementationData = $this->activitiesInputModel
                 ->where('activity_id', $activity['id'])
                 ->first();
         }
@@ -1495,19 +1669,16 @@ class ActivitiesController extends ResourceController
                 ->first();
             // ActivitiesTrainingModel automatically decodes JSON fields via afterFind callback
         } elseif ($activity['type'] === 'inputs') {
-            $implementationData = $this->workplanInputActivityModel
+            $implementationData = $this->activitiesInputModel
                 ->where('activity_id', $activity['id'])
                 ->first();
         } elseif ($activity['type'] === 'infrastructures') {
-            $implementationData = $this->workplanInfrastructureActivityModel
+            $implementationData = $this->activitiesInfrastructureModel
                 ->where('activity_id', $activity['id'])
                 ->first();
 
-            if ($implementationData && isset($implementationData['infrastructure_images'])) {
-                $implementationData['infrastructure_images'] = is_string($implementationData['infrastructure_images'])
-                    ? json_decode($implementationData['infrastructure_images'], true)
-                    : $implementationData['infrastructure_images'];
-            }
+            // ActivitiesInfrastructureModel automatically decodes JSON fields via afterFind callback
+            // No manual JSON decoding needed
         } elseif ($activity['type'] === 'outputs') {
             $implementationData = $this->workplanOutputActivityModel
                 ->where('activity_id', $activity['id'])
@@ -2106,6 +2277,127 @@ class ActivitiesController extends ResourceController
             return redirect()->to('/activities/' . $activity['id'])->with('success', 'Meeting implementation saved successfully.');
         } else {
             return redirect()->back()->withInput()->with('error', 'Failed to save meeting implementation: ' . implode(', ', $this->activitiesMeetingsModel->errors()));
+        }
+    }
+
+    /**
+     * Save agreement implementation data
+     *
+     * @param array $activity Activity data
+     * @return mixed
+     */
+    private function saveAgreementImplementation($activity)
+    {
+        $userId = session()->get('user_id');
+
+        // Validation rules
+        $validationRules = [
+            'title' => 'required|max_length[255]',
+            'description' => 'permit_empty',
+            'agreement_type' => 'permit_empty|max_length[100]',
+            'effective_date' => 'required|valid_date',
+            'expiry_date' => 'permit_empty|valid_date',
+            'status' => 'permit_empty|in_list[draft,active,expired,terminated,archived]',
+            'remarks' => 'permit_empty',
+            'agreement_documents' => 'permit_empty|uploaded[agreement_documents]|max_size[agreement_documents,5120]',
+            'signing_sheet' => 'permit_empty|uploaded[signing_sheet]|max_size[signing_sheet,5120]'
+        ];
+
+        if (!$this->validate($validationRules)) {
+            return redirect()->back()->withInput()->with('errors', $this->validator->getErrors());
+        }
+
+        // Check if there's an existing record
+        $existingRecord = $this->activitiesAgreementsModel
+            ->where('activity_id', $activity['id'])
+            ->first();
+
+        // Process parties (JSON format)
+        $parties = [];
+        $partyNames = $this->request->getPost('party_name') ?: [];
+        $partyOrganizations = $this->request->getPost('party_organization') ?: [];
+        $partyRoles = $this->request->getPost('party_role') ?: [];
+        $partyContacts = $this->request->getPost('party_contact') ?: [];
+
+        foreach ($partyNames as $index => $name) {
+            if (!empty(trim($name))) {
+                $parties[] = [
+                    'name' => trim($name),
+                    'organization' => trim($partyOrganizations[$index] ?? ''),
+                    'role' => trim($partyRoles[$index] ?? ''),
+                    'contact' => trim($partyContacts[$index] ?? '')
+                ];
+            }
+        }
+
+        // Note: Signing sheet functionality removed as the field doesn't exist in activities_agreements table
+        // This can be added later if the database schema is updated
+
+        // Handle agreement documents attachments
+        $attachments = [];
+        if ($existingRecord && !empty($existingRecord['attachments'])) {
+            $attachments = is_array($existingRecord['attachments']) ?
+                $existingRecord['attachments'] :
+                (json_decode($existingRecord['attachments'], true) ?: []);
+        }
+
+        $attachmentFiles = $this->request->getFiles();
+        if (isset($attachmentFiles['agreement_documents'])) {
+            $attachmentDescriptions = $this->request->getPost('attachment_descriptions') ?: [];
+
+            foreach ($attachmentFiles['agreement_documents'] as $index => $file) {
+                if ($file && $file->isValid() && !$file->hasMoved()) {
+                    $newName = $file->getRandomName();
+                    $uploadPath = ROOTPATH . 'public/uploads/agreement_attachments';
+
+                    if (!is_dir($uploadPath)) {
+                        mkdir($uploadPath, 0777, true);
+                    }
+
+                    $file->move($uploadPath, $newName);
+
+                    $attachments[] = [
+                        'filename' => $attachmentDescriptions[$index] ?? $file->getClientName(),
+                        'original_name' => $file->getClientName(),
+                        'path' => 'public/uploads/agreement_attachments/' . $newName,
+                        'description' => $attachmentDescriptions[$index] ?? ''
+                    ];
+                }
+            }
+        }
+
+        // Prepare data for saving (following activities_agreements table structure)
+        $data = [
+            'activity_id' => $activity['id'],
+            'title' => $this->request->getPost('title'),
+            'description' => $this->request->getPost('description'),
+            'agreement_type' => $this->request->getPost('agreement_type'),
+            'parties' => $parties,
+            'effective_date' => $this->request->getPost('effective_date'),
+            'expiry_date' => $this->request->getPost('expiry_date'),
+            'status' => $this->request->getPost('status') ?: 'draft',
+            'attachments' => $attachments,
+            'remarks' => $this->request->getPost('remarks'),
+            'created_by' => $userId,
+            'updated_by' => $userId
+        ];
+
+        // Check if record already exists
+        if ($existingRecord) {
+            $data['id'] = $existingRecord['id'];
+        }
+
+        // Save the data
+        if ($this->activitiesAgreementsModel->save($data)) {
+            // Update activity status to 'active'
+            $this->activitiesModel->update($activity['id'], [
+                'status' => 'active',
+                'updated_by' => $userId
+            ]);
+
+            return redirect()->to('/activities/' . $activity['id'])->with('success', 'Agreement implementation saved successfully.');
+        } else {
+            return redirect()->back()->withInput()->with('error', 'Failed to save agreement implementation: ' . implode(', ', $this->activitiesAgreementsModel->errors()));
         }
     }
 }

@@ -2,30 +2,85 @@
 <div class="row">
     <div class="col-md-6">
         <div class="mb-3">
-            <strong>Output Title:</strong>
-            <p class="text-muted"><?= esc($implementationData['title'] ?? 'N/A') ?></p>
-        </div>
-        <div class="mb-3">
-            <strong>Output Type:</strong>
-            <p class="text-muted"><?= esc($implementationData['output_type'] ?? 'N/A') ?></p>
+            <strong>Total Value:</strong>
+            <p class="text-muted">
+                <?php if (!empty($implementationData['total_value'])): ?>
+                    KES <?= number_format($implementationData['total_value'], 2) ?>
+                <?php else: ?>
+                    N/A
+                <?php endif; ?>
+            </p>
         </div>
     </div>
     <div class="col-md-6">
         <div class="mb-3">
-            <strong>Quantity:</strong>
-            <p class="text-muted"><?= esc($implementationData['quantity'] ?? 'N/A') ?></p>
-        </div>
-        <div class="mb-3">
-            <strong>Unit:</strong>
-            <p class="text-muted"><?= esc($implementationData['unit'] ?? 'N/A') ?></p>
+            <strong>Implementation Date:</strong>
+            <p class="text-muted"><?= date('d M Y', strtotime($implementationData['created_at'])) ?></p>
         </div>
     </div>
 </div>
 
-<div class="mb-3">
-    <strong>Description:</strong>
-    <p class="text-muted"><?= nl2br(esc($implementationData['description'] ?? 'N/A')) ?></p>
+<!-- Outputs Table -->
+<?php if (!empty($implementationData['outputs'])): ?>
+<div class="mb-4">
+    <strong>Outputs Delivered (<?= count($implementationData['outputs']) ?> items):</strong>
+    <div class="table-responsive">
+        <table class="table table-sm table-bordered">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Output Name</th>
+                    <th>Quantity</th>
+                    <th>Unit</th>
+                    <th>Description</th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php foreach ($implementationData['outputs'] as $index => $output): ?>
+                <tr>
+                    <td><?= $index + 1 ?></td>
+                    <td><?= esc($output['name']) ?></td>
+                    <td><?= esc($output['quantity'] ?? 'N/A') ?></td>
+                    <td><?= esc($output['unit'] ?? 'N/A') ?></td>
+                    <td><?= esc($output['description'] ?? 'N/A') ?></td>
+                </tr>
+                <?php endforeach; ?>
+            </tbody>
+        </table>
+    </div>
 </div>
+<?php endif; ?>
+
+<!-- Beneficiaries Table -->
+<?php if (!empty($implementationData['beneficiaries'])): ?>
+<div class="mb-4">
+    <strong>Beneficiaries (<?= count($implementationData['beneficiaries']) ?> beneficiaries):</strong>
+    <div class="table-responsive">
+        <table class="table table-sm table-bordered">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Name</th>
+                    <th>Organization</th>
+                    <th>Contact</th>
+                    <th>Type</th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php foreach ($implementationData['beneficiaries'] as $index => $beneficiary): ?>
+                <tr>
+                    <td><?= $index + 1 ?></td>
+                    <td><?= esc($beneficiary['name']) ?></td>
+                    <td><?= esc($beneficiary['organization'] ?? 'N/A') ?></td>
+                    <td><?= esc($beneficiary['contact'] ?? 'N/A') ?></td>
+                    <td><?= ucfirst(esc($beneficiary['type'] ?? 'individual')) ?></td>
+                </tr>
+                <?php endforeach; ?>
+            </tbody>
+        </table>
+    </div>
+</div>
+<?php endif; ?>
 
 <?php if (!empty($implementationData['gps_coordinates'])): ?>
 <div class="mb-3">
@@ -35,14 +90,14 @@
 <?php endif; ?>
 
 <?php if (!empty($implementationData['output_files'])): ?>
-<div class="mb-3">
+<div class="mb-4">
     <strong>Output Files (<?= count($implementationData['output_files']) ?> files):</strong>
     <div class="table-responsive">
         <table class="table table-sm table-bordered">
             <thead>
                 <tr>
                     <th>#</th>
-                    <th>Caption</th>
+                    <th>Description</th>
                     <th>Original Name</th>
                     <th>Actions</th>
                 </tr>
@@ -51,10 +106,10 @@
                 <?php foreach ($implementationData['output_files'] as $index => $file): ?>
                 <tr>
                     <td><?= $index + 1 ?></td>
-                    <td><?= esc($file['caption']) ?></td>
-                    <td><?= esc($file['original_name']) ?></td>
+                    <td><?= esc($file['filename'] ?? 'Output File') ?></td>
+                    <td><?= esc($file['original_name'] ?? 'N/A') ?></td>
                     <td>
-                        <a href="<?= base_url($file['file_path']) ?>" target="_blank" class="btn btn-sm btn-outline-primary">
+                        <a href="<?= base_url($file['path']) ?>" target="_blank" class="btn btn-sm btn-outline-primary">
                             <i class="fas fa-download"></i> Download
                         </a>
                     </td>
@@ -67,7 +122,7 @@
 <?php endif; ?>
 
 <?php if (!empty($implementationData['output_images'])): ?>
-<div class="mb-3">
+<div class="mb-4">
     <strong>Output Images (<?= count($implementationData['output_images']) ?> images):</strong>
     <div class="row">
         <?php foreach ($implementationData['output_images'] as $index => $image): ?>
@@ -84,8 +139,28 @@
 </div>
 <?php endif; ?>
 
+<!-- Signing Sheet -->
+<?php if (!empty($implementationData['signing_sheet_filepath'])): ?>
+<div class="mb-4">
+    <strong>Signing Sheet:</strong>
+    <div class="mt-2">
+        <a href="<?= base_url($implementationData['signing_sheet_filepath']) ?>" target="_blank" class="btn btn-sm btn-outline-primary">
+            <i class="fas fa-download"></i> Download Signing Sheet
+        </a>
+    </div>
+</div>
+<?php endif; ?>
+
+<!-- GPS Coordinates -->
+<?php if (!empty($implementationData['gps_coordinates'])): ?>
+<div class="mb-4">
+    <strong>GPS Coordinates:</strong>
+    <p class="text-muted"><?= esc($implementationData['gps_coordinates']) ?></p>
+</div>
+<?php endif; ?>
+
 <?php if (!empty($implementationData['remarks'])): ?>
-<div class="mb-3">
+<div class="mb-4">
     <strong>Remarks:</strong>
     <p class="text-muted"><?= nl2br(esc($implementationData['remarks'])) ?></p>
 </div>

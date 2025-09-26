@@ -155,6 +155,34 @@ $startTimeValue = date('H:i', strtotime($implementationData['start_time']));
 
 **Solution**: Created comprehensive details view with all sections.
 
+### Issue 5: Agreement Implementation Data Not Pre-populating (Critical)
+**Problem**: When accessing `/activities/{id}/implement` for agreement activities, the form appeared empty even when implementation data existed in the database.
+
+**Root Cause**:
+- The `implement()` method in `ActivitiesController.php` was missing the case to fetch existing agreement implementation data
+- While the method handled documents, trainings, inputs, infrastructures, outputs, and meetings, it lacked the agreements case
+- This caused `$implementationData` to remain `null` for agreement activities
+
+**Solution**:
+```php
+// Added missing case in implement() method (around line 586)
+} elseif ($activity['type'] === 'agreements') {
+    $implementationData = $this->activitiesAgreementsModel
+        ->where('activity_id', $activity['id'])
+        ->first();
+
+    // ActivitiesAgreementsModel automatically decodes JSON fields via afterFind callback
+    // No manual JSON decoding needed
+}
+```
+
+**Key Lesson**: When implementing new activity types, ensure ALL controller methods that handle activity-specific logic include the new type. Check:
+1. `implement()` method - for fetching existing data
+2. `saveImplementation()` method - for saving new data
+3. `show()` method - for displaying implementation details
+
+**Prevention**: Create a checklist for new activity type implementations to ensure all methods are updated consistently.
+
 ## Best Practices & Patterns
 
 ### 1. JSON Field Handling Pattern
@@ -216,6 +244,51 @@ protected $validationRules = [
 ```
 
 ## Implementation Guide for Other Activity Types
+
+### ⚠️ CRITICAL IMPLEMENTATION CHECKLIST
+
+When implementing a new activity type, **ALWAYS** ensure these controller methods are updated:
+
+#### ✅ Controller Method Checklist
+1. **`implement()` method** - Add case to fetch existing implementation data:
+   ```php
+   } elseif ($activity['type'] === 'your_new_type') {
+       $implementationData = $this->activitiesYourNewTypeModel
+           ->where('activity_id', $activity['id'])
+           ->first();
+   }
+   ```
+
+2. **`saveImplementation()` method** - Add case to handle form submission:
+   ```php
+   } elseif ($activity['type'] === 'your_new_type') {
+       return $this->saveYourNewTypeImplementation($activity);
+   }
+   ```
+
+3. **`show()` method** - Add case to fetch data for details view:
+   ```php
+   } elseif ($activity['type'] === 'your_new_type') {
+       $implementationData = $this->activitiesYourNewTypeModel
+           ->where('activity_id', $activity['id'])
+           ->first();
+   }
+   ```
+
+4. **View mapping** - Add to `$viewMap` array in `implement()` method:
+   ```php
+   $viewMap = [
+       // ... existing mappings
+       'your_new_type' => 'activities/implementations/your_new_type_implementation',
+   ];
+   ```
+
+#### 🚨 Common Mistake
+**Missing any of these cases will result in:**
+- Empty forms (missing `implement()` case)
+- Save errors (missing `saveImplementation()` case)
+- Missing details (missing `show()` case)
+- Wrong view (missing view mapping)
 
 ### Step-by-Step Process
 
