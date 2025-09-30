@@ -67,7 +67,8 @@
         }
 
         .sidebar.collapsed {
-            width: var(--sidebar-collapsed-width);
+            width: 0;
+            overflow: hidden;
         }
 
         .sidebar-header {
@@ -132,7 +133,11 @@
             display: none;
         }
 
-        .sidebar.collapsed .sidebar-header h4 {
+        .sidebar.collapsed .sidebar-title {
+            display: none;
+        }
+
+        .sidebar.collapsed .sidebar-logo {
             display: none;
         }
 
@@ -151,7 +156,7 @@
         }
 
         .main-content.expanded {
-            margin-left: var(--sidebar-collapsed-width);
+            margin-left: 0;
         }
 
         /* Top navigation */
@@ -201,19 +206,12 @@
         /* Responsive styles */
         @media (max-width: 991.98px) {
             .sidebar {
-                width: var(--sidebar-collapsed-width);
-            }
-
-            .sidebar .nav-text {
-                display: none;
-            }
-
-            .sidebar-header h4 {
-                display: none;
+                width: 0;
+                overflow: hidden;
             }
 
             .main-content {
-                margin-left: var(--sidebar-collapsed-width);
+                margin-left: 0;
             }
 
             .sidebar.expanded {
@@ -222,11 +220,19 @@
             }
 
             .sidebar.expanded .nav-text {
-                display: inline;
+                display: inline !important;
             }
 
-            .sidebar.expanded .sidebar-header h4 {
-                display: block;
+            .sidebar.expanded .sidebar-title {
+                display: block !important;
+            }
+
+            .sidebar.expanded .sidebar-logo {
+                display: block !important;
+            }
+
+            .mobile-nav-toggle {
+                display: block !important;
             }
         }
 
@@ -247,6 +253,22 @@
 
             .mobile-nav-toggle {
                 display: block !important;
+            }
+        }
+
+        /* Desktop sidebar collapse behavior */
+        @media (min-width: 992px) {
+            .sidebar.collapsed {
+                width: 0;
+                overflow: hidden;
+            }
+
+            .sidebar.collapsed + .main-content {
+                margin-left: 0;
+            }
+
+            .main-content.expanded {
+                margin-left: 0;
             }
         }
 
@@ -309,7 +331,8 @@
     <!-- Sidebar -->
     <div class="sidebar" id="sidebar">
         <div class="sidebar-header">
-            <img src="<?= base_url('public/assets/system_images/amis_logo.png') ?>" alt="AMIS Logo" height="40">
+            <img src="<?= base_url('public/assets/system_images/amis_logo.png') ?>" alt="AMIS Logo" height="40" class="sidebar-logo">
+            <h4 class="sidebar-title">AMIS</h4>
             <button class="toggle-sidebar" id="toggleSidebar">
                 <i class="fas fa-chevron-left"></i>
             </button>
@@ -428,7 +451,15 @@
                 </li>
                 <?php endif; ?>
 
-
+                <!-- Supervised Activities Menu - For Supervisors -->
+                <?php if (canAccessMenu('supervised_activities', $userRole)): ?>
+                <li class="nav-item">
+                    <a class="nav-link <?= strpos(current_url(), 'supervised-activities') !== false ? 'active' : '' ?>" href="<?= base_url('supervised-activities') ?>">
+                        <i class="fas fa-clipboard-list"></i>
+                        <span class="nav-text">Supervised Activities</span>
+                    </a>
+                </li>
+                <?php endif; ?>
 
                 <!-- Evaluation Menu - For Admin and Supervisor -->
                 <?php if (canAccessMenu('evaluation', $userRole)): ?>
@@ -450,15 +481,6 @@
                 </li>
                 <?php endif; ?>
 
-                <!-- Workplan Period Menu - For Admin and Supervisor -->
-                <?php if (canAccessMenu('workplan_period', $userRole)): ?>
-                <li class="nav-item">
-                    <a class="nav-link <?= (strpos(current_url(), 'workplan-period') !== false || strpos(current_url(), 'performance-output') !== false) ? 'active' : '' ?>" href="<?= base_url('workplan-period') ?>">
-                        <i class="fas fa-calendar-alt"></i>
-                        <span class="nav-text">Workplan Period</span>
-                    </a>
-                </li>
-                <?php endif; ?>
 
                 <!-- My Activities Menu - For Admin and Supervisor -->
                 <?php if (canAccessMenu('my_activities', $userRole)): ?>
@@ -470,38 +492,6 @@
                 </li>
                 <?php endif; ?>
 
-                <!-- Activities Menu - For Admin, Supervisor, and User -->
-                <?php if (canAccessMenu('activities', $userRole)): ?>
-                <li class="nav-item">
-                    <a class="nav-link <?= (strpos(current_url(), 'documents') !== false || strpos(current_url(), 'meetings') !== false || strpos(current_url(), 'agreements') !== false) ? 'active' : '' ?>" href="#activitiesSubmenu" data-bs-toggle="collapse">
-                        <i class="fas fa-folder-open"></i>
-                        <span class="nav-text">Activities</span>
-                        <i class="fas fa-chevron-down ms-auto"></i>
-                    </a>
-                    <div class="collapse <?= (strpos(current_url(), 'documents') !== false || strpos(current_url(), 'meetings') !== false || strpos(current_url(), 'agreements') !== false) ? 'show' : '' ?>" id="activitiesSubmenu">
-                        <ul class="nav flex-column ms-3">
-                            <li class="nav-item">
-                                <a class="nav-link <?= strpos(current_url(), 'documents') !== false ? 'active' : '' ?>" href="<?= base_url('documents') ?>">
-                                    <i class="fas fa-file-alt"></i>
-                                    <span class="nav-text">Documents</span>
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link <?= strpos(current_url(), 'meetings') !== false ? 'active' : '' ?>" href="<?= base_url('meetings') ?>">
-                                    <i class="fas fa-calendar-alt"></i>
-                                    <span class="nav-text">Meetings</span>
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link <?= strpos(current_url(), 'agreements') !== false ? 'active' : '' ?>" href="<?= base_url('agreements') ?>">
-                                    <i class="fas fa-handshake"></i>
-                                    <span class="nav-text">Agreements</span>
-                                </a>
-                            </li>
-                        </ul>
-                    </div>
-                </li>
-                <?php endif; ?>
                 <!-- Reports Menu - For All Roles -->
                 <?php if (canAccessMenu('reports', $userRole)): ?>
                 <li class="nav-item">
@@ -687,15 +677,11 @@
         $(document).ready(function() {
             // Function to check screen size and apply default sidebar state
             function checkScreenSize() {
-                if ($(window).width() < 768) {
-                    // Mobile view - sidebar hidden by default
-                    $('#sidebar').removeClass('expanded');
-                    $('#mainContent').removeClass('expanded');
-                } else if ($(window).width() < 992) {
-                    // Tablet view - sidebar collapsed by default
-                    $('#sidebar').addClass('collapsed');
+                if ($(window).width() < 992) {
+                    // Mobile/tablet view - sidebar hidden by default
+                    $('#sidebar').removeClass('expanded').addClass('collapsed');
                     $('#mainContent').addClass('expanded');
-                    $('#toggleSidebar i').removeClass('fa-chevron-left').addClass('fa-chevron-right');
+                    $('#toggleSidebar i').removeClass('fa-chevron-left').addClass('fa-bars');
                 }
             }
 
@@ -714,9 +700,9 @@
 
                 // Toggle icon
                 if ($('#sidebar').hasClass('collapsed')) {
-                    $('#toggleSidebar i').removeClass('fa-chevron-left').addClass('fa-chevron-right');
+                    $('#toggleSidebar i').removeClass('fa-chevron-left').addClass('fa-bars');
                 } else {
-                    $('#toggleSidebar i').removeClass('fa-chevron-right').addClass('fa-chevron-left');
+                    $('#toggleSidebar i').removeClass('fa-bars').addClass('fa-chevron-left');
                 }
             });
 
@@ -728,11 +714,12 @@
             // Close mobile sidebar when clicking outside
             $(document).on('click touchstart', function(e) {
                 // Only apply this on mobile screens
-                if ($(window).width() >= 768) return;
+                if ($(window).width() >= 992) return;
 
                 // If the click is outside the sidebar and the mobile toggle button
                 if (!$(e.target).closest('#sidebar').length &&
-                    !$(e.target).closest('#mobileNavToggle').length) {
+                    !$(e.target).closest('#mobileNavToggle').length &&
+                    !$(e.target).closest('#toggleSidebar').length) {
                     $('#sidebar').removeClass('expanded');
                 }
             });

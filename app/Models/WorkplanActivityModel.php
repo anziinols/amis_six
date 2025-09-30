@@ -19,15 +19,7 @@ class WorkplanActivityModel extends Model
         'activity_code',
         'title',
         'description',
-        'activity_type',
-        'q_one_target',
-        'q_two_target',
-        'q_three_target',
-        'q_four_target',
-        'q_one_achieved',
-        'q_two_achieved',
-        'q_three_achieved',
-        'q_four_achieved',
+        'target_output',
         'total_budget',
         'rated_at',
         'rated_by',
@@ -52,8 +44,8 @@ class WorkplanActivityModel extends Model
     protected $validationRules = [
         'workplan_id'   => 'required',
         'title'         => 'required|max_length[255]',
-        'activity_type' => 'required|in_list[training,inputs,infrastructure,output]',
-        'rating'        => 'permit_empty|integer|greater_than[0]|less_than_equal_to[5]'
+        'target_output' => 'permit_empty|max_length[255]',
+        'rating'        => 'permit_empty|integer|greater_than_equal_to[0]|less_than_equal_to[100]'
     ];
 
     protected $validationMessages = [
@@ -64,13 +56,13 @@ class WorkplanActivityModel extends Model
             'required' => 'Activity title is required',
             'max_length' => 'Title cannot exceed 255 characters'
         ],
-        'activity_type' => [
-            'required' => 'Activity type is required'
+        'target_output' => [
+            'max_length' => 'Target output cannot exceed 255 characters'
         ],
         'rating' => [
             'integer' => 'Rating must be a valid number',
-            'greater_than' => 'Rating must be at least 1 star',
-            'less_than_equal_to' => 'Rating cannot exceed 5 stars'
+            'greater_than_equal_to' => 'Rating must be between 0% and 100%',
+            'less_than_equal_to' => 'Rating cannot exceed 100%'
         ]
     ];
 

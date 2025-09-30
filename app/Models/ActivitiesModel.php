@@ -21,8 +21,6 @@ class ActivitiesModel extends Model
 
     // Fields that can be set during save/insert/update
     protected $allowedFields    = [
-        'workplan_period_id',
-        'performance_output_id',
         'supervisor_id',
         'action_officer_id',
         'activity_title',
@@ -56,8 +54,6 @@ class ActivitiesModel extends Model
 
     // Validation rules
     protected $validationRules = [
-        'workplan_period_id'    => 'required|integer',
-        'performance_output_id' => 'required|integer',
         'supervisor_id'         => 'permit_empty|integer',
         'action_officer_id'     => 'permit_empty|integer',
         'activity_title'        => 'required|max_length[500]',
@@ -108,19 +104,7 @@ class ActivitiesModel extends Model
         return $data;
     }
 
-    /**
-     * Get all activities for a specific performance output
-     *
-     * @param int $performanceOutputId
-     * @return array
-     */
-    public function getByPerformanceOutput($performanceOutputId)
-    {
-        return $this->where('performance_output_id', $performanceOutputId)
-                    ->orderBy('date_start', 'ASC')
-                    ->orderBy('created_at', 'DESC')
-                    ->findAll();
-    }
+
 
     /**
      * Get activities by type
@@ -129,15 +113,11 @@ class ActivitiesModel extends Model
      * @param int $performanceOutputId
      * @return array
      */
-    public function getByType($type, $performanceOutputId = null)
+    public function getByType($type)
     {
-        $builder = $this->where('type', $type);
-        
-        if ($performanceOutputId) {
-            $builder->where('performance_output_id', $performanceOutputId);
-        }
-        
-        return $builder->orderBy('date_start', 'ASC')->findAll();
+        return $this->where('type', $type)
+                    ->orderBy('date_start', 'ASC')
+                    ->findAll();
     }
 
     /**
@@ -165,7 +145,6 @@ class ActivitiesModel extends Model
 
         $query = $db->table('activities a')
             ->select('a.*,
-                     po.output as performance_output_title,
                      CONCAT(u1.fname, " ", u1.lname) as supervisor_name,
                      CONCAT(u2.fname, " ", u2.lname) as action_officer_name,
                      CONCAT(u3.fname, " ", u3.lname) as created_by_name,
@@ -173,7 +152,6 @@ class ActivitiesModel extends Model
                      CONCAT(u5.fname, " ", u5.lname) as rated_by_name,
                      p.name as province_name,
                      d.name as district_name')
-            ->join('performance_outputs po', 'a.performance_output_id = po.id', 'left')
             ->join('users u1', 'a.supervisor_id = u1.id', 'left')
             ->join('users u2', 'a.action_officer_id = u2.id', 'left')
             ->join('users u3', 'a.created_by = u3.id', 'left')
@@ -199,7 +177,6 @@ class ActivitiesModel extends Model
 
         $query = $db->table('activities a')
             ->select('a.*,
-                     po.output as performance_output_title,
                      CONCAT(u1.fname, " ", u1.lname) as supervisor_name,
                      CONCAT(u2.fname, " ", u2.lname) as action_officer_name,
                      CONCAT(u3.fname, " ", u3.lname) as created_by_name,
@@ -207,7 +184,6 @@ class ActivitiesModel extends Model
                      CONCAT(u5.fname, " ", u5.lname) as rated_by_name,
                      p.name as province_name,
                      d.name as district_name')
-            ->join('performance_outputs po', 'a.performance_output_id = po.id', 'left')
             ->join('users u1', 'a.supervisor_id = u1.id', 'left')
             ->join('users u2', 'a.action_officer_id = u2.id', 'left')
             ->join('users u3', 'a.created_by = u3.id', 'left')
@@ -347,7 +323,6 @@ class ActivitiesModel extends Model
 
         $query = $db->table('activities a')
             ->select('a.*,
-                     po.output as performance_output_title,
                      CONCAT(u1.fname, " ", u1.lname) as supervisor_name,
                      CONCAT(u2.fname, " ", u2.lname) as action_officer_name,
                      CONCAT(u3.fname, " ", u3.lname) as created_by_name,
@@ -355,7 +330,6 @@ class ActivitiesModel extends Model
                      CONCAT(u5.fname, " ", u5.lname) as rated_by_name,
                      p.name as province_name,
                      d.name as district_name')
-            ->join('performance_outputs po', 'a.performance_output_id = po.id', 'left')
             ->join('users u1', 'a.supervisor_id = u1.id', 'left')
             ->join('users u2', 'a.action_officer_id = u2.id', 'left')
             ->join('users u3', 'a.created_by = u3.id', 'left')
@@ -384,7 +358,6 @@ class ActivitiesModel extends Model
 
         $query = $db->table('activities a')
             ->select('a.*,
-                     po.output as performance_output_title,
                      CONCAT(u1.fname, " ", u1.lname) as supervisor_name,
                      CONCAT(u2.fname, " ", u2.lname) as action_officer_name,
                      CONCAT(u3.fname, " ", u3.lname) as created_by_name,
@@ -392,7 +365,6 @@ class ActivitiesModel extends Model
                      CONCAT(u5.fname, " ", u5.lname) as rated_by_name,
                      p.name as province_name,
                      d.name as district_name')
-            ->join('performance_outputs po', 'a.performance_output_id = po.id', 'left')
             ->join('users u1', 'a.supervisor_id = u1.id', 'left')
             ->join('users u2', 'a.action_officer_id = u2.id', 'left')
             ->join('users u3', 'a.created_by = u3.id', 'left')
@@ -450,21 +422,7 @@ class ActivitiesModel extends Model
                     ->findAll();
     }
 
-    /**
-     * Get total cost by performance output
-     *
-     * @param int $performanceOutputId
-     * @return float
-     */
-    public function getTotalCostByPerformanceOutput($performanceOutputId)
-    {
-        $result = $this->selectSum('total_cost')
-                       ->where('performance_output_id', $performanceOutputId)
-                       ->where('deleted_at', null)
-                       ->first();
 
-        return $result['total_cost'] ?? 0;
-    }
 
     /**
      * Get activities summary by type

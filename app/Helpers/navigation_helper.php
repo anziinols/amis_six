@@ -39,9 +39,8 @@ if (!function_exists('canAccessMenu')) {
             'commodities' => ['admin'],
             'commodity_boards' => ['admin'], // Only admin can manage commodity boards
             'workplans' => ['admin', 'supervisor'],
+            'supervised_activities' => ['supervisor'], // Supervised activities for supervisors
 
-            'activities' => ['admin', 'supervisor'], // Regular users access through direct assignment
-            'workplan_period' => ['admin', 'supervisor', 'user'], // Allow ordinary users access
             'my_activities' => ['admin', 'supervisor', 'user'], // Allow ordinary users access to their activities
             'reports' => ['admin', 'supervisor', 'user'], // Allow ordinary users access to reports
             'duty_instructions' => ['admin', 'supervisor'],
@@ -158,13 +157,6 @@ if (!function_exists('getNavigationMenus')) {
                 'url' => 'workplans',
                 'capabilities' => ['admin', 'supervisor']
             ],
-            'workplan_period' => [
-                'title' => 'Workplan Period',
-                'icon' => 'fas fa-calendar-alt',
-                'url' => 'workplan-period',
-                'capabilities' => ['admin', 'supervisor', 'user']
-            ],
-
             'evaluation' => [
                 'title' => 'Evaluation',
                 'icon' => 'fas fa-clipboard-check',
@@ -182,18 +174,6 @@ if (!function_exists('getNavigationMenus')) {
                 'icon' => 'fas fa-clipboard-list',
                 'url' => 'activities',
                 'capabilities' => ['admin', 'supervisor', 'user']
-            ],
-            'activities' => [
-                'title' => 'Activities',
-                'icon' => 'fas fa-folder-open',
-                'url' => '#activitiesSubmenu',
-                'capabilities' => ['admin', 'supervisor'],
-                'submenu' => true,
-                'submenus' => [
-                    'documents' => ['title' => 'Documents', 'icon' => 'fas fa-file-alt', 'url' => 'documents'],
-                    'meetings' => ['title' => 'Meetings', 'icon' => 'fas fa-calendar-alt', 'url' => 'meetings'],
-                    'agreements' => ['title' => 'Agreements', 'icon' => 'fas fa-handshake', 'url' => 'agreements']
-                ]
             ],
             'reports' => [
                 'title' => 'Reports',

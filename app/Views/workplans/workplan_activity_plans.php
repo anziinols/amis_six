@@ -33,10 +33,7 @@
                             ?>
                         </td>
                     </tr>
-                    <tr>
-                        <th>Activity Type:</th>
-                        <td><?= ucfirst($activity['activity_type']) ?></td>
-                    </tr>
+
                     <tr>
                         <th>Supervisor:</th>
                         <td>

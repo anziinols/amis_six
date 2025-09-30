@@ -52,16 +52,12 @@
                 <div class="row">
                     <div class="col-md-6">
                         <div class="mb-3">
-                            <label for="user_id" class="form-label">Assigned User <span class="text-danger">*</span></label>
-                            <select class="form-select" id="user_id" name="user_id" required>
-                                <option value="">Select User</option>
-                                <?php foreach ($users as $user): ?>
-                                    <option value="<?= $user['id'] ?>"
-                                            <?= (old('user_id', $duty_instruction['user_id']) == $user['id']) ? 'selected' : '' ?>>
-                                        <?= esc($user['fname'] . ' ' . $user['lname']) ?> (<?= esc($user['designation']) ?>)
-                                    </option>
-                                <?php endforeach; ?>
-                            </select>
+                            <label for="assigned_user" class="form-label">Assigned User <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="assigned_user" 
+                                   value="<?= esc(session()->get('fname') . ' ' . session()->get('lname')) ?>" 
+                                   readonly disabled>
+                            <input type="hidden" name="user_id" value="<?= session()->get('user_id') ?>">
+                            <div class="form-text">You are automatically assigned to this duty instruction</div>
                         </div>
                     </div>
                     <div class="col-md-6">

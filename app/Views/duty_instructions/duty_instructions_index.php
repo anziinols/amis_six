@@ -92,17 +92,22 @@
                                     <td>
                                         <div class="btn-group" role="group">
                                             <a href="<?= base_url('duty-instructions/' . $instruction['id']) ?>" 
-                                               class="btn btn-sm btn-outline-primary" title="View Details">
-                                                <i class="fas fa-eye"></i>
+                                               class="btn btn-outline-primary" 
+                                               title="View Details" 
+                                               style="margin-right: 5px;">
+                                                <i class="fas fa-eye me-1"></i> View Duty Items
                                             </a>
                                             <a href="<?= base_url('duty-instructions/' . $instruction['id'] . '/edit') ?>" 
-                                               class="btn btn-sm btn-outline-secondary" title="Edit">
-                                                <i class="fas fa-edit"></i>
+                                               class="btn btn-outline-warning" 
+                                               title="Edit" 
+                                               style="margin-right: 5px;">
+                                                <i class="fas fa-edit me-1"></i> Edit
                                             </a>
                                             <a href="<?= base_url('duty-instructions/' . $instruction['id'] . '/delete') ?>" 
-                                               class="btn btn-sm btn-outline-danger" title="Delete"
+                                               class="btn btn-outline-danger" 
+                                               title="Delete"
                                                onclick="return confirm('Are you sure you want to delete this duty instruction?')">
-                                                <i class="fas fa-trash"></i>
+                                                <i class="fas fa-trash me-1"></i> Delete
                                             </a>
                                         </div>
                                     </td>

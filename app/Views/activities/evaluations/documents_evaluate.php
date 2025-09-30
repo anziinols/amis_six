@@ -99,25 +99,11 @@
                                 <div class="card">
                                     <div class="card-body">
                                         <div class="row">
-                                            <div class="col-md-6">
+                                            <div class="col-md-12">
                                                 <div class="mb-3">
-                                                    <strong>Document Description:</strong>
-                                                    <p class="text-muted"><?= nl2br(esc($implementationData['document_description'])) ?></p>
+                                                    <strong>General Remarks:</strong>
+                                                    <p class="text-muted"><?= nl2br(esc($implementationData['remarks'] ?? 'N/A')) ?></p>
                                                 </div>
-                                            </div>
-                                            <div class="col-md-6">
-                                                <div class="mb-3">
-                                                    <strong>GPS Coordinates:</strong>
-                                                    <p class="text-muted"><?= esc($implementationData['gps_coordinates'] ?? 'N/A') ?></p>
-                                                </div>
-                                                <?php if (!empty($implementationData['signing_sheet_filepath'])): ?>
-                                                <div class="mb-3">
-                                                    <strong>Signing Sheet:</strong><br>
-                                                    <a href="<?= base_url($implementationData['signing_sheet_filepath']) ?>" target="_blank" class="btn btn-sm btn-outline-primary">
-                                                        <i class="fas fa-download"></i> Download Signing Sheet
-                                                    </a>
-                                                </div>
-                                                <?php endif; ?>
                                             </div>
                                         </div>
 

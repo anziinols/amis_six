@@ -566,6 +566,13 @@ $routes->group('workplans/(:num)/activities', function($routes) {
 // Route for getting districts by province ID (AJAX)
 $routes->get('workplans/get-districts/(:num)', 'WorkplanActivitiesController::getDistricts/$1');
 
+// Supervised Activities routes (RESTful)
+$routes->group('supervised-activities', ['filter' => 'auth'], function($routes) {
+    $routes->get('/', 'SupervisedActivitiesController::index');
+    $routes->get('(:num)/view-outputs', 'SupervisedActivitiesController::viewOutputs/$1');
+    $routes->post('(:num)/mark-complete', 'SupervisedActivitiesController::markComplete/$1');
+});
+
 // Activities routes (RESTful)
 $routes->group('activities', ['filter' => 'auth'], function($routes) {
     $routes->get('/', 'ActivitiesController::index');
@@ -584,9 +591,17 @@ $routes->group('activities', ['filter' => 'auth'], function($routes) {
     $routes->get('(:num)/evaluate', 'ActivitiesController::evaluate/$1');
     $routes->post('(:num)/process-evaluation', 'ActivitiesController::processEvaluation/$1');
 
+    // Activity Links routes
+    $routes->get('(:num)/links', 'ActivitiesController::manageLinks/$1');
+    $routes->post('(:num)/link-duty-instruction', 'ActivitiesController::linkToDutyInstruction/$1');
+    $routes->post('(:num)/link-workplan-activity', 'ActivitiesController::linkToWorkplanActivity/$1');
+    $routes->post('(:num)/remove-duty-instruction-link', 'ActivitiesController::removeDutyInstructionLink/$1');
+    $routes->post('(:num)/remove-workplan-activity-link', 'ActivitiesController::removeWorkplanActivityLink/$1');
+
     // AJAX endpoints
     $routes->get('get-districts/(:num)', 'ActivitiesController::getDistricts/$1');
-    $routes->get('get-performance-outputs/(:num)', 'ActivitiesController::getPerformanceOutputs/$1');
+    $routes->post('get-duty-instruction-items', 'ActivitiesController::getDutyInstructionItems');
+    $routes->post('get-workplan-activities', 'ActivitiesController::getWorkplanActivities');
 });
 
 // Output Activities routes (RESTful)
@@ -637,12 +652,12 @@ $routes->get('/dakoii_dashboard', 'DakoiiController::index');
 
 
 
-// Evaluation routes (RESTful) - Only for admin evaluators
+// Evaluation routes (RESTful) - Only for admin and evaluators
 $routes->group('evaluation', ['filter' => 'auth'], function($routes) {
     $routes->get('/', 'EvaluationController::index');
-    $routes->get('(:num)', 'EvaluationController::show/$1');
-    $routes->get('(:num)/rate', 'EvaluationController::rate/$1');
-    $routes->post('(:num)/rate', 'EvaluationController::updateRating/$1');
+    $routes->get('workplan/(:num)/activities', 'EvaluationController::workplanActivities/$1');
+    $routes->get('workplan-activity/(:num)/outputs', 'EvaluationController::viewOutputs/$1');
+    $routes->post('rate-activity/(:num)', 'EvaluationController::rateActivity/$1');
 });
 
 // Duty Instructions routes (RESTful)
@@ -665,67 +680,6 @@ $routes->group('duty-instructions', ['filter' => 'auth'], static function ($rout
 $routes->post('duty-instructions/items/(:num)/update', 'DutyInstructionsController::updateItem/$1', ['filter' => 'auth']);
 $routes->post('duty-instructions/items/(:num)/delete', 'DutyInstructionsController::deleteItem/$1', ['filter' => 'auth']);
 
-// Workplan Period routes (RESTful)
-$routes->group('workplan-period', ['filter' => 'auth'], static function ($routes) {
-    $routes->get('/', 'WorkplanPeriodController::index');
-    $routes->get('new', 'WorkplanPeriodController::new');
-    $routes->post('create', 'WorkplanPeriodController::create');
-    $routes->get('(:num)', 'WorkplanPeriodController::show/$1');
-    $routes->get('(:num)/edit', 'WorkplanPeriodController::edit/$1');
-    $routes->post('(:num)/update', 'WorkplanPeriodController::update/$1');
-    $routes->get('(:num)/delete', 'WorkplanPeriodController::delete/$1');
-    $routes->post('(:num)/status', 'WorkplanPeriodController::updateStatus/$1');
-
-    // KRA routes within performance period
-    $routes->get('(:num)/kra', 'PerformanceIndicatorsKraController::indexKra/$1');
-    $routes->get('(:num)/kra/new', 'PerformanceIndicatorsKraController::newKra/$1');
-    $routes->post('(:num)/kra/create', 'PerformanceIndicatorsKraController::createKra/$1');
-
-    // Performance Indicators routes within KRA
-    $routes->get('kra/(:num)/indicators', 'PerformanceIndicatorsKraController::indexIndicators/$1');
-    $routes->get('kra/(:num)/indicators/new', 'PerformanceIndicatorsKraController::newIndicator/$1');
-    $routes->post('kra/(:num)/indicators/create', 'PerformanceIndicatorsKraController::createIndicator/$1');
-
-    // Performance Outputs routes within indicators
-    $routes->get('indicators/(:num)/outputs', 'PerformanceOutputsController::indexByIndicator/$1');
-    $routes->get('indicators/(:num)/outputs/new', 'PerformanceOutputsController::newByIndicator/$1');
-    $routes->post('indicators/(:num)/outputs/create', 'PerformanceOutputsController::createByIndicator/$1');
-});
-
-// Performance Output routes (for KRA and indicators)
-$routes->group('performance-output', ['filter' => 'auth'], static function ($routes) {
-    // KRA routes
-    $routes->get('(:num)/kra', 'PerformanceIndicatorsKraController::indexKra/$1');
-    $routes->get('(:num)/kra/new', 'PerformanceIndicatorsKraController::newKra/$1');
-    $routes->post('(:num)/kra/create', 'PerformanceIndicatorsKraController::createKra/$1');
-
-    // Performance Indicators routes within KRA
-    $routes->get('kra/(:num)/indicators', 'PerformanceIndicatorsKraController::indexIndicators/$1');
-    $routes->get('kra/(:num)/indicators/new', 'PerformanceIndicatorsKraController::newIndicator/$1');
-    $routes->post('kra/(:num)/indicators/create', 'PerformanceIndicatorsKraController::createIndicator/$1');
-
-    // Performance Outputs routes within indicators
-    $routes->get('indicators/(:num)/outputs', 'PerformanceOutputsController::indexByIndicator/$1');
-    $routes->get('indicators/(:num)/outputs/new', 'PerformanceOutputsController::newByIndicator/$1');
-    $routes->post('indicators/(:num)/outputs/create', 'PerformanceOutputsController::createByIndicator/$1');
-});
-
-// Performance Indicators KRA routes (direct access)
-$routes->group('performance-indicators-kra', ['filter' => 'auth'], static function ($routes) {
-    $routes->get('(:num)', 'PerformanceIndicatorsKraController::show/$1');
-    $routes->get('(:num)/edit', 'PerformanceIndicatorsKraController::edit/$1');
-    $routes->post('(:num)/update', 'PerformanceIndicatorsKraController::update/$1');
-    $routes->get('(:num)/delete', 'PerformanceIndicatorsKraController::delete/$1');
-});
-
-// Performance Outputs routes (direct access)
-$routes->group('performance-outputs', ['filter' => 'auth'], static function ($routes) {
-    $routes->get('(:num)', 'PerformanceOutputsController::show/$1');
-    $routes->get('(:num)/edit', 'PerformanceOutputsController::edit/$1');
-    $routes->post('(:num)/update', 'PerformanceOutputsController::update/$1');
-    $routes->get('(:num)/delete', 'PerformanceOutputsController::delete/$1');
-    $routes->post('(:num)/status', 'PerformanceOutputsController::updateStatus/$1');
-});
 
 // MTDP Reports routes
 $routes->get('reports/mtdp', [MTDReportsController::class, 'index']);

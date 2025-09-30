@@ -76,26 +76,28 @@
                                     <span class="badge bg-info"><?= esc($workplan['activity_count']) ?></span>
                                 </td>
                                 <td>
-                                    <a href="<?= base_url('workplans/' . $workplan['id']) ?>" class="btn btn-info btn-sm" title="View">
-                                        <i class="fas fa-eye"></i>
-                                    </a>
-                                    <a href="<?= base_url('workplans/' . $workplan['id'] . '/activities') ?>" class="btn btn-success btn-sm">
-                                        <i class="fas fa-tasks"></i> View Activities
-                                    </a>
-                                    <a href="<?= base_url('workplans/edit/' . $workplan['id']) ?>" class="btn btn-primary btn-sm" title="Edit">
-                                        <i class="fas fa-edit"></i>
-                                    </a>
-                                    <?php if ($workplan['activity_count'] > 0): ?>
-                                        <button type="button" class="btn btn-secondary btn-sm" disabled title="Cannot delete workplan with activities">
-                                            <i class="fas fa-trash"></i>
-                                        </button>
-                                    <?php else: ?>
-                                        <?= form_open('workplans/delete/' . $workplan['id'], ['style' => 'display:inline-block;', 'onsubmit' => 'return confirm("Are you sure you want to delete this workplan?");']) ?>
-                                            <button type="submit" class="btn btn-danger btn-sm" title="Delete">
-                                                <i class="fas fa-trash"></i>
+                                    <div class="btn-group" role="group">
+                                        <a href="<?= base_url('workplans/' . $workplan['id'] . '/activities') ?>" class="btn btn-outline-info" title="View Activities" style="margin-right: 5px;">
+                                            <i class="fas fa-tasks me-1"></i> Activities
+                                        </a>
+                                        <a href="<?= base_url('workplans/' . $workplan['id']) ?>" class="btn btn-outline-primary" title="View Details" style="margin-right: 5px;">
+                                            <i class="fas fa-eye me-1"></i> View
+                                        </a>
+                                        <a href="<?= base_url('workplans/edit/' . $workplan['id']) ?>" class="btn btn-outline-warning" title="Edit" style="margin-right: 5px;">
+                                            <i class="fas fa-edit me-1"></i> Edit
+                                        </a>
+                                        <?php if ($workplan['activity_count'] > 0): ?>
+                                            <button type="button" class="btn btn-outline-secondary" disabled title="Cannot delete workplan with activities">
+                                                <i class="fas fa-trash me-1"></i> Delete
                                             </button>
-                                        <?= form_close() ?>
-                                    <?php endif; ?>
+                                        <?php else: ?>
+                                            <?= form_open('workplans/delete/' . $workplan['id'], ['style' => 'display:inline-block;', 'onsubmit' => 'return confirm("Are you sure you want to delete this workplan?");']) ?>
+                                                <button type="submit" class="btn btn-outline-danger" title="Delete">
+                                                    <i class="fas fa-trash me-1"></i> Delete
+                                                </button>
+                                            <?= form_close() ?>
+                                        <?php endif; ?>
+                                    </div>
                                 </td>
                             </tr>
                         <?php endforeach; ?>

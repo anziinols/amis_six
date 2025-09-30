@@ -68,7 +68,7 @@ class WorkplanOutputActivitiesController extends BaseController
             'validation' => \Config\Services::validation(),
             'workplans' => $this->workplanModel->findAll(),
             'proposals' => $this->proposalModel->findAll(),
-            'activities' => $this->workplanActivityModel->where('activity_type', 'output')->findAll()
+            'activities' => $this->workplanActivityModel->findAll()
         ];
 
         return view('output_activities/output_activities_new', $data);
@@ -212,7 +212,7 @@ class WorkplanOutputActivitiesController extends BaseController
             'validation' => \Config\Services::validation(),
             'workplans' => $this->workplanModel->findAll(),
             'proposals' => $this->proposalModel->findAll(),
-            'activities' => $this->workplanActivityModel->where('activity_type', 'output')->findAll()
+            'activities' => $this->workplanActivityModel->findAll()
         ];
 
         return view('output_activities/output_activities_edit', $data);

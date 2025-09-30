@@ -50,7 +50,6 @@ class DutyInstructionsController extends BaseController
         $data = [
             'title' => 'Create New Duty Instruction',
             'workplans' => $this->workplanModel->findAll(),
-            'users' => $this->userModel->where('user_status', 1)->findAll(),
             'supervisors' => $this->userModel->getUsersBySupervisorCapability()
         ];
 
@@ -64,7 +63,6 @@ class DutyInstructionsController extends BaseController
     {
         $rules = [
             'workplan_id' => 'required|integer',
-            'user_id' => 'required|integer',
             'supervisor_id' => 'required|integer',
             'duty_instruction_number' => 'required|max_length[50]',
             'duty_instruction_title' => 'required|max_length[255]',
@@ -79,7 +77,7 @@ class DutyInstructionsController extends BaseController
 
         $data = [
             'workplan_id' => $this->request->getPost('workplan_id'),
-            'user_id' => $this->request->getPost('user_id'),
+            'user_id' => session()->get('user_id'), // Automatically assign logged-in user
             'supervisor_id' => $this->request->getPost('supervisor_id'),
             'duty_instruction_number' => $this->request->getPost('duty_instruction_number'),
             'duty_instruction_title' => $this->request->getPost('duty_instruction_title'),
@@ -139,7 +137,6 @@ class DutyInstructionsController extends BaseController
             'title' => 'Edit Duty Instruction',
             'duty_instruction' => $dutyInstruction,
             'workplans' => $this->workplanModel->findAll(),
-            'users' => $this->userModel->where('user_status', 1)->findAll(),
             'supervisors' => $this->userModel->getUsersBySupervisorCapability()
         ];
 
@@ -159,7 +156,6 @@ class DutyInstructionsController extends BaseController
 
         $rules = [
             'workplan_id' => 'required|integer',
-            'user_id' => 'required|integer',
             'supervisor_id' => 'required|integer',
             'duty_instruction_number' => 'required|max_length[50]',
             'duty_instruction_title' => 'required|max_length[255]',
@@ -174,7 +170,7 @@ class DutyInstructionsController extends BaseController
 
         $data = [
             'workplan_id' => $this->request->getPost('workplan_id'),
-            'user_id' => $this->request->getPost('user_id'),
+            'user_id' => session()->get('user_id'), // Automatically assign logged-in user
             'supervisor_id' => $this->request->getPost('supervisor_id'),
             'duty_instruction_number' => $this->request->getPost('duty_instruction_number'),
             'duty_instruction_title' => $this->request->getPost('duty_instruction_title'),

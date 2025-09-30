@@ -105,7 +105,7 @@ class WorkplanOutputActivityModel extends Model
             'o.*',
             'w.title as workplan_title',
             'a.title as activity_title',
-            'a.activity_type',
+            'a.target_output',
             'p.date_start',
             'p.date_end',
             'p.location',

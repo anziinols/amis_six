@@ -22,16 +22,12 @@
     </div>
     <div class="col-md-6">
         <div class="mb-3">
-            <label for="activity_type" class="form-label">Activity Type <span class="text-danger">*</span></label>
-            <select class="form-select <?= session('errors.activity_type') ? 'is-invalid' : '' ?>" id="activity_type" name="activity_type" required>
-                <option value="">Select Activity Type</option>
-                <?php foreach ($activityTypes as $value => $label): ?>
-                    <option value="<?= $value ?>" <?= old('activity_type', $activity['activity_type'] ?? '') == $value ? 'selected' : '' ?>><?= $label ?></option>
-                <?php endforeach; ?>
-            </select>
-            <?php if (session('errors.activity_type')): ?>
-                <div class="invalid-feedback"><?= session('errors.activity_type') ?></div>
+            <label for="target_output" class="form-label">Target Output</label>
+            <input type="text" class="form-control <?= session('errors.target_output') ? 'is-invalid' : '' ?>" id="target_output" name="target_output" value="<?= old('target_output', $activity['target_output'] ?? '') ?>">
+            <?php if (session('errors.target_output')): ?>
+                <div class="invalid-feedback"><?= session('errors.target_output') ?></div>
             <?php endif; ?>
+            <div class="form-text">Describe the expected output or deliverable for this activity.</div>
         </div>
     </div>
 </div>
@@ -44,54 +40,7 @@
     <?php endif; ?>
 </div>
 
-<!-- Quarterly Targets Section -->
-<div class="card mb-4">
-    <div class="card-header">
-        <h6 class="mb-0">Quarterly Targets</h6>
-    </div>
-    <div class="card-body">
-        <div class="row">
-            <div class="col-md-6">
-                <div class="mb-3">
-                    <label for="q_one_target" class="form-label">Quarter One Target</label>
-                    <input type="number" step="0.01" class="form-control <?= session('errors.q_one_target') ? 'is-invalid' : '' ?>" id="q_one_target" name="q_one_target" value="<?= old('q_one_target', $activity['q_one_target'] ?? '') ?>">
-                    <?php if (session('errors.q_one_target')): ?>
-                        <div class="invalid-feedback"><?= session('errors.q_one_target') ?></div>
-                    <?php endif; ?>
-                </div>
-            </div>
-            <div class="col-md-6">
-                <div class="mb-3">
-                    <label for="q_two_target" class="form-label">Quarter Two Target</label>
-                    <input type="number" step="0.01" class="form-control <?= session('errors.q_two_target') ? 'is-invalid' : '' ?>" id="q_two_target" name="q_two_target" value="<?= old('q_two_target', $activity['q_two_target'] ?? '') ?>">
-                    <?php if (session('errors.q_two_target')): ?>
-                        <div class="invalid-feedback"><?= session('errors.q_two_target') ?></div>
-                    <?php endif; ?>
-                </div>
-            </div>
-        </div>
-        <div class="row">
-            <div class="col-md-6">
-                <div class="mb-3">
-                    <label for="q_three_target" class="form-label">Quarter Three Target</label>
-                    <input type="number" step="0.01" class="form-control <?= session('errors.q_three_target') ? 'is-invalid' : '' ?>" id="q_three_target" name="q_three_target" value="<?= old('q_three_target', $activity['q_three_target'] ?? '') ?>">
-                    <?php if (session('errors.q_three_target')): ?>
-                        <div class="invalid-feedback"><?= session('errors.q_three_target') ?></div>
-                    <?php endif; ?>
-                </div>
-            </div>
-            <div class="col-md-6">
-                <div class="mb-3">
-                    <label for="q_four_target" class="form-label">Quarter Four Target</label>
-                    <input type="number" step="0.01" class="form-control <?= session('errors.q_four_target') ? 'is-invalid' : '' ?>" id="q_four_target" name="q_four_target" value="<?= old('q_four_target', $activity['q_four_target'] ?? '') ?>">
-                    <?php if (session('errors.q_four_target')): ?>
-                        <div class="invalid-feedback"><?= session('errors.q_four_target') ?></div>
-                    <?php endif; ?>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
+
 
 <!-- Budget Section -->
 <div class="card mb-4">
@@ -129,24 +78,14 @@
                     <?php if (session('errors.supervisor_id')): ?>
                         <div class="invalid-feedback"><?= session('errors.supervisor_id') ?></div>
                     <?php endif; ?>
-                    <div class="form-text">Select the supervisor responsible for this activity.</div>
+                    <div class="form-text">Select the supervisor responsible for this activity (filtered by workplan branch).</div>
                 </div>
             </div>
             <div class="col-md-6">
                 <div class="mb-3">
-                    <label for="branch_id" class="form-label">Branch</label>
-                    <select class="form-select <?= session('errors.branch_id') ? 'is-invalid' : '' ?>" id="branch_id" name="branch_id">
-                        <option value="">Select Branch</option>
-                        <?php if (isset($branches)): ?>
-                            <?php foreach ($branches as $branch): ?>
-                                <option value="<?= $branch['id'] ?>" <?= old('branch_id', $activity['branch_id'] ?? $workplan['branch_id'] ?? '') == $branch['id'] ? 'selected' : '' ?>><?= $branch['name'] ?></option>
-                            <?php endforeach; ?>
-                        <?php endif; ?>
-                    </select>
-                    <?php if (session('errors.branch_id')): ?>
-                        <div class="invalid-feedback"><?= session('errors.branch_id') ?></div>
-                    <?php endif; ?>
-                    <div class="form-text">Select the branch responsible for this activity.</div>
+                    <label for="branch_display" class="form-label">Branch</label>
+                    <input type="text" class="form-control" id="branch_display" value="<?= esc($workplan['branch_name'] ?? 'Inherited from Workplan') ?>" readonly>
+                    <div class="form-text">Branch is automatically inherited from the workplan.</div>
                 </div>
             </div>
         </div>

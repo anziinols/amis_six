@@ -30,44 +30,6 @@
 
             <?= form_open('activities/' . $activity['id'] . '/update', ['class' => 'needs-validation', 'novalidate' => true]) ?>
                 <div class="row">
-                    <!-- Workplan Period -->
-                    <div class="col-md-6 mb-3">
-                        <label for="workplan_period_id" class="form-label">Workplan Period <span class="text-danger">*</span></label>
-                        <select class="form-select <?= $validation->hasError('workplan_period_id') ? 'is-invalid' : '' ?>" 
-                                id="workplan_period_id" name="workplan_period_id" required>
-                            <option value="">Select Workplan Period</option>
-                            <?php foreach ($workplan_periods as $period): ?>
-                                <option value="<?= $period['id'] ?>" 
-                                    <?= (old('workplan_period_id', $activity['workplan_period_id']) == $period['id']) ? 'selected' : '' ?>>
-                                    <?= esc($period['title']) ?>
-                                </option>
-                            <?php endforeach; ?>
-                        </select>
-                        <div class="invalid-feedback">
-                            <?= $validation->getError('workplan_period_id') ?>
-                        </div>
-                    </div>
-
-                    <!-- Performance Output -->
-                    <div class="col-md-6 mb-3">
-                        <label for="performance_output_id" class="form-label">Performance Output <span class="text-danger">*</span></label>
-                        <select class="form-select <?= $validation->hasError('performance_output_id') ? 'is-invalid' : '' ?>" 
-                                id="performance_output_id" name="performance_output_id" required>
-                            <option value="">Select Performance Output</option>
-                            <?php foreach ($performance_outputs as $output): ?>
-                                <option value="<?= $output['id'] ?>" 
-                                    <?= (old('performance_output_id', $activity['performance_output_id']) == $output['id']) ? 'selected' : '' ?>>
-                                    <?= esc($output['output']) ?>
-                                </option>
-                            <?php endforeach; ?>
-                        </select>
-                        <div class="invalid-feedback">
-                            <?= $validation->getError('performance_output_id') ?>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="row">
                     <!-- Activity Title -->
                     <div class="col-md-12 mb-3">
                         <label for="activity_title" class="form-label">Activity Title <span class="text-danger">*</span></label>
@@ -201,7 +163,7 @@
 
                 <div class="row">
                     <!-- Supervisor -->
-                    <div class="col-md-6 mb-3">
+                    <div class="col-md-12 mb-3">
                         <label for="supervisor_id" class="form-label">Supervisor</label>
                         <select class="form-select <?= $validation->hasError('supervisor_id') ? 'is-invalid' : '' ?>" 
                                 id="supervisor_id" name="supervisor_id">
@@ -218,23 +180,8 @@
                         </div>
                     </div>
 
-                    <!-- Action Officer -->
-                    <div class="col-md-6 mb-3">
-                        <label for="action_officer_id" class="form-label">Action Officer</label>
-                        <select class="form-select <?= $validation->hasError('action_officer_id') ? 'is-invalid' : '' ?>" 
-                                id="action_officer_id" name="action_officer_id">
-                            <option value="">Select Action Officer</option>
-                            <?php foreach ($users as $user): ?>
-                                <option value="<?= $user['id'] ?>" 
-                                    <?= (old('action_officer_id', $activity['action_officer_id']) == $user['id']) ? 'selected' : '' ?>>
-                                    <?= esc($user['fname'] . ' ' . $user['lname']) ?>
-                                </option>
-                            <?php endforeach; ?>
-                        </select>
-                        <div class="invalid-feedback">
-                            <?= $validation->getError('action_officer_id') ?>
-                        </div>
-                    </div>
+                    <!-- Action Officer (Hidden - keep current value) -->
+                    <input type="hidden" name="action_officer_id" value="<?= old('action_officer_id', $activity['action_officer_id']) ?>">
                 </div>
 
                 <div class="row">

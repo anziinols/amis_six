@@ -3,44 +3,31 @@
 namespace App\Controllers;
 
 use App\Controllers\BaseController;
-use App\Models\WorkplanActivityModel;
 use App\Models\WorkplanModel;
-use App\Models\BranchesModel;
-use App\Models\UserModel;
-use App\Models\ProposalModel;
-use App\Models\WorkplanTrainingActivityModel;
-use App\Models\WorkplanInputActivityModel;
-use App\Models\WorkplanInfrastructureActivityModel;
-use App\Models\WorkplanOutputActivityModel;
-use App\Models\GovStructureModel;
+use App\Models\WorkplanActivityModel;
+use App\Models\MyActivitiesWorkplanActivitiesModel;
+use App\Models\ActivitiesModel;
 
+/**
+ * EvaluationController
+ * 
+ * Handles evaluation features for M&E evaluators to access and rate workplan activities
+ */
 class EvaluationController extends BaseController
 {
-    protected $workplanActivityModel;
     protected $workplanModel;
-    protected $branchesModel;
-    protected $userModel;
-    protected $proposalModel;
-    protected $workplanTrainingActivityModel;
-    protected $workplanInputActivityModel;
-    protected $workplanInfrastructureActivityModel;
-    protected $workplanOutputActivityModel;
-    protected $govStructureModel;
+    protected $workplanActivityModel;
+    protected $myActivitiesWorkplanModel;
+    protected $activitiesModel;
 
     public function __construct()
     {
-        $this->workplanActivityModel = new WorkplanActivityModel();
         $this->workplanModel = new WorkplanModel();
-        $this->branchesModel = new BranchesModel();
-        $this->userModel = new UserModel();
-        $this->proposalModel = new ProposalModel();
-        $this->workplanTrainingActivityModel = new WorkplanTrainingActivityModel();
-        $this->workplanInputActivityModel = new WorkplanInputActivityModel();
-        $this->workplanInfrastructureActivityModel = new WorkplanInfrastructureActivityModel();
-        $this->workplanOutputActivityModel = new WorkplanOutputActivityModel();
-        $this->govStructureModel = new GovStructureModel();
+        $this->workplanActivityModel = new WorkplanActivityModel();
+        $this->myActivitiesWorkplanModel = new MyActivitiesWorkplanActivitiesModel();
+        $this->activitiesModel = new ActivitiesModel();
 
-        // Check if user has access to evaluation module
+        // Check if user has evaluator access
         $this->checkEvaluatorAccess();
     }
 
@@ -54,412 +41,237 @@ class EvaluationController extends BaseController
         $isEvaluator = session()->get('is_evaluator');
 
         if ($isAdmin != 1 && $isEvaluator != 1) {
-            throw new \CodeIgniter\Exceptions\PageNotFoundException('Access denied. Evaluation module requires admin capability or evaluator privileges.');
+            return redirect()->to(base_url('dashboard'))
+                ->with('error', 'Access denied. Evaluation module requires admin capability or evaluator privileges.');
         }
     }
 
     /**
-     * Display a list of approved or rated activities for evaluation
-     *
+     * Display list of all workplans for evaluation
+     * 
      * @return mixed
      */
     public function index()
     {
-        // Get only activities that have approved or rated proposals
-        $activities = $this->getApprovedOrRatedActivities();
+        // Get current user ID from session
+        $currentUserId = session()->get('user_id');
+
+        if (!$currentUserId) {
+            return redirect()->to(base_url('login'))->with('error', 'Please login to continue');
+        }
+
+        // Get all workplans with details
+        $workplans = $this->workplanModel
+            ->select('workplans.*, 
+                     branches.name as branch_name,
+                     CONCAT(u.fname, " ", u.lname) as created_by_name')
+            ->join('branches', 'branches.id = workplans.branch_id', 'left')
+            ->join('users u', 'u.id = workplans.created_by', 'left')
+            ->orderBy('workplans.created_at', 'DESC')
+            ->findAll();
+
+        // Add activity count for each workplan
+        foreach ($workplans as &$workplan) {
+            $workplan['activities_count'] = $this->workplanModel->countActivities($workplan['id']);
+        }
 
         $data = [
-            'title' => 'Activity Evaluation - Approved or Rated Activities',
-            'activities' => $activities
+            'title' => 'Evaluation - Workplans',
+            'workplans' => $workplans
         ];
 
         return view('evaluation/evaluation_index', $data);
     }
 
     /**
-     * Display the specified activity for evaluation with all proposals and implementations
-     *
-     * @param int $id
+     * Display workplan activities for a specific workplan
+     * 
+     * @param int|null $workplanId
      * @return mixed
      */
-    public function show($id)
+    public function workplanActivities($workplanId = null)
     {
-        // Get the activity details
-        $activity = $this->workplanActivityModel->find($id);
-
-        if (!$activity) {
-            return redirect()->to('evaluation')->with('error', 'Activity not found.');
+        if ($workplanId === null) {
+            return redirect()->to(base_url('evaluation'))
+                ->with('error', 'Workplan ID is required');
         }
 
-        // Get supervisor information
-        if (!empty($activity['supervisor_id'])) {
-            $supervisor = $this->userModel->find($activity['supervisor_id']);
-            $activity['supervisor_name'] = ($supervisor['fname'] ?? '') . ' ' . ($supervisor['lname'] ?? '');
-        } else {
-            $activity['supervisor_name'] = 'Not assigned';
+        // Get current user ID from session
+        $currentUserId = session()->get('user_id');
+
+        if (!$currentUserId) {
+            return redirect()->to(base_url('login'))->with('error', 'Please login to continue');
         }
 
-        // Get the workplan information
-        $workplan = $this->workplanModel->find($activity['workplan_id']);
+        // Get the workplan details
+        $workplan = $this->workplanModel
+            ->select('workplans.*, branches.name as branch_name')
+            ->join('branches', 'branches.id = workplans.branch_id', 'left')
+            ->find($workplanId);
 
-        // Get the branch information
-        $branch = $this->branchesModel->find($activity['branch_id']);
-
-        // Get ALL proposals for summary
-        $allProposals = $this->proposalModel->where('activity_id', $id)->findAll();
-
-        // Get approved OR rated proposals for detailed display
-        $approvedOrRatedProposals = $this->proposalModel
-            ->where('activity_id', $id)
-            ->groupStart()
-                ->where('status', 'approved')
-                ->orGroupStart()
-                    ->where('rating_score IS NOT NULL')
-                    ->where('rating_score >', 0)
-                ->groupEnd()
-            ->groupEnd()
-            ->findAll();
-
-        // Calculate summary statistics
-        $proposalSummary = [
-            'total' => count($allProposals),
-            'approved' => 0,
-            'pending' => 0,
-            'rejected' => 0,
-            'rated' => 0,
-            'total_cost' => 0
-        ];
-
-        foreach ($allProposals as $proposal) {
-            $proposalSummary['total_cost'] += $proposal['total_cost'] ?? 0;
-
-            switch ($proposal['status']) {
-                case 'approved':
-                    $proposalSummary['approved']++;
-                    break;
-                case 'pending':
-                    $proposalSummary['pending']++;
-                    break;
-                case 'rejected':
-                    $proposalSummary['rejected']++;
-                    break;
-            }
-
-            if (!empty($proposal['rating_score']) && $proposal['rating_score'] > 0) {
-                $proposalSummary['rated']++;
-            }
+        if (!$workplan) {
+            return redirect()->to(base_url('evaluation'))
+                ->with('error', 'Workplan not found');
         }
 
-        // Enhance each approved or rated proposal with detailed information
-        foreach ($approvedOrRatedProposals as &$proposal) {
-            // Get supervisor and action officer information
-            if (!empty($proposal['supervisor_id'])) {
-                $supervisor = $this->userModel->find($proposal['supervisor_id']);
-                $proposal['supervisor_name'] = ($supervisor['fname'] ?? '') . ' ' . ($supervisor['lname'] ?? '');
-            }
-
-            if (!empty($proposal['action_officer_id'])) {
-                $officer = $this->userModel->find($proposal['action_officer_id']);
-                $proposal['action_officer_name'] = ($officer['fname'] ?? '') . ' ' . ($officer['lname'] ?? '');
-            }
-
-            // Get location information
-            if (!empty($proposal['province_id'])) {
-                $province = $this->govStructureModel->find($proposal['province_id']);
-                $proposal['province_name'] = $province['name'] ?? 'N/A';
-            }
-
-            if (!empty($proposal['district_id'])) {
-                $district = $this->govStructureModel->find($proposal['district_id']);
-                $proposal['district_name'] = $district['name'] ?? 'N/A';
-            }
-
-            // Get implementation activities for this proposal
-            $proposal['implementations'] = $this->getImplementationActivities($proposal['id'], $id);
-        }
-
-        $data = [
-            'title' => 'Activity Evaluation - ' . ucfirst($activity['activity_type']) . ' Implementation Details',
-            'activity' => $activity,
-            'workplan' => $workplan,
-            'branch' => $branch,
-            'proposalSummary' => $proposalSummary,
-            'proposals' => $approvedOrRatedProposals
-        ];
-
-        // Route to specific view based on activity type
-        $activityType = strtolower($activity['activity_type']);
-
-        // Map activity types to view names
-        $viewMapping = [
-            'training' => 'evaluation/evaluation_training',
-            'inputs' => 'evaluation/evaluation_inputs',
-            'infrastructure' => 'evaluation/evaluation_infrastructure',
-            'output' => 'evaluation/evaluation_output',
-            'outputs' => 'evaluation/evaluation_output' // Handle plural form
-        ];
-
-        // Get the appropriate view name or fallback to general view
-        $viewName = $viewMapping[$activityType] ?? 'evaluation/evaluation_show';
-
-        return view($viewName, $data);
-    }
-
-
-
-    /**
-     * Get all implementation activities for a proposal
-     *
-     * @param int $proposalId
-     * @param int $activityId
-     * @return array
-     */
-    private function getImplementationActivities($proposalId, $activityId)
-    {
-        $implementations = [];
-
-        // Get training activities
-        $trainingActivities = $this->workplanTrainingActivityModel
-            ->where('proposal_id', $proposalId)
-            ->where('activity_id', $activityId)
-            ->findAll();
-
-        foreach ($trainingActivities as $training) {
-            $training['type'] = 'Training';
-            // Parse JSON fields for training
-            if (!empty($training['trainees']) && is_string($training['trainees'])) {
-                $training['trainees'] = json_decode($training['trainees'], true);
-            }
-            if (!empty($training['training_images']) && is_string($training['training_images'])) {
-                $training['training_images'] = json_decode($training['training_images'], true);
-            }
-            if (!empty($training['training_files']) && is_string($training['training_files'])) {
-                $training['training_files'] = json_decode($training['training_files'], true);
-            }
-            $implementations[] = $training;
-        }
-
-        // Get input activities
-        $inputActivities = $this->workplanInputActivityModel
-            ->where('proposal_id', $proposalId)
-            ->where('activity_id', $activityId)
-            ->findAll();
-
-        foreach ($inputActivities as $input) {
-            $input['type'] = 'Input';
-            // Parse JSON fields for inputs
-            if (!empty($input['inputs']) && is_string($input['inputs'])) {
-                $input['inputs'] = json_decode($input['inputs'], true);
-            }
-            if (!empty($input['input_images']) && is_string($input['input_images'])) {
-                $input['input_images'] = json_decode($input['input_images'], true);
-            }
-            if (!empty($input['input_files']) && is_string($input['input_files'])) {
-                $input['input_files'] = json_decode($input['input_files'], true);
-            }
-            $implementations[] = $input;
-        }
-
-        // Get infrastructure activities
-        $infrastructureActivities = $this->workplanInfrastructureActivityModel
-            ->where('proposal_id', $proposalId)
-            ->where('activity_id', $activityId)
-            ->findAll();
-
-        foreach ($infrastructureActivities as $infrastructure) {
-            $infrastructure['type'] = 'Infrastructure';
-            // Parse JSON fields for infrastructure
-            if (!empty($infrastructure['infrastructure_images']) && is_string($infrastructure['infrastructure_images'])) {
-                $infrastructure['infrastructure_images'] = json_decode($infrastructure['infrastructure_images'], true);
-            }
-            if (!empty($infrastructure['infrastructure_files']) && is_string($infrastructure['infrastructure_files'])) {
-                $infrastructure['infrastructure_files'] = json_decode($infrastructure['infrastructure_files'], true);
-            }
-            $implementations[] = $infrastructure;
-        }
-
-        // Get output activities
-        $outputActivities = $this->workplanOutputActivityModel
-            ->where('proposal_id', $proposalId)
-            ->where('activity_id', $activityId)
-            ->findAll();
-
-        foreach ($outputActivities as $output) {
-            $output['type'] = 'Output';
-            // Parse JSON fields for outputs
-            if (!empty($output['outputs']) && is_string($output['outputs'])) {
-                $output['outputs'] = json_decode($output['outputs'], true);
-            }
-            if (!empty($output['beneficiaries']) && is_string($output['beneficiaries'])) {
-                $output['beneficiaries'] = json_decode($output['beneficiaries'], true);
-            }
-            if (!empty($output['output_images']) && is_string($output['output_images'])) {
-                $output['output_images'] = json_decode($output['output_images'], true);
-            }
-            if (!empty($output['output_files']) && is_string($output['output_files'])) {
-                $output['output_files'] = json_decode($output['output_files'], true);
-            }
-            $implementations[] = $output;
-        }
-
-        return $implementations;
-    }
-
-    /**
-     * Get activities that have approved or rated proposals
-     *
-     * @return array
-     */
-    private function getApprovedOrRatedActivities()
-    {
-        // Get all activities
-        $allActivities = $this->workplanActivityModel->orderBy('activity_code', 'ASC')->findAll();
-
-        // Load related models
-        $workplanModel = new \App\Models\WorkplanModel();
-        $branchesModel = new \App\Models\BranchesModel();
-        $userModel = new \App\Models\UserModel();
-
-        $approvedOrRatedActivities = [];
-
-        foreach ($allActivities as $activity) {
-            // Check if this activity has any approved OR rated proposals
-            $approvedOrRatedProposals = $this->proposalModel
-                ->where('activity_id', $activity['id'])
-                ->groupStart()
-                    ->where('status', 'approved')
-                    ->orGroupStart()
-                        ->where('rating_score IS NOT NULL')
-                        ->where('rating_score >', 0)
-                    ->groupEnd()
-                ->groupEnd()
-                ->countAllResults();
-
-            // Only include activities that have approved OR rated proposals
-            if ($approvedOrRatedProposals > 0) {
-                // Get workplan information
-                if (!empty($activity['workplan_id'])) {
-                    $workplan = $workplanModel->find($activity['workplan_id']);
-                    $activity['workplan_title'] = $workplan['title'] ?? 'N/A';
-                    $activity['workplan_start_date'] = $workplan['start_date'] ?? null;
-                    $activity['workplan_end_date'] = $workplan['end_date'] ?? null;
-                } else {
-                    $activity['workplan_title'] = 'N/A';
-                    $activity['workplan_start_date'] = null;
-                    $activity['workplan_end_date'] = null;
-                }
-
-                // Get branch information
-                if (!empty($activity['branch_id'])) {
-                    $branch = $branchesModel->find($activity['branch_id']);
-                    $activity['branch_name'] = $branch['name'] ?? 'N/A';
-                } else {
-                    $activity['branch_name'] = 'N/A';
-                }
-
-                // Get supervisor information
-                if (!empty($activity['supervisor_id'])) {
-                    $supervisor = $userModel->find($activity['supervisor_id']);
-                    $activity['supervisor_name'] = ($supervisor['fname'] ?? '') . ' ' . ($supervisor['lname'] ?? '');
-                } else {
-                    $activity['supervisor_name'] = 'N/A';
-                }
-
-                // Get created by information
-                if (!empty($activity['created_by'])) {
-                    $creator = $userModel->find($activity['created_by']);
-                    $activity['created_by_name'] = ($creator['fname'] ?? '') . ' ' . ($creator['lname'] ?? '');
-                } else {
-                    $activity['created_by_name'] = 'N/A';
-                }
-
-                // Add count of approved or rated proposals
-                $activity['approved_rated_proposals_count'] = $approvedOrRatedProposals;
-
-                $approvedOrRatedActivities[] = $activity;
-            }
-        }
-
-        return $approvedOrRatedActivities;
-    }
-
-    /**
-     * Show evaluation and rating form for workplan activity
-     */
-    public function rate($id)
-    {
-        // Get activity details with related information
-        $activity = $this->workplanActivityModel
-            ->select('workplan_activities.*,
+        // Get all activities for this workplan with details
+        $activities = $this->workplanActivityModel
+            ->select('workplan_activities.*, 
                      workplans.title as workplan_title,
                      branches.name as branch_name,
-                     CONCAT(supervisors.fname, " ", supervisors.lname) as supervisor_name')
+                     CONCAT(supervisors.fname, " ", supervisors.lname) as supervisor_name,
+                     CONCAT(raters.fname, " ", raters.lname) as rated_by_name')
             ->join('workplans', 'workplans.id = workplan_activities.workplan_id', 'left')
             ->join('branches', 'branches.id = workplan_activities.branch_id', 'left')
             ->join('users as supervisors', 'supervisors.id = workplan_activities.supervisor_id', 'left')
-            ->where('workplan_activities.id', $id)
-            ->first();
-
-        if (!$activity) {
-            throw new \CodeIgniter\Exceptions\PageNotFoundException('Activity not found');
-        }
+            ->join('users as raters', 'raters.id = workplan_activities.rated_by', 'left')
+            ->where('workplan_activities.workplan_id', $workplanId)
+            ->orderBy('workplan_activities.activity_code', 'ASC')
+            ->findAll();
 
         $data = [
-            'title' => 'Evaluate and Rate Activity - ' . $activity['title'],
-            'activity' => $activity
+            'title' => 'Evaluation - Workplan Activities: ' . $workplan['title'],
+            'workplan' => $workplan,
+            'activities' => $activities
         ];
 
-        return view('evaluation/evaluation_rate', $data);
+        return view('evaluation/evaluation_workplan_activities', $data);
     }
 
     /**
-     * Update activity rating and quarterly achievements
+     * View outputs/activities linked to a workplan activity
+     * 
+     * @param int|null $activityId
+     * @return mixed
      */
-    public function updateRating($id)
+    public function viewOutputs($activityId = null)
     {
-        // Get activity
-        $activity = $this->workplanActivityModel->find($id);
-        if (!$activity) {
-            throw new \CodeIgniter\Exceptions\PageNotFoundException('Activity not found');
+        if ($activityId === null) {
+            return redirect()->to(base_url('evaluation'))
+                ->with('error', 'Activity ID is required');
         }
 
-        // Validation rules
-        $rules = [
-            'q_one_achieved' => 'permit_empty|decimal',
-            'q_two_achieved' => 'permit_empty|decimal',
-            'q_three_achieved' => 'permit_empty|decimal',
-            'q_four_achieved' => 'permit_empty|decimal',
-            'rating' => 'required|integer|greater_than[0]|less_than_equal_to[5]',
-            'reated_remarks' => 'permit_empty|string'
+        // Get current user ID from session
+        $currentUserId = session()->get('user_id');
+
+        if (!$currentUserId) {
+            return redirect()->to(base_url('login'))->with('error', 'Please login to continue');
+        }
+
+        // Get the workplan activity with details
+        $workplanActivity = $this->workplanActivityModel
+            ->select('workplan_activities.*, 
+                     workplans.title as workplan_title,
+                     workplans.id as workplan_id,
+                     branches.name as branch_name,
+                     CONCAT(raters.fname, " ", raters.lname) as rated_by_name')
+            ->join('workplans', 'workplans.id = workplan_activities.workplan_id', 'left')
+            ->join('branches', 'branches.id = workplan_activities.branch_id', 'left')
+            ->join('users as raters', 'raters.id = workplan_activities.rated_by', 'left')
+            ->find($activityId);
+
+        if (!$workplanActivity) {
+            return redirect()->to(base_url('evaluation'))
+                ->with('error', 'Workplan activity not found');
+        }
+
+        // Get all activities linked to this workplan activity
+        $linkedActivities = $this->myActivitiesWorkplanModel
+            ->select('myactivities_workplan_activities.*, 
+                     activities.id as activity_id,
+                     activities.activity_title,
+                     activities.activity_description,
+                     activities.type,
+                     activities.date_start,
+                     activities.date_end,
+                     activities.location,
+                     activities.total_cost,
+                     activities.status,
+                     activities.status_at,
+                     p.name as province_name,
+                     d.name as district_name,
+                     CONCAT(ao.fname, " ", ao.lname) as action_officer_name')
+            ->join('activities', 'activities.id = myactivities_workplan_activities.my_activities_id', 'left')
+            ->join('gov_structure p', 'activities.province_id = p.id AND p.level = "province"', 'left')
+            ->join('gov_structure d', 'activities.district_id = d.id AND d.level = "district"', 'left')
+            ->join('users ao', 'activities.action_officer_id = ao.id', 'left')
+            ->where('myactivities_workplan_activities.workplan_activities_id', $activityId)
+            ->findAll();
+
+        $data = [
+            'title' => 'Evaluation - Linked Activities: ' . $workplanActivity['title'],
+            'workplanActivity' => $workplanActivity,
+            'linkedActivities' => $linkedActivities
         ];
 
-        if (!$this->validate($rules)) {
-            return redirect()->back()->withInput()->with('errors', $this->validator->getErrors());
+        return view('evaluation/evaluation_outputs', $data);
+    }
+
+    /**
+     * Rate a workplan activity
+     * 
+     * @param int|null $activityId
+     * @return mixed
+     */
+    public function rateActivity($activityId = null)
+    {
+        if ($activityId === null) {
+            return redirect()->to(base_url('evaluation'))
+                ->with('error', 'Activity ID is required');
+        }
+
+        // Get current user ID from session
+        $currentUserId = session()->get('user_id');
+
+        if (!$currentUserId) {
+            return redirect()->to(base_url('login'))->with('error', 'Please login to continue');
+        }
+
+        // Get the activity
+        $activity = $this->workplanActivityModel->find($activityId);
+
+        if (!$activity) {
+            return redirect()->to(base_url('evaluation'))
+                ->with('error', 'Activity not found');
+        }
+
+        // Get rating and remarks from POST data
+        $rating = $this->request->getPost('rating');
+        $remarks = $this->request->getPost('rating_remarks');
+
+        // Validate rating
+        if ($rating === null || $rating === '') {
+            return redirect()->back()
+                ->with('error', 'Rating is required');
         }
 
         // Prepare data for update
-        $data = [
-            'q_one_achieved' => $this->request->getPost('q_one_achieved') ?: null,
-            'q_two_achieved' => $this->request->getPost('q_two_achieved') ?: null,
-            'q_three_achieved' => $this->request->getPost('q_three_achieved') ?: null,
-            'q_four_achieved' => $this->request->getPost('q_four_achieved') ?: null,
-            'rating' => $this->request->getPost('rating'),
-            'reated_remarks' => $this->request->getPost('reated_remarks'),
+        $updateData = [
+            'id' => $activityId,
+            'rating' => $rating,
+            'reated_remarks' => $remarks ?? '', // Note: field name has typo in database
+            'rated_by' => $currentUserId,
             'rated_at' => date('Y-m-d H:i:s'),
-            'rated_by' => session()->get('user_id'),
-            'status' => 'rated',
-            'status_by' => session()->get('user_id'),
-            'status_at' => date('Y-m-d H:i:s'),
-            'updated_by' => session()->get('user_id')
+            'updated_by' => $currentUserId
         ];
 
         // Update the activity
-        if ($this->workplanActivityModel->update($id, $data)) {
-            session()->setFlashdata('success', 'Activity evaluation and rating updated successfully!');
-            return redirect()->to(base_url('evaluation/' . $id));
+        if ($this->workplanActivityModel->save($updateData)) {
+            // Redirect back to the outputs page
+            return redirect()->to(base_url('evaluation/workplan-activity/' . $activityId . '/outputs'))
+                ->with('success', 'Activity rated successfully');
         } else {
-            session()->setFlashdata('error', 'Failed to update activity evaluation. Please try again.');
-            return redirect()->back()->withInput();
+            // Get validation errors if any
+            $errors = $this->workplanActivityModel->errors();
+            $errorMessage = 'Failed to rate activity';
+
+            if (!empty($errors)) {
+                $errorMessage .= ': ' . implode(', ', $errors);
+            }
+
+            return redirect()->back()
+                ->with('error', $errorMessage);
         }
     }
 }
+

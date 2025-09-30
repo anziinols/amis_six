@@ -106,7 +106,8 @@
                         <th>#</th>
                         <th>Activity Code</th>
                         <th>Title</th>
-                        <th>Type</th>
+                        <th>Target Output</th>
+                        <th>Budget</th>
                         <th>Supervisor</th>
                         <th>Plans Linked</th>
                         <th>Actions</th>
@@ -119,9 +120,8 @@
                                 <td><?= esc($index + 1) ?></td>
                                 <td><span class="badge bg-primary"><?= esc($activity['activity_code'] ?? 'N/A') ?></span></td>
                                 <td><?= esc($activity['title']) ?></td>
-                                <td>
-                                    <?= ucfirst(esc($activity['activity_type'])) ?>
-                                </td>
+                                <td><?= esc($activity['target_output'] ?? 'N/A') ?></td>
+                                <td><?= !empty($activity['total_budget']) ? number_format($activity['total_budget'], 2) : 'N/A' ?></td>
                                 <td><?= esc($activity['supervisor_name'] ?? 'N/A') ?></td>
                                 <td class="text-center">
                                     <?php
@@ -150,24 +150,26 @@
                                     ?>
                                 </td>
                                 <td>
-                                    <a href="<?= base_url('workplans/' . $workplan['id'] . '/activities/' . $activity['id']) ?>" class="btn btn-info btn-sm" title="View">
-                                        <i class="fas fa-eye"></i>
-                                    </a>
-                                    <a href="<?= base_url('workplans/' . $workplan['id'] . '/activities/' . $activity['id'] . '/edit') ?>" class="btn btn-primary btn-sm" title="Edit">
-                                        <i class="fas fa-edit"></i>
-                                    </a>
-                                    <a href="<?= base_url('workplans/' . $workplan['id'] . '/activities/' . $activity['id'] . '/delete') ?>" class="btn btn-danger btn-sm" title="Delete" onclick="return confirm('Are you sure you want to delete this activity?');">
-                                        <i class="fas fa-trash"></i>
-                                    </a>
-                                    <a href="<?= base_url('workplans/' . $workplan['id'] . '/activities/' . $activity['id'] . '/plans') ?>" class="btn btn-success btn-sm" title="Link to Plans">
-                                        <i class="fas fa-link"></i>
-                                    </a>
+                                    <div class="btn-group" role="group">
+                                        <a href="<?= base_url('workplans/' . $workplan['id'] . '/activities/' . $activity['id'] . '/plans') ?>" class="btn btn-outline-success" title="Link to Plans" style="margin-right: 5px;">
+                                            <i class="fas fa-link me-1"></i> Plans
+                                        </a>
+                                        <a href="<?= base_url('workplans/' . $workplan['id'] . '/activities/' . $activity['id']) ?>" class="btn btn-outline-primary" title="View Details" style="margin-right: 5px;">
+                                            <i class="fas fa-eye me-1"></i> View
+                                        </a>
+                                        <a href="<?= base_url('workplans/' . $workplan['id'] . '/activities/' . $activity['id'] . '/edit') ?>" class="btn btn-outline-warning" title="Edit" style="margin-right: 5px;">
+                                            <i class="fas fa-edit me-1"></i> Edit
+                                        </a>
+                                        <a href="<?= base_url('workplans/' . $workplan['id'] . '/activities/' . $activity['id'] . '/delete') ?>" class="btn btn-outline-danger" title="Delete" onclick="return confirm('Are you sure you want to delete this activity?');">
+                                            <i class="fas fa-trash me-1"></i> Delete
+                                        </a>
+                                    </div>
                                 </td>
                             </tr>
                         <?php endforeach; ?>
                     <?php else: ?>
                         <tr>
-                            <td colspan="7" class="text-center">No activities found for this workplan.</td>
+                            <td colspan="8" class="text-center">No activities found for this workplan.</td>
                         </tr>
                     <?php endif; ?>
                 </tbody>

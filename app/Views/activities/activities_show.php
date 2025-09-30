@@ -31,7 +31,17 @@
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <h5 class="card-title mb-0">Activity Details</h5>
                     <div>
-                        <?php if (in_array($activity['status'], ['pending', 'active'])): ?>
+                        <?php
+                        // Check if the current user can implement this activity
+                        // Admin can implement all activities
+                        // Action officers can implement their own activities
+                        // Supervisors can only implement activities where they are the action officer
+                        $currentUserId = session()->get('user_id');
+                        $isAdmin = session()->get('is_admin') == 1;
+                        $isActionOfficer = $activity['action_officer_id'] == $currentUserId;
+                        $canImplement = $isAdmin || $isActionOfficer;
+                        ?>
+                        <?php if ($canImplement && in_array($activity['status'], ['pending', 'active']) && isset($activity['has_links']) && $activity['has_links']): ?>
                             <a href="<?= base_url('activities/' . $activity['id'] . '/implement') ?>" class="btn btn-primary">
                                 <i class="fas fa-tasks me-1"></i> Implement
                             </a>
@@ -172,6 +182,91 @@
                             </table>
                         </div>
                     </div>
+                </div>
+            </div>
+
+            <!-- Activity Links Section -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-link me-2"></i>Activity Links
+                        <?php if ($canImplement): ?>
+                        <a href="<?= base_url('activities/' . $activity['id'] . '/links') ?>" class="btn btn-sm btn-outline-primary float-end">
+                            <i class="fas fa-cog me-1"></i> Manage Links
+                        </a>
+                        <?php endif; ?>
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <?php if ((isset($dutyLinks) && !empty($dutyLinks)) || (isset($workplanLinks) && !empty($workplanLinks))): ?>
+                    <div class="row">
+                        <!-- Duty Instructions Links -->
+                        <?php if (isset($dutyLinks) && !empty($dutyLinks)): ?>
+                        <div class="col-md-6">
+                            <h6 class="fw-bold text-primary">
+                                <i class="fas fa-clipboard-list me-1"></i>Linked Duty Instructions
+                            </h6>
+                            <div class="table-responsive">
+                                <table class="table table-sm table-bordered">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>Duty Instruction</th>
+                                            <th>Item</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <?php foreach ($dutyLinks as $link): ?>
+                                        <tr>
+                                            <td>
+                                                <strong><?= esc($link['duty_instruction_title'] ?? 'N/A') ?></strong><br>
+                                                <small class="text-muted"><?= esc($link['duty_instruction_number'] ?? 'N/A') ?></small>
+                                            </td>
+                                            <td><?= esc($link['item'] ?? 'N/A') ?></td>
+                                        </tr>
+                                        <?php endforeach; ?>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        <?php endif; ?>
+
+                        <!-- Workplan Activities Links -->
+                        <?php if (isset($workplanLinks) && !empty($workplanLinks)): ?>
+                        <div class="col-md-6">
+                            <h6 class="fw-bold text-success">
+                                <i class="fas fa-tasks me-1"></i>Linked Workplan Activities
+                            </h6>
+                            <div class="table-responsive">
+                                <table class="table table-sm table-bordered">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>Activity Code</th>
+                                            <th>Activity Title</th>
+                                            <th>Workplan</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <?php foreach ($workplanLinks as $link): ?>
+                                        <tr>
+                                            <td>
+                                                <span class="badge bg-primary"><?= esc($link['activity_code'] ?? 'N/A') ?></span>
+                                            </td>
+                                            <td><?= esc($link['activity_title'] ?? 'N/A') ?></td>
+                                            <td><?= esc($link['workplan_title'] ?? 'N/A') ?></td>
+                                        </tr>
+                                        <?php endforeach; ?>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        <?php endif; ?>
+                    </div>
+                    <?php else: ?>
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>
+                        This activity has no links to duty instructions or workplan activities yet. Links are required before this activity can be implemented.
+                    </div>
+                    <?php endif; ?>
                 </div>
             </div>
 

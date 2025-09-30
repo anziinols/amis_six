@@ -1,5 +1,126 @@
 <?= $this->extend('templates/system_template') ?>
 
+<?= $this->section('head') ?>
+<style>
+/* Mobile responsive styles for Instruction Items table */
+@media (max-width: 767px) {
+    /* Hide table headers on mobile */
+    #itemsTable thead {
+        display: none;
+    }
+    
+    /* Stack table rows as cards on mobile */
+    #itemsTable, #itemsTable tbody, #itemsTable tr, #itemsTable td {
+        display: block;
+        width: 100%;
+    }
+    
+    #itemsTable tr {
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        margin-bottom: 15px;
+        padding: 15px;
+        background: white;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    #itemsTable td {
+        border: none;
+        padding: 8px 0;
+        text-align: left;
+        position: relative;
+        padding-left: 50%;
+        word-wrap: break-word;
+    }
+    
+    /* Add labels before content on mobile */
+    #itemsTable td:before {
+        content: attr(data-label);
+        position: absolute;
+        left: 0;
+        width: 45%;
+        font-weight: bold;
+        color: #333;
+        padding-right: 10px;
+    }
+    
+    #itemsTable td:nth-child(1):before {
+        content: "Item #: ";
+    }
+    
+    #itemsTable td:nth-child(2):before {
+        content: "Instruction: ";
+    }
+    
+    #itemsTable td:nth-child(3):before {
+        content: "Status: ";
+    }
+    
+    #itemsTable td:nth-child(4):before {
+        content: "Remarks: ";
+    }
+    
+    #itemsTable td:nth-child(5):before {
+        content: "Actions: ";
+    }
+    
+    /* Special styling for form inputs in mobile view */
+    #itemsTable td input,
+    #itemsTable td textarea,
+    #itemsTable td select {
+        width: 100% !important;
+        max-width: 100%;
+        box-sizing: border-box;
+    }
+    
+    /* Action buttons styling for mobile */
+    #itemsTable td:nth-child(5) {
+        padding-left: 0;
+    }
+    
+    #itemsTable td:nth-child(5):before {
+        display: none;
+    }
+    
+    #itemsTable td .btn {
+        margin: 2px 5px 2px 0;
+        font-size: 0.9rem;
+        padding: 8px 16px;
+    }
+    
+    /* No items row styling */
+    #itemsTable tr#noItemsRow td {
+        padding-left: 0;
+        text-align: center;
+    }
+    
+    #itemsTable tr#noItemsRow td:before {
+        display: none;
+    }
+    
+    /* Add item row special styling */
+    #itemsTable tr#addItemRow {
+        background-color: #f8f9fa;
+        border-color: #28a745;
+    }
+}
+
+/* Tablet responsive adjustments */
+@media (max-width: 991px) and (min-width: 768px) {
+    #itemsTable td input,
+    #itemsTable td textarea,
+    #itemsTable td select {
+        font-size: 0.9rem;
+    }
+    
+    #itemsTable td .btn {
+        font-size: 0.9rem;
+        padding: 8px 14px;
+    }
+}
+</style>
+<?= $this->endSection() ?>
+
 <?= $this->section('content') ?>
 <div class="container-fluid">
     <!-- Page Header -->
@@ -14,11 +135,13 @@
             </nav>
         </div>
         <div>
-            <a href="<?= base_url('duty-instructions/' . $duty_instruction['id'] . '/edit') ?>" class="btn btn-primary me-2">
-                <i class="fas fa-edit"></i> Edit
+            <a href="<?= base_url('duty-instructions/' . $duty_instruction['id'] . '/edit') ?>" 
+               class="btn btn-warning" 
+               style="margin-right: 5px;">
+                <i class="fas fa-edit me-1"></i> Edit
             </a>
-            <a href="<?= base_url('duty-instructions') ?>" class="btn btn-secondary">
-                <i class="fas fa-arrow-left"></i> Back to List
+            <a href="<?= base_url('duty-instructions') ?>" class="btn btn-info">
+                <i class="fas fa-arrow-left me-1"></i> Back to List
             </a>
         </div>
     </div>
@@ -97,8 +220,10 @@
                             <div class="col-sm-3"><strong>Attachment:</strong></div>
                             <div class="col-sm-9">
                                 <a href="<?= base_url($duty_instruction['duty_instruction_filepath']) ?>" 
-                                   class="btn btn-sm btn-outline-primary" target="_blank">
-                                    <i class="fas fa-download"></i> Download File
+                                   class="btn btn-outline-primary" 
+                                   target="_blank" 
+                                   style="margin-right: 5px;">
+                                    <i class="fas fa-download me-1"></i> Download File
                                 </a>
                             </div>
                         </div>
@@ -144,7 +269,9 @@
                             <label for="status_remarks" class="form-label">Remarks:</label>
                             <textarea class="form-control form-control-sm" name="status_remarks" id="status_remarks" rows="2"></textarea>
                         </div>
-                        <button type="submit" class="btn btn-sm btn-primary">Update Status</button>
+                        <button type="submit" class="btn btn-success">
+                            <i class="fas fa-save me-1"></i> Update Status
+                        </button>
                     <?= form_close() ?>
 
                     <hr>
@@ -164,8 +291,8 @@
     <div class="card mt-4">
         <div class="card-header d-flex justify-content-between align-items-center">
             <h6 class="mb-0">Instruction Items</h6>
-            <button type="button" class="btn btn-sm btn-primary" id="addItemBtn">
-                <i class="fas fa-plus"></i> Add Item
+            <button type="button" class="btn btn-primary" id="addItemBtn" style="margin-right: 5px;">
+                <i class="fas fa-plus me-1"></i> Add Item
             </button>
         </div>
         <div class="card-body">
@@ -185,14 +312,14 @@
                         <tr id="addItemRow" style="display: none;">
                             <td>
                                 <input type="text" class="form-control form-control-sm" id="newItemNumber"
-                                       placeholder="Item #" style="width: 80px;">
+                                       placeholder="Item #" style="width: 80px; min-width: 60px;">
                             </td>
                             <td>
                                 <textarea class="form-control form-control-sm" id="newInstruction"
-                                          placeholder="Enter instruction" rows="2" required></textarea>
+                                          placeholder="Enter instruction" rows="2" required style="min-height: 60px;"></textarea>
                             </td>
                             <td>
-                                <select class="form-select form-select-sm" id="newStatus">
+                                <select class="form-select form-select-sm" id="newStatus" style="min-width: 100px;">
                                     <option value="active">Active</option>
                                     <option value="inactive">Inactive</option>
                                     <option value="completed">Completed</option>
@@ -200,14 +327,14 @@
                             </td>
                             <td>
                                 <textarea class="form-control form-control-sm" id="newRemarks"
-                                          placeholder="Remarks" rows="2"></textarea>
+                                          placeholder="Remarks" rows="2" style="min-height: 60px;"></textarea>
                             </td>
                             <td>
-                                <button type="button" class="btn btn-sm btn-success" id="saveItemBtn">
-                                    <i class="fas fa-save"></i>
+                                <button type="button" class="btn btn-outline-success" id="saveItemBtn" style="margin-right: 5px;">
+                                    <i class="fas fa-save me-1"></i> Save
                                 </button>
-                                <button type="button" class="btn btn-sm btn-secondary" id="cancelItemBtn">
-                                    <i class="fas fa-times"></i>
+                                <button type="button" class="btn btn-outline-danger" id="cancelItemBtn">
+                                    <i class="fas fa-times me-1"></i> Cancel
                                 </button>
                             </td>
                         </tr>
@@ -231,13 +358,13 @@
                                     </td>
                                     <td><?= esc($item['remarks'] ?? '-') ?></td>
                                     <td>
-                                        <button class="btn btn-sm btn-outline-secondary edit-item-btn"
-                                                data-item-id="<?= $item['id'] ?>" title="Edit Item">
-                                            <i class="fas fa-edit"></i>
+                                        <button class="btn btn-outline-warning edit-item-btn"
+                                                data-item-id="<?= $item['id'] ?>" title="Edit Item" style="margin-right: 5px;">
+                                            <i class="fas fa-edit me-1"></i> Edit
                                         </button>
-                                        <button class="btn btn-sm btn-outline-danger delete-item-btn"
+                                        <button class="btn btn-outline-danger delete-item-btn"
                                                 data-item-id="<?= $item['id'] ?>" title="Delete Item">
-                                            <i class="fas fa-trash"></i>
+                                            <i class="fas fa-trash me-1"></i> Delete
                                         </button>
                                     </td>
                                 </tr>
@@ -299,7 +426,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         // Show loading state
-        saveItemBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+        saveItemBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Saving...';
         saveItemBtn.disabled = true;
 
         // AJAX request
@@ -336,7 +463,7 @@ document.addEventListener('DOMContentLoaded', function() {
         })
         .finally(() => {
             // Reset button state
-            saveItemBtn.innerHTML = '<i class="fas fa-save"></i>';
+            saveItemBtn.innerHTML = '<i class="fas fa-save me-1"></i> Save';
             saveItemBtn.disabled = false;
         });
     });
@@ -358,14 +485,14 @@ document.addEventListener('DOMContentLoaded', function() {
             row.innerHTML = `
                 <td>
                     <input type="text" class="form-control form-control-sm" value="${escapeHtml(itemNumber)}"
-                           id="editItemNumber_${itemId}" style="width: 80px;">
+                           id="editItemNumber_${itemId}" style="width: 80px; min-width: 60px;">
                 </td>
                 <td>
                     <textarea class="form-control form-control-sm" id="editInstruction_${itemId}"
-                              rows="2" required>${escapeHtml(instruction)}</textarea>
+                              rows="2" required style="min-height: 60px;">${escapeHtml(instruction)}</textarea>
                 </td>
                 <td>
-                    <select class="form-select form-select-sm" id="editStatus_${itemId}">
+                    <select class="form-select form-select-sm" id="editStatus_${itemId}" style="min-width: 100px;">
                         <option value="active" ${currentStatus === 'active' ? 'selected' : ''}>Active</option>
                         <option value="inactive" ${currentStatus === 'inactive' ? 'selected' : ''}>Inactive</option>
                         <option value="completed" ${currentStatus === 'completed' ? 'selected' : ''}>Completed</option>
@@ -373,14 +500,14 @@ document.addEventListener('DOMContentLoaded', function() {
                 </td>
                 <td>
                     <textarea class="form-control form-control-sm" id="editRemarks_${itemId}"
-                              rows="2">${escapeHtml(remarks === '-' ? '' : remarks)}</textarea>
+                              rows="2" style="min-height: 60px;">${escapeHtml(remarks === '-' ? '' : remarks)}</textarea>
                 </td>
                 <td>
-                    <button type="button" class="btn btn-sm btn-success save-edit-btn" data-item-id="${itemId}">
-                        <i class="fas fa-save"></i>
+                    <button type="button" class="btn btn-outline-success save-edit-btn" data-item-id="${itemId}" style="margin-right: 5px;">
+                        <i class="fas fa-save me-1"></i> Save
                     </button>
-                    <button type="button" class="btn btn-sm btn-secondary cancel-edit-btn">
-                        <i class="fas fa-times"></i>
+                    <button type="button" class="btn btn-outline-danger cancel-edit-btn">
+                        <i class="fas fa-times me-1"></i> Cancel
                     </button>
                 </td>
             `;
@@ -402,7 +529,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
 
             // Show loading state
-            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Saving...';
             btn.disabled = true;
 
             // AJAX request to update item
@@ -437,7 +564,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 showAlert('danger', 'An error occurred while updating the item');
             })
             .finally(() => {
-                btn.innerHTML = '<i class="fas fa-save"></i>';
+                btn.innerHTML = '<i class="fas fa-save me-1"></i> Save';
                 btn.disabled = false;
             });
         }
@@ -505,13 +632,13 @@ document.addEventListener('DOMContentLoaded', function() {
             <td><span class="badge ${statusClass}">${capitalizeFirst(item.status)}</span></td>
             <td>${escapeHtml(item.remarks || '-')}</td>
             <td>
-                <button class="btn btn-sm btn-outline-secondary edit-item-btn"
-                        data-item-id="${item.id}" title="Edit Item">
-                    <i class="fas fa-edit"></i>
+                <button class="btn btn-outline-warning edit-item-btn"
+                        data-item-id="${item.id}" title="Edit Item" style="margin-right: 5px;">
+                    <i class="fas fa-edit me-1"></i> Edit
                 </button>
-                <button class="btn btn-sm btn-outline-danger delete-item-btn"
+                <button class="btn btn-outline-danger delete-item-btn"
                         data-item-id="${item.id}" title="Delete Item">
-                    <i class="fas fa-trash"></i>
+                    <i class="fas fa-trash me-1"></i> Delete
                 </button>
             </td>
         `;

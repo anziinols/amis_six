@@ -41,12 +41,6 @@
                             <th>Activity:</th>
                             <td><?= esc($activity['title']) ?></td>
                         </tr>
-                        <tr>
-                            <th>Type:</th>
-                            <td>
-                                <span class="badge bg-info"><?= ucfirst(esc($activity['activity_type'])) ?></span>
-                            </td>
-                        </tr>
                     </table>
                 </div>
                 <div class="col-md-6">

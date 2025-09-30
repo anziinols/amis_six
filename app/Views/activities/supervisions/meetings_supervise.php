@@ -27,7 +27,6 @@
                                             <p class="mb-1"><strong>Type:</strong> <span class="badge bg-secondary"><?= ucfirst(esc($activity['type'])) ?></span></p>
                                         </div>
                                         <div class="col-md-4">
-                                            <p class="mb-1"><strong>Performance Output:</strong> <?= esc($activity['performance_output_title'] ?? 'N/A') ?></p>
                                             <p class="mb-1"><strong>Location:</strong> <?= esc($activity['location'] ?? 'N/A') ?></p>
                                         </div>
                                         <div class="col-md-4">

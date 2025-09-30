@@ -11,8 +11,6 @@ use App\Models\GovStructureModel;
 use App\Models\ActivitiesModel;
 use App\Models\ActivitiesDocumentsModel;
 use App\Models\ActivitiesTrainingModel;
-use App\Models\WorkplanPeriodModel;
-use App\Models\PerformanceOutputsModel;
 use App\Models\WorkplanTrainingActivityModel;
 
 use App\Models\WorkplanInfrastructureActivityModel;
@@ -33,8 +31,6 @@ class ActivitiesController extends ResourceController
     protected $userModel;
     protected $govStructureModel;
     protected $activitiesModel;
-    protected $workplanPeriodModel;
-    protected $performanceOutputsModel;
     protected $activitiesDocumentsModel;
     protected $activitiesTrainingModel;
     protected $workplanTrainingActivityModel;
@@ -56,8 +52,6 @@ class ActivitiesController extends ResourceController
         $this->userModel = new UserModel();
         $this->govStructureModel = new GovStructureModel();
         $this->activitiesModel = new ActivitiesModel();
-        $this->workplanPeriodModel = new WorkplanPeriodModel();
-        $this->performanceOutputsModel = new PerformanceOutputsModel();
         $this->activitiesDocumentsModel = new ActivitiesDocumentsModel();
         $this->activitiesTrainingModel = new ActivitiesTrainingModel();
         $this->workplanTrainingActivityModel = new WorkplanTrainingActivityModel();
@@ -127,6 +121,50 @@ class ActivitiesController extends ResourceController
             $title = 'My Assigned Activities';
         }
 
+        // Load junction models to check for links
+        $myActivitiesDutyModel = new \App\Models\MyActivitiesDutyInstructionsModel();
+        $myActivitiesWorkplanModel = new \App\Models\MyActivitiesWorkplanActivitiesModel();
+
+        // Add link information to each activity
+        foreach ($activities as &$activity) {
+            // Check for duty instruction links
+            $dutyLinks = $myActivitiesDutyModel->where('my_activities_id', $activity['id'])->findAll();
+            $activity['has_duty_links'] = !empty($dutyLinks);
+
+            // Check for workplan activity links
+            $workplanLinks = $myActivitiesWorkplanModel->where('my_activities_id', $activity['id'])->findAll();
+            $activity['has_workplan_links'] = !empty($workplanLinks);
+
+            // Activity has links if it has either duty or workplan links
+            $activity['has_links'] = $activity['has_duty_links'] || $activity['has_workplan_links'];
+        }
+
+        // Sort activities by start date (closest approaching first) and then by status priority
+        usort($activities, function($a, $b) {
+            // Define status priority (lower number = higher priority)
+            $statusPriority = [
+                'pending' => 1,
+                'active' => 2,
+                'approved' => 3,
+                'submitted' => 4,
+                'rated' => 5
+            ];
+
+            // Get status priorities (default to 999 for unknown status)
+            $priorityA = $statusPriority[$a['status']] ?? 999;
+            $priorityB = $statusPriority[$b['status']] ?? 999;
+
+            // First sort by status priority
+            if ($priorityA !== $priorityB) {
+                return $priorityA - $priorityB;
+            }
+
+            // If same status priority, sort by start date (ascending - closest dates first)
+            $dateA = strtotime($a['date_start']);
+            $dateB = strtotime($b['date_start']);
+            return $dateA - $dateB;
+        });
+
         $data = [
             'title' => $title,
             'activities' => $activities,
@@ -144,18 +182,14 @@ class ActivitiesController extends ResourceController
     public function new()
     {
         // Get dropdown data
-        $workplanPeriods = $this->workplanPeriodModel->getByStatus('approved');
         $provinces = $this->govStructureModel->getByLevel('province');
         $supervisors = $this->userModel->where('is_supervisor', 1)->findAll();
-        $users = $this->userModel->findAll();
         $activityTypes = $this->activitiesModel->getActivityTypes();
 
         $data = [
             'title' => 'Create New Activity',
-            'workplan_periods' => $workplanPeriods,
             'provinces' => $provinces,
             'supervisors' => $supervisors,
-            'users' => $users,
             'activity_types' => $activityTypes,
             'validation' => \Config\Services::validation()
         ];
@@ -174,8 +208,6 @@ class ActivitiesController extends ResourceController
 
         // Validation rules
         $rules = [
-            'workplan_period_id' => 'required|integer',
-            'performance_output_id' => 'required|integer',
             'activity_title' => 'required|max_length[500]',
             'activity_description' => 'required',
             'province_id' => 'required|integer',
@@ -186,7 +218,7 @@ class ActivitiesController extends ResourceController
             'total_cost' => 'permit_empty|decimal',
             'location' => 'permit_empty|max_length[255]',
             'supervisor_id' => 'permit_empty|integer',
-            'action_officer_id' => 'permit_empty|integer'
+            'action_officer_id' => 'required|integer'
         ];
 
         if (!$this->validate($rules)) {
@@ -195,10 +227,8 @@ class ActivitiesController extends ResourceController
 
         // Prepare data for saving
         $data = [
-            'workplan_period_id' => $this->request->getPost('workplan_period_id'),
-            'performance_output_id' => $this->request->getPost('performance_output_id'),
             'supervisor_id' => $this->request->getPost('supervisor_id') ?: null,
-            'action_officer_id' => $this->request->getPost('action_officer_id') ?: null,
+            'action_officer_id' => $this->request->getPost('action_officer_id'),
             'activity_title' => $this->request->getPost('activity_title'),
             'activity_description' => $this->request->getPost('activity_description'),
             'province_id' => $this->request->getPost('province_id'),
@@ -243,6 +273,21 @@ class ActivitiesController extends ResourceController
             $activity['supervisor_id'] != $userId) {
             return redirect()->to('/activities')->with('error', 'You are not authorized to view this activity.');
         }
+
+        // Load junction models to check for links
+        $myActivitiesDutyModel = new \App\Models\MyActivitiesDutyInstructionsModel();
+        $myActivitiesWorkplanModel = new \App\Models\MyActivitiesWorkplanActivitiesModel();
+
+        // Get duty instruction links with details
+        $dutyLinks = $myActivitiesDutyModel->getDutyInstructionsByMyActivity($activity['id']);
+        $activity['has_duty_links'] = !empty($dutyLinks);
+
+        // Get workplan activity links with details
+        $workplanLinks = $myActivitiesWorkplanModel->getWorkplanActivitiesByMyActivity($activity['id']);
+        $activity['has_workplan_links'] = !empty($workplanLinks);
+
+        // Activity has links if it has either duty or workplan links
+        $activity['has_links'] = $activity['has_duty_links'] || $activity['has_workplan_links'];
 
         // Check if there's already an implementation record based on activity type
         $implementationData = null;
@@ -323,7 +368,9 @@ class ActivitiesController extends ResourceController
         $data = [
             'title' => 'Activity Details',
             'activity' => $activity,
-            'implementationData' => $implementationData
+            'implementationData' => $implementationData,
+            'dutyLinks' => $dutyLinks,
+            'workplanLinks' => $workplanLinks
         ];
 
         return view('activities/activities_show', $data);
@@ -353,25 +400,19 @@ class ActivitiesController extends ResourceController
         }
 
         // Get dropdown data
-        $workplanPeriods = $this->workplanPeriodModel->getByStatus('approved');
-        $performanceOutputs = $this->performanceOutputsModel->getByPerformancePeriod($activity['workplan_period_id']);
         $provinces = $this->govStructureModel->getByLevel('province');
         $districts = $this->govStructureModel->where('level', 'district')
                                             ->where('parent_id', $activity['province_id'])
                                             ->findAll();
         $supervisors = $this->userModel->where('is_supervisor', 1)->findAll();
-        $users = $this->userModel->findAll();
         $activityTypes = $this->activitiesModel->getActivityTypes();
 
         $data = [
             'title' => 'Edit Activity',
             'activity' => $activity,
-            'workplan_periods' => $workplanPeriods,
-            'performance_outputs' => $performanceOutputs,
             'provinces' => $provinces,
             'districts' => $districts,
             'supervisors' => $supervisors,
-            'users' => $users,
             'activity_types' => $activityTypes,
             'validation' => \Config\Services::validation()
         ];
@@ -404,8 +445,6 @@ class ActivitiesController extends ResourceController
 
         // Validation rules
         $rules = [
-            'workplan_period_id' => 'required|integer',
-            'performance_output_id' => 'required|integer',
             'activity_title' => 'required|max_length[500]',
             'activity_description' => 'required',
             'province_id' => 'required|integer',
@@ -416,7 +455,7 @@ class ActivitiesController extends ResourceController
             'total_cost' => 'permit_empty|decimal',
             'location' => 'permit_empty|max_length[255]',
             'supervisor_id' => 'permit_empty|integer',
-            'action_officer_id' => 'permit_empty|integer'
+            'action_officer_id' => 'required|integer'
         ];
 
         if (!$this->validate($rules)) {
@@ -426,10 +465,8 @@ class ActivitiesController extends ResourceController
         // Prepare data for updating
         $data = [
             'id' => $id,
-            'workplan_period_id' => $this->request->getPost('workplan_period_id'),
-            'performance_output_id' => $this->request->getPost('performance_output_id'),
             'supervisor_id' => $this->request->getPost('supervisor_id') ?: null,
-            'action_officer_id' => $this->request->getPost('action_officer_id') ?: null,
+            'action_officer_id' => $this->request->getPost('action_officer_id'),
             'activity_title' => $this->request->getPost('activity_title'),
             'activity_description' => $this->request->getPost('activity_description'),
             'province_id' => $this->request->getPost('province_id'),
@@ -480,6 +517,428 @@ class ActivitiesController extends ResourceController
             return redirect()->to('/activities')->with('error', 'Failed to delete activity.');
         }
     }
+
+    /**
+     * Manage activity links to duty instructions and workplan activities
+     *
+     * @param int $id
+     * @return mixed
+     */
+    public function manageLinks($id)
+    {
+        $activity = $this->activitiesModel->find($id);
+        if (!$activity) {
+            return redirect()->to('/activities')->with('error', 'Activity not found.');
+        }
+
+        // Load junction models
+        $myActivitiesDutyModel = new \App\Models\MyActivitiesDutyInstructionsModel();
+        $myActivitiesWorkplanModel = new \App\Models\MyActivitiesWorkplanActivitiesModel();
+
+        // Load related models
+        $dutyInstructionItemsModel = new \App\Models\DutyInstructionItemsModel();
+        $dutyInstructionsModel = new \App\Models\DutyInstructionsModel();
+        $workplanActivityModel = new \App\Models\WorkplanActivityModel();
+        $workplanModel = new \App\Models\WorkplanModel();
+
+        // Get existing links
+        $linkedDutyInstructions = $myActivitiesDutyModel->getDutyInstructionsByMyActivity($id);
+        $linkedWorkplanActivities = $myActivitiesWorkplanModel->getWorkplanActivitiesByMyActivity($id);
+
+        // Get available duty instructions
+        $dutyInstructions = $dutyInstructionsModel->findAll();
+
+        // Get all duty instruction items (for dropdown and existing links display)
+        $dutyInstructionItems = $dutyInstructionItemsModel
+            ->select('duty_instruction_items.*, duty_instructions.duty_instruction_title')
+            ->join('duty_instructions', 'duty_instructions.id = duty_instruction_items.duty_instruction_id')
+            ->findAll();
+
+        // Get available workplan activities
+        $workplanActivities = $workplanActivityModel->findAll();
+
+        // Get available workplans
+        $workplans = $workplanModel->where('deleted_at', null)->findAll();
+
+        $data = [
+            'title' => 'Manage Activity Links - ' . $activity['activity_title'],
+            'activity' => $activity,
+            'linkedDutyInstructions' => $linkedDutyInstructions,
+            'linkedWorkplanActivities' => $linkedWorkplanActivities,
+            'dutyInstructions' => $dutyInstructions,
+            'dutyInstructionItems' => $dutyInstructionItems,
+            'workplanActivities' => $workplanActivities,
+            'workplans' => $workplans,
+            'validation' => \Config\Services::validation()
+        ];
+
+        return view('activities/activities_links', $data);
+    }
+
+
+
+    /**
+     * Get duty instruction items by duty instruction ID (AJAX endpoint)
+     * Excludes items already linked to the current activity
+     *
+     * @return mixed
+     */
+    public function getDutyInstructionItems()
+    {
+        $dutyInstructionId = $this->request->getPost('duty_instruction_id');
+        $activityId = $this->request->getPost('activity_id');
+
+        if (!$dutyInstructionId) {
+            return $this->response->setJSON([
+                'success' => false,
+                'message' => 'Duty instruction ID is required'
+            ]);
+        }
+
+        $dutyInstructionItemsModel = new \App\Models\DutyInstructionItemsModel();
+        $myActivitiesDutyModel = new \App\Models\MyActivitiesDutyInstructionsModel();
+
+        // Get all items for this duty instruction
+        $items = $dutyInstructionItemsModel
+            ->where('duty_instruction_id', $dutyInstructionId)
+            ->where('deleted_at', null)
+            ->findAll();
+
+        // If activity ID is provided, filter out already linked items
+        if ($activityId) {
+            // Get already linked duty instruction item IDs for this activity
+            $linkedItems = $myActivitiesDutyModel
+                ->where('my_activities_id', $activityId)
+                ->findAll();
+
+            $linkedItemIds = array_column($linkedItems, 'duty_instructions_id');
+
+            // Filter out linked items
+            $items = array_filter($items, function($item) use ($linkedItemIds) {
+                return !in_array($item['id'], $linkedItemIds);
+            });
+
+            // Re-index the array to ensure proper JSON encoding
+            $items = array_values($items);
+        }
+
+        return $this->response->setJSON([
+            'success' => true,
+            'items' => $items,
+            'csrf_hash' => csrf_hash() // Include refreshed CSRF token
+        ]);
+    }
+
+    /**
+     * Get workplan activities by workplan ID (AJAX endpoint)
+     * Excludes activities already linked to the current activity
+     *
+     * @return mixed
+     */
+    public function getWorkplanActivities()
+    {
+        $workplanId = $this->request->getPost('workplan_id');
+        $activityId = $this->request->getPost('activity_id');
+
+        if (!$workplanId) {
+            return $this->response->setJSON([
+                'success' => false,
+                'message' => 'Workplan ID is required',
+                'csrf_hash' => csrf_hash()
+            ]);
+        }
+
+        $workplanActivityModel = new \App\Models\WorkplanActivityModel();
+        $myActivitiesWorkplanModel = new \App\Models\MyActivitiesWorkplanActivitiesModel();
+
+        // Get all activities for this workplan
+        $activities = $workplanActivityModel
+            ->where('workplan_id', $workplanId)
+            ->where('deleted_at', null)
+            ->findAll();
+
+        // If activity ID is provided, filter out already linked activities
+        if ($activityId) {
+            // Get already linked workplan activity IDs for this activity
+            $linkedActivities = $myActivitiesWorkplanModel
+                ->where('my_activities_id', $activityId)
+                ->findAll();
+
+            $linkedActivityIds = array_column($linkedActivities, 'workplan_activities_id');
+
+            // Filter out linked activities
+            $activities = array_filter($activities, function($activity) use ($linkedActivityIds) {
+                return !in_array($activity['id'], $linkedActivityIds);
+            });
+
+            // Re-index the array to ensure proper JSON encoding
+            $activities = array_values($activities);
+        }
+
+        return $this->response->setJSON([
+            'success' => true,
+            'activities' => $activities,
+            'csrf_hash' => csrf_hash() // Include refreshed CSRF token
+        ]);
+    }
+
+    /**
+     * Link activity to duty instruction
+     *
+     * @param int $id
+     * @return mixed
+     */
+    public function linkToDutyInstruction($id)
+    {
+        $activity = $this->activitiesModel->find($id);
+        if (!$activity) {
+            if ($this->request->isAJAX()) {
+                return $this->response->setJSON([
+                    'success' => false,
+                    'message' => 'Activity not found.',
+                    'csrf_hash' => csrf_hash()
+                ]);
+            }
+            return redirect()->to('/activities')->with('error', 'Activity not found.');
+        }
+
+        $dutyInstructionItemId = $this->request->getPost('duty_instruction_item_id');
+
+        if (!$dutyInstructionItemId) {
+            if ($this->request->isAJAX()) {
+                return $this->response->setJSON([
+                    'success' => false,
+                    'message' => 'Please select a duty instruction item.',
+                    'csrf_hash' => csrf_hash()
+                ]);
+            }
+            return redirect()->back()->with('error', 'Please select a duty instruction item.');
+        }
+
+        $myActivitiesDutyModel = new \App\Models\MyActivitiesDutyInstructionsModel();
+
+        // Check if link already exists
+        if ($myActivitiesDutyModel->isLinked($id, $dutyInstructionItemId)) {
+            if ($this->request->isAJAX()) {
+                return $this->response->setJSON([
+                    'success' => false,
+                    'message' => 'This activity is already linked to the selected duty instruction item.',
+                    'csrf_hash' => csrf_hash()
+                ]);
+            }
+            return redirect()->back()->with('error', 'This activity is already linked to the selected duty instruction item.');
+        }
+
+        // Create the link
+        if ($myActivitiesDutyModel->linkMyActivityToDutyInstruction($id, $dutyInstructionItemId)) {
+            if ($this->request->isAJAX()) {
+                return $this->response->setJSON([
+                    'success' => true,
+                    'message' => 'Activity successfully linked to duty instruction item.',
+                    'csrf_hash' => csrf_hash()
+                ]);
+            }
+            return redirect()->back()->with('success', 'Activity successfully linked to duty instruction item.');
+        } else {
+            if ($this->request->isAJAX()) {
+                return $this->response->setJSON([
+                    'success' => false,
+                    'message' => 'Failed to create link. Please try again.',
+                    'csrf_hash' => csrf_hash()
+                ]);
+            }
+            return redirect()->back()->with('error', 'Failed to create link. Please try again.');
+        }
+    }
+
+    /**
+     * Link activity to workplan activity
+     *
+     * @param int $id
+     * @return mixed
+     */
+    public function linkToWorkplanActivity($id)
+    {
+        // Debug logging
+        log_message('info', 'linkToWorkplanActivity called with ID: ' . $id);
+        log_message('info', 'POST data: ' . json_encode($this->request->getPost()));
+
+        $activity = $this->activitiesModel->find($id);
+        if (!$activity) {
+            if ($this->request->isAJAX()) {
+                return $this->response->setJSON([
+                    'success' => false,
+                    'message' => 'Activity not found.',
+                    'csrf_hash' => csrf_hash()
+                ]);
+            }
+            return redirect()->to('/activities')->with('error', 'Activity not found.');
+        }
+
+        $workplanActivityId = $this->request->getPost('workplan_activity_id');
+
+        if (!$workplanActivityId) {
+            if ($this->request->isAJAX()) {
+                return $this->response->setJSON([
+                    'success' => false,
+                    'message' => 'Please select a workplan activity.',
+                    'csrf_hash' => csrf_hash()
+                ]);
+            }
+            return redirect()->back()->with('error', 'Please select a workplan activity.');
+        }
+
+        $myActivitiesWorkplanModel = new \App\Models\MyActivitiesWorkplanActivitiesModel();
+
+        // Check if link already exists
+        if ($myActivitiesWorkplanModel->isLinked($id, $workplanActivityId)) {
+            if ($this->request->isAJAX()) {
+                return $this->response->setJSON([
+                    'success' => false,
+                    'message' => 'This activity is already linked to the selected workplan activity.',
+                    'csrf_hash' => csrf_hash()
+                ]);
+            }
+            return redirect()->back()->with('error', 'This activity is already linked to the selected workplan activity.');
+        }
+
+        // Create the link
+        if ($myActivitiesWorkplanModel->linkMyActivityToWorkplanActivity($id, $workplanActivityId)) {
+            if ($this->request->isAJAX()) {
+                return $this->response->setJSON([
+                    'success' => true,
+                    'message' => 'Activity successfully linked to workplan activity.',
+                    'csrf_hash' => csrf_hash()
+                ]);
+            }
+            return redirect()->back()->with('success', 'Activity successfully linked to workplan activity.');
+        } else {
+            if ($this->request->isAJAX()) {
+                return $this->response->setJSON([
+                    'success' => false,
+                    'message' => 'Failed to create link. Please try again.',
+                    'csrf_hash' => csrf_hash()
+                ]);
+            }
+            return redirect()->back()->with('error', 'Failed to create link. Please try again.');
+        }
+    }
+
+    /**
+     * Remove duty instruction link
+     *
+     * @param int $id
+     * @return mixed
+     */
+    public function removeDutyInstructionLink($id)
+    {
+        $activity = $this->activitiesModel->find($id);
+        if (!$activity) {
+            if ($this->request->isAJAX()) {
+                return $this->response->setJSON([
+                    'success' => false,
+                    'message' => 'Activity not found.',
+                    'csrf_hash' => csrf_hash()
+                ]);
+            }
+            return redirect()->to('/activities')->with('error', 'Activity not found.');
+        }
+
+        $dutyInstructionItemId = $this->request->getPost('duty_instruction_item_id');
+
+        if (!$dutyInstructionItemId) {
+            if ($this->request->isAJAX()) {
+                return $this->response->setJSON([
+                    'success' => false,
+                    'message' => 'Invalid duty instruction item ID.',
+                    'csrf_hash' => csrf_hash()
+                ]);
+            }
+            return redirect()->back()->with('error', 'Invalid duty instruction item ID.');
+        }
+
+        $myActivitiesDutyModel = new \App\Models\MyActivitiesDutyInstructionsModel();
+
+        // Remove the link
+        if ($myActivitiesDutyModel->unlinkMyActivityFromDutyInstruction($id, $dutyInstructionItemId)) {
+            if ($this->request->isAJAX()) {
+                return $this->response->setJSON([
+                    'success' => true,
+                    'message' => 'Link to duty instruction item removed successfully.',
+                    'csrf_hash' => csrf_hash()
+                ]);
+            }
+            return redirect()->back()->with('success', 'Link to duty instruction item removed successfully.');
+        } else {
+            if ($this->request->isAJAX()) {
+                return $this->response->setJSON([
+                    'success' => false,
+                    'message' => 'Failed to remove link. Please try again.',
+                    'csrf_hash' => csrf_hash()
+                ]);
+            }
+            return redirect()->back()->with('error', 'Failed to remove link. Please try again.');
+        }
+    }
+
+    /**
+     * Remove workplan activity link
+     *
+     * @param int $id
+     * @return mixed
+     */
+    public function removeWorkplanActivityLink($id)
+    {
+        $activity = $this->activitiesModel->find($id);
+        if (!$activity) {
+            if ($this->request->isAJAX()) {
+                return $this->response->setJSON([
+                    'success' => false,
+                    'message' => 'Activity not found.',
+                    'csrf_hash' => csrf_hash()
+                ]);
+            }
+            return redirect()->to('/activities')->with('error', 'Activity not found.');
+        }
+
+        $workplanActivityId = $this->request->getPost('workplan_activity_id');
+
+        if (!$workplanActivityId) {
+            if ($this->request->isAJAX()) {
+                return $this->response->setJSON([
+                    'success' => false,
+                    'message' => 'Invalid workplan activity ID.',
+                    'csrf_hash' => csrf_hash()
+                ]);
+            }
+            return redirect()->back()->with('error', 'Invalid workplan activity ID.');
+        }
+
+        $myActivitiesWorkplanModel = new \App\Models\MyActivitiesWorkplanActivitiesModel();
+
+        // Remove the link
+        if ($myActivitiesWorkplanModel->unlinkMyActivityFromWorkplanActivity($id, $workplanActivityId)) {
+            if ($this->request->isAJAX()) {
+                return $this->response->setJSON([
+                    'success' => true,
+                    'message' => 'Link to workplan activity removed successfully.',
+                    'csrf_hash' => csrf_hash()
+                ]);
+            }
+            return redirect()->back()->with('success', 'Link to workplan activity removed successfully.');
+        } else {
+            if ($this->request->isAJAX()) {
+                return $this->response->setJSON([
+                    'success' => false,
+                    'message' => 'Failed to remove link. Please try again.',
+                    'csrf_hash' => csrf_hash()
+                ]);
+            }
+            return redirect()->back()->with('error', 'Failed to remove link. Please try again.');
+        }
+    }
+
+
 
     /**
      * Show the form for implementing an activity
@@ -1330,19 +1789,6 @@ class ActivitiesController extends ResourceController
     }
 
     /**
-     * Get performance outputs by workplan period ID (AJAX)
-     *
-     * @param int $workplanPeriodId
-     * @return mixed
-     */
-    public function getPerformanceOutputs($workplanPeriodId = null)
-    {
-        $performanceOutputs = $this->performanceOutputsModel->getByPerformancePeriod($workplanPeriodId);
-
-        return $this->response->setJSON($performanceOutputs);
-    }
-
-    /**
      * Submit an activity for supervision
      *
      * @param int $id Activity ID
@@ -1446,6 +1892,13 @@ class ActivitiesController extends ResourceController
             $implementationData = $this->activitiesMeetingsModel
                 ->where('activity_id', $activity['id'])
                 ->first();
+        } elseif ($activity['type'] === 'agreements') {
+            $implementationData = $this->activitiesAgreementsModel
+                ->where('activity_id', $activity['id'])
+                ->first();
+
+            // ActivitiesAgreementsModel automatically decodes JSON fields via afterFind callback
+            // No manual JSON decoding needed
         }
 
         $data = [
@@ -1687,6 +2140,13 @@ class ActivitiesController extends ResourceController
             $implementationData = $this->activitiesMeetingsModel
                 ->where('activity_id', $activity['id'])
                 ->first();
+        } elseif ($activity['type'] === 'agreements') {
+            $implementationData = $this->activitiesAgreementsModel
+                ->where('activity_id', $activity['id'])
+                ->first();
+
+            // ActivitiesAgreementsModel automatically decodes JSON fields via afterFind callback
+            // No manual JSON decoding needed
         }
 
         $data = [
@@ -1822,7 +2282,7 @@ class ActivitiesController extends ResourceController
                     proposal.*,
                     workplans.title as workplan_title,
                     workplan_activities.title as activity_title,
-                    workplan_activities.activity_type,
+                    workplan_activities.target_output,
                     workplan_activities.description,
                     provinces.name as province_name,
                     districts.name as district_name,

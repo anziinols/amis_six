@@ -109,23 +109,25 @@ class WorkplanActivitiesController extends BaseController
      */
     public function new($workplanId = null)
     {
-        $workplan = $this->workplanModel->find($workplanId);
+        $workplan = $this->workplanModel
+            ->select('workplans.*, branches.name as branch_name')
+            ->join('branches', 'branches.id = workplans.branch_id', 'left')
+            ->find($workplanId);
         if (!$workplan) {
             return redirect()->to('/workplans')->with('error', 'Workplan not found.');
         }
+
+        // Get supervisors filtered by the workplan's branch
+        $allSupervisors = $this->userModel->getUsersBySupervisorCapability();
+        $supervisors = array_filter($allSupervisors, function($supervisor) use ($workplan) {
+            return $supervisor['branch_id'] == $workplan['branch_id'];
+        });
 
         $data = [
             'title' => 'Create New Activity',
             'workplan' => $workplan,
             'validation' => \Config\Services::validation(),
-            'branches' => $this->branchModel->findAll(),
-            'supervisors' => $this->userModel->getUsersBySupervisorCapability(),
-            'activityTypes' => [
-                'training' => 'Training',
-                'inputs' => 'Inputs',
-                'infrastructure' => 'Infrastructure',
-                'output' => 'Output'
-            ]
+            'supervisors' => $supervisors
         ];
 
         return view('workplans/workplan_activities_new', $data);
@@ -148,13 +150,8 @@ class WorkplanActivitiesController extends BaseController
         $rules = [
             'title' => 'required|max_length[255]',
             'description' => 'permit_empty',
-            'activity_type' => 'required|in_list[training,inputs,infrastructure,output]',
-            'q_one_target' => 'permit_empty|decimal',
-            'q_two_target' => 'permit_empty|decimal',
-            'q_three_target' => 'permit_empty|decimal',
-            'q_four_target' => 'permit_empty|decimal',
+            'target_output' => 'permit_empty|max_length[255]',
             'total_budget' => 'permit_empty|decimal',
-            'branch_id' => 'permit_empty|integer',
             'supervisor_id' => 'permit_empty|integer',
         ];
 
@@ -165,14 +162,10 @@ class WorkplanActivitiesController extends BaseController
         // Prepare data for saving - updated for correct field names
         $data = [
             'workplan_id' => $workplanId,
-            'branch_id' => $this->request->getPost('branch_id') ?: $workplan['branch_id'],
+            'branch_id' => $workplan['branch_id'], // Always inherit from workplan
             'title' => $this->request->getPost('title'),
             'description' => $this->request->getPost('description'),
-            'activity_type' => $this->request->getPost('activity_type'),
-            'q_one_target' => $this->request->getPost('q_one_target') ?: null,
-            'q_two_target' => $this->request->getPost('q_two_target') ?: null,
-            'q_three_target' => $this->request->getPost('q_three_target') ?: null,
-            'q_four_target' => $this->request->getPost('q_four_target') ?: null,
+            'target_output' => $this->request->getPost('target_output') ?: null,
             'total_budget' => $this->request->getPost('total_budget') ?: null,
             'supervisor_id' => $this->request->getPost('supervisor_id') ?: null,
             'created_by' => session()->get('user_id'),
@@ -242,6 +235,7 @@ class WorkplanActivitiesController extends BaseController
         $workplanNaspLinkModel = new \App\Models\WorkplanNaspLinkModel();
         $workplanMtdpLinkModel = new \App\Models\WorkplanMtdpLinkModel();
         $workplanCorporatePlanLinkModel = new \App\Models\WorkplanCorporatePlanLinkModel();
+        $workplanOthersLinkModel = new \App\Models\WorkplanOthersLinkModel();
 
         // Get NASP links for this activity
         try {
@@ -271,6 +265,16 @@ class WorkplanActivitiesController extends BaseController
         } catch (\Exception $e) {
             log_message('error', 'Error fetching Corporate Plan links: ' . $e->getMessage());
             $corporateLinks = [];
+        }
+
+        // Get Others links for this activity
+        try {
+            $othersLinks = $workplanOthersLinkModel->where('workplan_activity_id', $id)
+                ->where('deleted_at IS NULL')
+                ->findAll();
+        } catch (\Exception $e) {
+            log_message('error', 'Error fetching Others links: ' . $e->getMessage());
+            $othersLinks = [];
         }
 
         // Load additional models to get details for the links
@@ -467,7 +471,8 @@ class WorkplanActivitiesController extends BaseController
             'activity' => $activity,
             'naspLinks' => $naspLinks,
             'mtdpLinks' => $mtdpLinks,
-            'corporateLinks' => $corporateLinks
+            'corporateLinks' => $corporateLinks,
+            'othersLinks' => $othersLinks
         ];
 
         return view('workplans/workplan_activities_show', $data);
@@ -505,19 +510,24 @@ class WorkplanActivitiesController extends BaseController
             $activity['trainees'] = [];
         }
 
+        // Get workplan with branch information
+        $workplan = $this->workplanModel
+            ->select('workplans.*, branches.name as branch_name')
+            ->join('branches', 'branches.id = workplans.branch_id', 'left')
+            ->find($workplanId);
+
+        // Get supervisors filtered by the workplan's branch
+        $allSupervisors = $this->userModel->getUsersBySupervisorCapability();
+        $supervisors = array_filter($allSupervisors, function($supervisor) use ($workplan) {
+            return $supervisor['branch_id'] == $workplan['branch_id'];
+        });
+
         $data = [
             'title' => 'Edit Activity',
             'workplan' => $workplan,
             'activity' => $activity,
             'validation' => \Config\Services::validation(),
-            'branches' => $this->branchModel->findAll(),
-            'supervisors' => $this->userModel->getUsersBySupervisorCapability(),
-            'activityTypes' => [
-                'training' => 'Training',
-                'inputs' => 'Inputs',
-                'infrastructure' => 'Infrastructure',
-                'output' => 'Output'
-            ]
+            'supervisors' => $supervisors
         ];
 
         return view('workplans/workplan_activities_edit', $data);
@@ -546,13 +556,8 @@ class WorkplanActivitiesController extends BaseController
         $rules = [
             'title' => 'required|max_length[255]',
             'description' => 'permit_empty',
-            'activity_type' => 'required|in_list[training,inputs,infrastructure,output]',
-            'q_one_target' => 'permit_empty|decimal',
-            'q_two_target' => 'permit_empty|decimal',
-            'q_three_target' => 'permit_empty|decimal',
-            'q_four_target' => 'permit_empty|decimal',
+            'target_output' => 'permit_empty|max_length[255]',
             'total_budget' => 'permit_empty|decimal',
-            'branch_id' => 'permit_empty|integer',
             'supervisor_id' => 'permit_empty|integer',
         ];
 
@@ -564,13 +569,8 @@ class WorkplanActivitiesController extends BaseController
         $data = [
             'title' => $this->request->getPost('title'),
             'description' => $this->request->getPost('description'),
-            'activity_type' => $this->request->getPost('activity_type'),
-            'q_one_target' => $this->request->getPost('q_one_target') ?: null,
-            'q_two_target' => $this->request->getPost('q_two_target') ?: null,
-            'q_three_target' => $this->request->getPost('q_three_target') ?: null,
-            'q_four_target' => $this->request->getPost('q_four_target') ?: null,
+            'target_output' => $this->request->getPost('target_output') ?: null,
             'total_budget' => $this->request->getPost('total_budget') ?: null,
-            'branch_id' => $this->request->getPost('branch_id') ?: null,
             'supervisor_id' => $this->request->getPost('supervisor_id') ?: null,
             'updated_by' => session()->get('user_id'),
         ];
@@ -734,7 +734,7 @@ class WorkplanActivitiesController extends BaseController
                             <p>Title: ' . $activity['title'] . '</p>
                             <p>Workplan: ' . $workplan['title'] . '</p>
                             <p>Branch: ' . $branchName . '</p>
-                            <p>Activity Type: ' . ucfirst($activity['activity_type']) . '</p>
+                            <p>Target Output: ' . ($activity['target_output'] ?? 'Not specified') . '</p>
                         </div>
 
                         <p>This activity was created by: <strong>' . $creatorName . '</strong> (' . $creatorEmail . ')</p>
@@ -860,7 +860,7 @@ class WorkplanActivitiesController extends BaseController
                             <p>Title: ' . $activity['title'] . '</p>
                             <p>Workplan: ' . $workplan['title'] . '</p>
                             <p>Branch: ' . $branchName . '</p>
-                            <p>Activity Type: ' . ucfirst($activity['activity_type']) . '</p>
+                            <p>Target Output: ' . ($activity['target_output'] ?? 'Not specified') . '</p>
                         </div>
 
                         <p>This activity was updated by: <strong>' . $updaterName . '</strong> (' . $updaterEmail . ')</p>

@@ -41,12 +41,12 @@
                                     <tr>
                                         <th>#</th>
                                         <th>Activity Title</th>
-                                        <th>Performance Output</th>
                                         <th>Type</th>
                                         <th>Location</th>
                                         <th>Date Range</th>
-                                        <?php if (isset($isAdmin) && $isAdmin): ?>
                                         <th>Action Officer</th>
+                                        <?php if (isset($isAdmin) && $isAdmin): ?>
+                                        <th>Supervisor</th>
                                         <?php endif; ?>
                                         <th>Status</th>
                                         <th>Actions</th>
@@ -60,7 +60,6 @@
                                             <td>
                                                 <strong><?= esc($activity['activity_title']) ?></strong>
                                             </td>
-                                            <td><?= esc($activity['performance_output_title'] ?? 'N/A') ?></td>
                                             <td>
                                                 <?php
                                                 $typeClass = '';
@@ -98,8 +97,9 @@
                                                 <?= date('d M Y', strtotime($activity['date_start'])) ?> -
                                                 <?= date('d M Y', strtotime($activity['date_end'])) ?>
                                             </td>
-                                            <?php if (isset($isAdmin) && $isAdmin): ?>
                                             <td><?= esc($activity['action_officer_name'] ?? 'Not Assigned') ?></td>
+                                            <?php if (isset($isAdmin) && $isAdmin): ?>
+                                            <td><?= esc($activity['supervisor_name'] ?? 'Not Assigned') ?></td>
                                             <?php endif; ?>
                                             <td>
                                                 <?php
@@ -133,34 +133,51 @@
                                                                        (session()->get('user_id') == $activity['supervisor_id']);
                                                         ?>
                                                         <?php if ($canSupervise): ?>
-                                                        <a href="<?= base_url('activities/' . $activity['id'] . '/supervise') ?>" class="btn btn-sm btn-outline-info" title="Supervise">
-                                                            <i class="fas fa-check-circle"></i> Supervise
+                                                        <a href="<?= base_url('activities/' . $activity['id'] . '/supervise') ?>" class="btn btn-outline-info" title="Supervise" style="margin-right: 5px;">
+                                                            <i class="fas fa-check-circle me-1"></i> Supervise
                                                         </a>
                                                         <?php endif; ?>
                                                     <?php elseif ($activity['status'] === 'approved'): ?>
-                                                        <a href="<?= base_url('activities/' . $activity['id'] . '/view') ?>" class="btn btn-sm btn-outline-success" title="View Activity">
-                                                            <i class="fas fa-eye"></i> View
+                                                        <a href="<?= base_url('activities/' . $activity['id'] . '/evaluate') ?>" class="btn btn-outline-warning" title="Evaluate Activity" style="margin-right: 5px;">
+                                                            <i class="fas fa-star me-1"></i> Evaluate
                                                         </a>
-                                                        <a href="<?= base_url('activities/' . $activity['id'] . '/evaluate') ?>" class="btn btn-sm btn-outline-warning" title="Evaluate Activity">
-                                                            <i class="fas fa-star"></i> Evaluate
+                                                        <a href="<?= base_url('activities/' . $activity['id'] . '/view') ?>" class="btn btn-outline-primary" title="View Activity">
+                                                            <i class="fas fa-eye me-1"></i> View
                                                         </a>
                                                     <?php elseif ($activity['status'] === 'rated'): ?>
-                                                        <a href="<?= base_url('activities/' . $activity['id'] . '/view') ?>" class="btn btn-sm btn-outline-success" title="View Activity">
-                                                            <i class="fas fa-eye"></i> View
+                                                        <a href="<?= base_url('activities/' . $activity['id'] . '/view') ?>" class="btn btn-outline-primary" title="View Activity" style="margin-right: 5px;">
+                                                            <i class="fas fa-eye me-1"></i> View
                                                         </a>
                                                         <span class="badge bg-warning text-dark">
                                                             <i class="fas fa-star me-1"></i>Rated: <?= esc($activity['rating_score'] ?? 'N/A') ?>/10
                                                         </span>
                                                     <?php else: ?>
-                                                        <a href="<?= base_url('activities/' . $activity['id']) ?>" class="btn btn-sm btn-outline-primary" title="View Details">
-                                                            <i class="fas fa-eye"></i>
+                                                        <?php
+                                                        // Check if the current user can edit and implement this activity
+                                                        // Admin can edit/implement all activities
+                                                        // Action officers can edit/implement their own activities
+                                                        // Supervisors can only edit/implement activities where they are the action officer
+                                                        $currentUserId = session()->get('user_id');
+                                                        $isAdmin = session()->get('is_admin') == 1;
+                                                        $isActionOfficer = $activity['action_officer_id'] == $currentUserId;
+                                                        $canEditImplement = $isAdmin || $isActionOfficer;
+                                                        ?>
+                                                        <?php if ($canEditImplement): ?>
+                                                        <a href="<?= base_url('activities/' . $activity['id'] . '/links') ?>" class="btn btn-outline-info" title="Manage Links" style="margin-right: 5px;">
+                                                            <i class="fas fa-link me-1"></i> Links
                                                         </a>
-                                                        <a href="<?= base_url('activities/' . $activity['id'] . '/edit') ?>" class="btn btn-sm btn-outline-warning" title="Edit">
-                                                            <i class="fas fa-edit"></i>
+                                                        <?php endif; ?>
+                                                        <a href="<?= base_url('activities/' . $activity['id']) ?>" class="btn btn-outline-primary" title="View Details" style="margin-right: 5px;">
+                                                            <i class="fas fa-eye me-1"></i> View
                                                         </a>
-                                                        <?php if (in_array($activity['status'], ['pending', 'active'])): ?>
-                                                        <a href="<?= base_url('activities/' . $activity['id'] . '/implement') ?>" class="btn btn-sm btn-outline-success" title="Implement">
-                                                            <i class="fas fa-tasks"></i>
+                                                        <?php if ($canEditImplement && in_array($activity['status'], ['pending', 'active']) && isset($activity['has_links']) && $activity['has_links']): ?>
+                                                        <a href="<?= base_url('activities/' . $activity['id'] . '/implement') ?>" class="btn btn-outline-success" title="Implement" style="margin-right: 5px;">
+                                                            <i class="fas fa-tasks me-1"></i> Implement
+                                                        </a>
+                                                        <?php endif; ?>
+                                                        <?php if ($canEditImplement): ?>
+                                                        <a href="<?= base_url('activities/' . $activity['id'] . '/edit') ?>" class="btn btn-outline-warning" title="Edit">
+                                                            <i class="fas fa-edit me-1"></i> Edit
                                                         </a>
                                                         <?php endif; ?>
                                                     <?php endif; ?>

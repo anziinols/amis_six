@@ -212,79 +212,18 @@
             <div class="col-md-6">
                 <table class="info-table">
                     <tr>
-                        <th colspan="2" style="text-align: center; background-color: #e3f2fd;">Quarterly Performance</th>
+                        <th colspan="2" style="text-align: center; background-color: #e3f2fd;">Performance Summary</th>
                     </tr>
                     <tr>
-                        <th>Quarter</th>
-                        <th>Target / Achieved / Percentage</th>
-                    </tr>
-                    <tr>
-                        <td><strong>Q1</strong></td>
-                        <td>
-                            <?php
-                            $q1_target = $activity['q_one_target'] ? number_format($activity['q_one_target'], 0) : 'N/A';
-                            $q1_achieved = $activity['q_one_achieved'] ? number_format($activity['q_one_achieved'], 0) : 'N/A';
-                            $q1_percent = ($activity['q_one_target'] && $activity['q_one_achieved'])
-                                ? round(($activity['q_one_achieved'] / $activity['q_one_target']) * 100, 1)
-                                : 0;
-                            ?>
-                            <?= $q1_target ?> / <?= $q1_achieved ?> / <strong><?= $q1_percent ?>%</strong>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td><strong>Q2</strong></td>
-                        <td>
-                            <?php
-                            $q2_target = $activity['q_two_target'] ? number_format($activity['q_two_target'], 0) : 'N/A';
-                            $q2_achieved = $activity['q_two_achieved'] ? number_format($activity['q_two_achieved'], 0) : 'N/A';
-                            $q2_percent = ($activity['q_two_target'] && $activity['q_two_achieved'])
-                                ? round(($activity['q_two_achieved'] / $activity['q_two_target']) * 100, 1)
-                                : 0;
-                            ?>
-                            <?= $q2_target ?> / <?= $q2_achieved ?> / <strong><?= $q2_percent ?>%</strong>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td><strong>Q3</strong></td>
-                        <td>
-                            <?php
-                            $q3_target = $activity['q_three_target'] ? number_format($activity['q_three_target'], 0) : 'N/A';
-                            $q3_achieved = $activity['q_three_achieved'] ? number_format($activity['q_three_achieved'], 0) : 'N/A';
-                            $q3_percent = ($activity['q_three_target'] && $activity['q_three_achieved'])
-                                ? round(($activity['q_three_achieved'] / $activity['q_three_target']) * 100, 1)
-                                : 0;
-                            ?>
-                            <?= $q3_target ?> / <?= $q3_achieved ?> / <strong><?= $q3_percent ?>%</strong>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td><strong>Q4</strong></td>
-                        <td>
-                            <?php
-                            $q4_target = $activity['q_four_target'] ? number_format($activity['q_four_target'], 0) : 'N/A';
-                            $q4_achieved = $activity['q_four_achieved'] ? number_format($activity['q_four_achieved'], 0) : 'N/A';
-                            $q4_percent = ($activity['q_four_target'] && $activity['q_four_achieved'])
-                                ? round(($activity['q_four_achieved'] / $activity['q_four_target']) * 100, 1)
-                                : 0;
-                            ?>
-                            <?= $q4_target ?> / <?= $q4_achieved ?> / <strong><?= $q4_percent ?>%</strong>
-                        </td>
+                        <th>Target Output</th>
+                        <td><?= esc($activity['target_output'] ?? 'Not specified') ?></td>
                     </tr>
                     <tr style="background-color: #f8f9fa;">
-                        <td><strong>TOTAL</strong></td>
+                        <td><strong>STATUS</strong></td>
                         <td>
-                            <?php
-                            $total_target = ($activity['q_one_target'] ?? 0) + ($activity['q_two_target'] ?? 0) +
-                                           ($activity['q_three_target'] ?? 0) + ($activity['q_four_target'] ?? 0);
-                            $total_achieved = ($activity['q_one_achieved'] ?? 0) + ($activity['q_two_achieved'] ?? 0) +
-                                             ($activity['q_three_achieved'] ?? 0) + ($activity['q_four_achieved'] ?? 0);
-                            $total_percent = ($total_target && $total_achieved)
-                                ? round(($total_achieved / $total_target) * 100, 1)
-                                : 0;
-                            ?>
-                            <strong><?= $total_target ? number_format($total_target, 0) : 'N/A' ?> /
-                            <?= $total_achieved ? number_format($total_achieved, 0) : 'N/A' ?> /
-                            <?= $total_percent ?>%</strong>
+                            <span class="badge bg-<?= $activity['status'] == 'completed' ? 'success' : ($activity['status'] == 'in_progress' ? 'warning' : 'secondary') ?>">
+                                <?= ucfirst(str_replace('_', ' ', $activity['status'] ?? 'pending')) ?>
+                            </span>
                         </td>
                     </tr>
                     <?php if (!empty($activity['rating']) && $activity['rating'] > 0): ?>
