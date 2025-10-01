@@ -10,13 +10,9 @@ use App\Controllers\Admin\MtdpPlanController;
 use App\Controllers\Admin\MTDPSpecificAreasController;
 use App\Controllers\Admin\MTDPInvestmentsController;
 use App\Controllers\Admin\RegionsController;
-use App\Controllers\Admin\CommoditiesController;
 use App\Controllers\DashboardController;
 use App\Controllers\DakoiiController;
 use App\Controllers\Home;
-use App\Controllers\DocumentsController;
-use App\Controllers\MeetingController;
-use App\Controllers\AgreementsController;
 use App\Controllers\MTDReportsController;
 use App\Controllers\NASPReportsController;
 use App\Controllers\WorkplanReportsController;
@@ -177,16 +173,6 @@ $routes->group('admin', ['filter' => 'admin'], static function ($routes) {
     $routes->get('regions/(:num)/import-provinces', [RegionsController::class, 'importProvinces/$1']);
     $routes->post('regions/(:num)/import-provinces', [RegionsController::class, 'saveImportProvinces/$1']);
     $routes->get('regions/(:num)/remove-province/(:num)', [RegionsController::class, 'removeProvince/$1/$2']);
-
-    // Commodities Management - RESTful Routes
-    $routes->get('commodities', [CommoditiesController::class, 'index']);
-    $routes->get('commodities/debug', [CommoditiesController::class, 'debug']); // Temporary debug route
-    $routes->get('commodities/new', [CommoditiesController::class, 'new']);
-    $routes->post('commodities', [CommoditiesController::class, 'create']);
-    $routes->get('commodities/(:num)', [CommoditiesController::class, 'show/$1']);
-    $routes->get('commodities/(:num)/edit', [CommoditiesController::class, 'edit/$1']);
-    $routes->post('commodities/(:num)', [CommoditiesController::class, 'update/$1']);
-    $routes->get('commodities/(:num)/delete', [CommoditiesController::class, 'delete/$1']);
 
     // NASP Plans Management Routes - RESTful
     $routes->group('nasp-plans', function($routes) {
@@ -431,19 +417,10 @@ $routes->group('admin', ['filter' => 'admin'], static function ($routes) {
     $routes->post('mtdp-plans/update-dip/(:num)', [MtdpPlanController::class, 'updateDip/$1']);
     $routes->post('mtdp-plans/toggle-dip-status', [MtdpPlanController::class, 'toggleDipStatus']);
     $routes->get('mtdp-plans/dip-details/(:num)', [MtdpPlanController::class, 'getDipDetails/$1']);
-
-    // Organization Settings Routes
-    $routes->get('org-settings', 'Admin\SettingsController::index');
-    $routes->get('org-settings/new', 'Admin\SettingsController::new');
-    $routes->post('org-settings', 'Admin\SettingsController::create');
-    $routes->get('org-settings/(:num)', 'Admin\SettingsController::show/$1');
-    $routes->get('org-settings/(:num)/edit', 'Admin\SettingsController::edit/$1');
-    $routes->post('org-settings/(:num)', 'Admin\SettingsController::update/$1');
-    $routes->get('org-settings/(:num)/delete', 'Admin\SettingsController::delete/$1');
 });
 
-// SME Routes - RESTful
-$routes->group('smes', static function($routes){
+// SME Routes - RESTful (accessible by all authenticated users)
+$routes->group('smes', ['filter' => 'auth'], static function($routes){
     $routes->get('/', [\App\Controllers\SmeController::class, 'index']);
     $routes->get('new', [\App\Controllers\SmeController::class, 'new']);
     $routes->post('/', [\App\Controllers\SmeController::class, 'create']);
@@ -466,17 +443,6 @@ $routes->group('smes', static function($routes){
     $routes->get('staff/(:num)/(:num)/delete', [\App\Controllers\SmeController::class, 'staff_delete/$1/$2']);
 });
 
-// Commodity Production Routes - RESTful (for commodity role users)
-$routes->group('commodity-boards', ['filter' => 'auth'], static function($routes){
-    $routes->get('/', [\App\Controllers\CommodityProductionController::class, 'index']);
-    $routes->get('new', [\App\Controllers\CommodityProductionController::class, 'new']);
-    $routes->post('/', [\App\Controllers\CommodityProductionController::class, 'create']);
-    $routes->get('(:num)', [\App\Controllers\CommodityProductionController::class, 'show/$1']);
-    $routes->get('(:num)/edit', [\App\Controllers\CommodityProductionController::class, 'edit/$1']);
-    $routes->post('(:num)', [\App\Controllers\CommodityProductionController::class, 'update/$1']);
-    $routes->get('(:num)/delete', [\App\Controllers\CommodityProductionController::class, 'delete/$1']);
-});
-
 // Dakoii Organization User routes (RESTful)
 $routes->get('/dakoii_org/user/(:num)', 'DakoiiController::dakoii_org_user_index/$1');
 $routes->get('/dakoii_org/user/new/(:num)', 'DakoiiController::dakoii_org_user_new/$1');
@@ -485,49 +451,6 @@ $routes->get('/dakoii_org/user/show/(:num)/(:num)', 'DakoiiController::dakoii_or
 $routes->get('/dakoii_org/user/edit/(:num)/(:num)', 'DakoiiController::dakoii_org_user_edit/$1/$2');
 $routes->post('/dakoii_org/user/update/(:num)/(:num)', 'DakoiiController::dakoii_org_user_update/$1/$2');
 $routes->get('/dakoii_org/user/delete/(:num)/(:num)', 'DakoiiController::dakoii_org_user_delete/$1/$2');
-
-// Documents Management Routes
-$routes->group('documents', ['filter' => 'auth'], static function ($routes) {
-    $routes->get('/', 'DocumentsController::index');
-    $routes->get('new', 'DocumentsController::new');
-    $routes->post('create', 'DocumentsController::create');
-    $routes->get('edit/(:num)', 'DocumentsController::edit/$1');
-    $routes->post('update/(:num)', 'DocumentsController::update/$1');
-    $routes->get('delete/(:num)', 'DocumentsController::delete/$1');
-    $routes->get('file/new/(:num)', 'DocumentsController::newDocument/$1');
-    $routes->post('file/create', 'DocumentsController::createDocument');
-    $routes->get('file/view/(:num)', 'DocumentsController::viewDocument/$1');
-    $routes->get('file/download/(:num)', 'DocumentsController::downloadDocument/$1');
-    $routes->get('file/delete/(:num)', 'DocumentsController::deleteDocument/$1');
-});
-
-// Meeting routes (RESTful)
-$routes->get('meetings', 'MeetingController::index');
-$routes->get('meetings/new', 'MeetingController::new');
-$routes->post('meetings', 'MeetingController::create');
-$routes->get('meetings/(:num)', 'MeetingController::show/$1');
-$routes->get('meetings/edit/(:num)', 'MeetingController::edit/$1');
-$routes->post('meetings/update/(:num)', 'MeetingController::update/$1');
-$routes->get('meetings/delete/(:num)', 'MeetingController::delete/$1');
-$routes->get('meetings/download/(:num)/(:num)', 'MeetingController::download/$1/$2');
-$routes->post('meetings/deleteAttachment/(:num)/(:num)', 'MeetingController::deleteAttachment/$1/$2');
-$routes->post('meetings/status/(:num)', 'MeetingController::updateStatus/$1');
-
-// Agreements routes (RESTful)
-$routes->group('agreements', ['filter' => 'auth'], static function ($routes) {
-    $routes->get('/', 'AgreementsController::index');
-    $routes->get('new', 'AgreementsController::new');
-    $routes->post('create', 'AgreementsController::create'); // Using post for form submission
-    $routes->get('(:num)', 'AgreementsController::show/$1');
-    $routes->get('edit/(:num)', 'AgreementsController::edit/$1');
-    $routes->post('update/(:num)', 'AgreementsController::update/$1'); // Using post for form submission
-    $routes->delete('delete/(:num)', 'AgreementsController::delete/$1'); // Using delete method (requires _method field in form)
-    $routes->post('delete/(:num)', 'AgreementsController::delete/$1'); // Fallback for forms without method spoofing
-
-    // Attachment routes
-    $routes->get('download/(:num)/(:num)', 'AgreementsController::downloadAttachment/$1/$2');
-    $routes->post('delete_attachment/(:num)/(:num)', 'AgreementsController::deleteAttachment/$1/$2'); // Route to handle attachment deletion
-});
 
 // Workplan routes (RESTful) - Basic CRUD
 $routes->get('workplans', 'WorkplanController::index');
@@ -588,8 +511,9 @@ $routes->group('activities', ['filter' => 'auth'], function($routes) {
     $routes->get('(:num)/supervise', 'ActivitiesController::supervise/$1');
     $routes->post('(:num)/process-supervision', 'ActivitiesController::processSupervision/$1');
     $routes->get('(:num)/view', 'ActivitiesController::viewActivity/$1');
-    $routes->get('(:num)/evaluate', 'ActivitiesController::evaluate/$1');
-    $routes->post('(:num)/process-evaluation', 'ActivitiesController::processEvaluation/$1');
+    // Evaluation routes disabled - rating is now handled in supervision workflow
+    // $routes->get('(:num)/evaluate', 'ActivitiesController::evaluate/$1');
+    // $routes->post('(:num)/process-evaluation', 'ActivitiesController::processEvaluation/$1');
 
     // Activity Links routes
     $routes->get('(:num)/links', 'ActivitiesController::manageLinks/$1');
@@ -695,9 +619,6 @@ $routes->get('reports/workplan', 'WorkplanReportsController::index');
 
 // Activities Map Reports routes
 $routes->get('reports/activities-map', 'ActivityMapsReportsController::index');
-
-// Commodity Reports routes
-$routes->get('reports/commodity', 'CommodityReportsController::index');
 
 // HR Reports routes
 $routes->get('reports/hr', 'HRReportsController::index');

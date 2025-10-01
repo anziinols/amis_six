@@ -29,7 +29,7 @@
                                             <p class="text-muted"><?= nl2br(esc($activity['activity_description'])) ?></p>
                                         </div>
                                         <div class="col-md-4">
-                                            <p class="mb-1"><strong>Performance Output:</strong> <?= esc($activity['performance_output_title'] ?? 'N/A') ?></p>
+
                                             <p class="mb-1"><strong>Location:</strong> <?= esc($activity['location'] ?? 'N/A') ?></p>
                                             <p class="mb-1"><strong>Province:</strong> <?= esc($activity['province_name'] ?? 'N/A') ?></p>
                                             <p class="mb-1"><strong>District:</strong> <?= esc($activity['district_name'] ?? 'N/A') ?></p>
@@ -40,7 +40,7 @@
                                             <p class="mb-1"><strong>Status:</strong> <span class="badge bg-success"><?= ucfirst(esc($activity['status'])) ?></span></p>
                                             <p class="mb-1"><strong>Date Range:</strong></p>
                                             <p class="text-muted"><?= date('d M Y', strtotime($activity['date_start'])) ?> - <?= date('d M Y', strtotime($activity['date_end'])) ?></p>
-                                            <p class="mb-1"><strong>Total Cost:</strong> <?= !empty($activity['total_cost']) ? 'USD ' . number_format($activity['total_cost'], 2) : 'N/A' ?></p>
+                                            <p class="mb-1"><strong>Total Cost:</strong> <?= !empty($activity['total_cost']) ? CURRENCY_SYMBOL . ' ' . number_format($activity['total_cost'], 2) : 'N/A' ?></p>
                                         </div>
                                     </div>
                                 </div>
@@ -86,7 +86,7 @@
                     <?php endif; ?>
 
                     <!-- Rating Information -->
-                    <?php if ($activity['status'] === 'rated' && (!empty($activity['rating_score']) || !empty($activity['rate_remarks']))): ?>
+                    <?php if (!empty($activity['rating_score']) || !empty($activity['rate_remarks'])): ?>
                     <div class="row mb-4">
                         <div class="col-md-12">
                             <div class="card border-warning">
@@ -100,12 +100,12 @@
                                     <div class="mb-3">
                                         <strong>Rating Score:</strong>
                                         <span class="fs-4 fw-bold text-warning ms-2">
-                                            <?= esc($activity['rating_score']) ?>/10
+                                            <?= esc($activity['rating_score']) ?>/5
                                             <?php
                                             $score = floatval($activity['rating_score']);
-                                            if ($score >= 8) {
+                                            if ($score >= 4) {
                                                 echo '<i class="fas fa-star text-success ms-1" title="Excellent"></i>';
-                                            } elseif ($score >= 6) {
+                                            } elseif ($score >= 3) {
                                                 echo '<i class="fas fa-star text-warning ms-1" title="Good"></i>';
                                             } else {
                                                 echo '<i class="fas fa-star text-danger ms-1" title="Needs Improvement"></i>';
@@ -117,7 +117,7 @@
 
                                     <?php if (!empty($activity['rate_remarks'])): ?>
                                     <div class="mb-3">
-                                        <strong>Evaluation Remarks:</strong>
+                                        <strong>Rating Remarks:</strong>
                                         <p class="mt-2 mb-0"><?= nl2br(esc($activity['rate_remarks'])) ?></p>
                                     </div>
                                     <?php endif; ?>

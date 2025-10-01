@@ -44,7 +44,6 @@ class UserModel extends Model
         'is_evaluator',
         'is_supervisor',
         'is_admin',
-        'commodity_id',
         'role',
         'joined_date',
         'id_photo_filepath',
@@ -63,8 +62,9 @@ class UserModel extends Model
 
     // Simple validation rules - no complex email uniqueness check
     // Password not required for new users (activation workflow)
+    // User code (ucode) not required - auto-generated in controller
     protected $validationRules = [
-        'ucode' => 'required|max_length[200]',
+        'ucode' => 'permit_empty|max_length[200]',
         'email' => 'required|valid_email|max_length[255]',
         'phone' => 'permit_empty',
         'fname' => 'required|max_length[255]',
@@ -81,7 +81,6 @@ class UserModel extends Model
         'is_evaluator' => 'permit_empty|in_list[0,1]',
         'is_supervisor' => 'permit_empty|in_list[0,1]',
         'is_admin' => 'permit_empty|in_list[0,1]',
-        'commodity_id' => 'permit_empty|integer',
         'role' => 'required|in_list[user,guest]',
         'joined_date' => 'permit_empty|valid_date',
         'id_photo_filepath' => 'permit_empty|max_length[255]',
@@ -95,16 +94,12 @@ class UserModel extends Model
     // Simple validation messages
     protected $validationMessages = [
         'ucode' => [
-            'required' => 'User code is required',
             'max_length' => 'User code cannot exceed 200 characters'
         ],
         'email' => [
             'required' => 'Email address is required',
             'valid_email' => 'Please enter a valid email address',
             'max_length' => 'Email cannot exceed 255 characters'
-        ],
-        'phone' => [
-            'required' => 'Phone number is required'
         ],
         'fname' => [
             'required' => 'First name is required',
@@ -441,12 +436,10 @@ class UserModel extends Model
             ->select('u.*,
                      b.name as branch_name,
                      CONCAT(s.fname, " ", s.lname) as supervisor_name,
-                     c.commodity_name,
                      CONCAT(cb.fname, " ", cb.lname) as created_by_name,
                      CONCAT(ub.fname, " ", ub.lname) as updated_by_name')
             ->join('branches b', 'u.branch_id = b.id', 'left')
             ->join('users s', 'u.report_to_id = s.id', 'left')
-            ->join('commodities c', 'u.commodity_id = c.id', 'left')
             ->join('users cb', 'u.created_by = cb.id', 'left')
             ->join('users ub', 'u.updated_by = ub.id', 'left')
             ->where('u.deleted_at', null)
@@ -466,5 +459,128 @@ class UserModel extends Model
             'deleted_by' => $deletedBy ?? session()->get('user_id'),
             'user_status' => 0
         ]);
+    }
+
+    /**
+     * Get user accessibility flags as formatted badges (HTML)
+     * Returns HTML badges for is_admin, is_supervisor, is_evaluator
+     *
+     * @param array $user User data array or null to use session
+     * @return string HTML string with badges
+     */
+    public function getUserAccessibilityBadges($user = null): string
+    {
+        // If no user data provided, get from session
+        if ($user === null) {
+            $user = [
+                'is_admin' => session()->get('is_admin') ?? 0,
+                'is_supervisor' => session()->get('is_supervisor') ?? 0,
+                'is_evaluator' => session()->get('is_evaluator') ?? 0
+            ];
+        }
+
+        $badges = [];
+
+        if (isset($user['is_admin']) && $user['is_admin'] == 1) {
+            $badges[] = '<span class="badge bg-danger"><i class="fas fa-user-shield me-1"></i>Admin</span>';
+        }
+
+        if (isset($user['is_supervisor']) && $user['is_supervisor'] == 1) {
+            $badges[] = '<span class="badge bg-warning"><i class="fas fa-user-tie me-1"></i>Supervisor</span>';
+        }
+
+        if (isset($user['is_evaluator']) && $user['is_evaluator'] == 1) {
+            $badges[] = '<span class="badge bg-info"><i class="fas fa-clipboard-check me-1"></i>Evaluator</span>';
+        }
+
+        return !empty($badges) ? implode(' ', $badges) : '';
+    }
+
+    /**
+     * Get user accessibility flags as array
+     * Returns array with boolean values for is_admin, is_supervisor, is_evaluator
+     *
+     * @param array $user User data array or null to use session
+     * @return array Associative array with accessibility flags
+     */
+    public function getUserAccessibilityFlags($user = null): array
+    {
+        // If no user data provided, get from session
+        if ($user === null) {
+            return [
+                'is_admin' => (bool)(session()->get('is_admin') ?? 0),
+                'is_supervisor' => (bool)(session()->get('is_supervisor') ?? 0),
+                'is_evaluator' => (bool)(session()->get('is_evaluator') ?? 0)
+            ];
+        }
+
+        return [
+            'is_admin' => (bool)($user['is_admin'] ?? 0),
+            'is_supervisor' => (bool)($user['is_supervisor'] ?? 0),
+            'is_evaluator' => (bool)($user['is_evaluator'] ?? 0)
+        ];
+    }
+
+    /**
+     * Get user role with accessibility flags as text
+     * Returns formatted string like "User (Admin, Supervisor)"
+     *
+     * @param array $user User data array or null to use session
+     * @return string Formatted role with flags
+     */
+    public function getRoleWithAccessibilityText($user = null): string
+    {
+        // If no user data provided, get from session
+        if ($user === null) {
+            $role = session()->get('role') ?? 'user';
+            $user = [
+                'is_admin' => session()->get('is_admin') ?? 0,
+                'is_supervisor' => session()->get('is_supervisor') ?? 0,
+                'is_evaluator' => session()->get('is_evaluator') ?? 0
+            ];
+        } else {
+            $role = $user['role'] ?? 'user';
+        }
+
+        $flags = [];
+
+        if (isset($user['is_admin']) && $user['is_admin'] == 1) {
+            $flags[] = 'Admin';
+        }
+
+        if (isset($user['is_supervisor']) && $user['is_supervisor'] == 1) {
+            $flags[] = 'Supervisor';
+        }
+
+        if (isset($user['is_evaluator']) && $user['is_evaluator'] == 1) {
+            $flags[] = 'Evaluator';
+        }
+
+        $roleText = ucfirst($role);
+
+        if (!empty($flags)) {
+            $roleText .= ' (' . implode(', ', $flags) . ')';
+        }
+
+        return $roleText;
+    }
+
+    /**
+     * Check if user has specific accessibility flag
+     *
+     * @param string $flag Flag to check (admin, supervisor, evaluator)
+     * @param array $user User data array or null to use session
+     * @return bool True if user has the flag
+     */
+    public function hasAccessibilityFlag(string $flag, $user = null): bool
+    {
+        $flagField = 'is_' . strtolower($flag);
+
+        // If no user data provided, get from session
+        if ($user === null) {
+            return (bool)(session()->get($flagField) ?? 0);
+        }
+
+        return (bool)($user[$flagField] ?? 0);
     }
 }

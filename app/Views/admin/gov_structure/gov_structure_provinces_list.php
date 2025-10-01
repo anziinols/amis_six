@@ -2,23 +2,31 @@
 
 <?= $this->section('content') ?>
 <div class="container-fluid">
+    <div class="row mb-2">
+        <div class="col-12">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item active" aria-current="page">Provinces</li>
+                </ol>
+            </nav>
+        </div>
+    </div>
+
     <div class="row">
         <div class="col-12">
             <div class="card">
-                <div class="card-header">
-                    <h3 class="card-title">Provinces</h3>
-                    <div class="card-tools">
-                        <div class="btn-group" role="group">
-                            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addProvinceModal">
-                                <i class="fas fa-plus"></i> Add Province
-                            </button>
-                            <a href="<?= base_url('admin/gov-structure/provinces/csv-template') ?>" class="btn btn-success">
-                                <i class="fas fa-download"></i> Download CSV Template
-                            </a>
-                            <button type="button" class="btn btn-info" data-bs-toggle="modal" data-bs-target="#importProvinceModal">
-                                <i class="fas fa-upload"></i> Import CSV
-                            </button>
-                        </div>
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h3 class="card-title mb-0">Provinces</h3>
+                    <div>
+                        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addProvinceModal">
+                            <i class="fas fa-plus"></i> Add Province
+                        </button>
+                        <a href="<?= base_url('admin/gov-structure/provinces/csv-template') ?>" class="btn btn-success">
+                            <i class="fas fa-download"></i> Download CSV Template
+                        </a>
+                        <button type="button" class="btn btn-info" data-bs-toggle="modal" data-bs-target="#importProvinceModal">
+                            <i class="fas fa-upload"></i> Import CSV
+                        </button>
                     </div>
                 </div>
                 <div class="card-body">
@@ -49,31 +57,31 @@
                                         <td><?= $province['map_center'] ?></td>
                                         <td><?= $province['map_zoom'] ?></td>
                                         <td>
-                                            <div class="btn-group" role="group" aria-label="Province actions">
-                                                <a href="<?= base_url('admin/gov-structure/provinces/'.$province['id'].'/districts') ?>" class="btn btn-info btn-sm">
-                                                    <i class="fas fa-eye"></i> View Districts
-                                                </a>
-                                                <button type="button" class="btn btn-warning btn-sm edit-province-btn"
-                                                        data-id="<?= $province['id'] ?>"
-                                                        data-bs-toggle="modal"
-                                                        data-bs-target="#editProvinceModal">
-                                                    <i class="fas fa-edit"></i> Edit
-                                                </button>
-                                                <?php
-                                                // Consider fetching this count more efficiently if performance is an issue
-                                                $districtCount = model('GovStructureModel')->where('parent_id', $province['id'])->where('level', 'district')->countAllResults();
-                                                $hasDistricts = $districtCount > 0;
-                                                ?>
-                                                <button type="button" class="btn btn-danger btn-sm delete-province-btn"
-                                                        data-id="<?= $province['id'] ?>"
-                                                        data-name="<?= esc($province['name']) ?>"
-                                                        data-bs-toggle="modal"
-                                                        data-bs-target="#deleteProvinceModal"
-                                                        <?= $hasDistricts ? 'disabled' : '' ?>
-                                                        title="<?= $hasDistricts ? 'Cannot delete province with districts' : 'Delete province' ?>">
-                                                    <i class="fas fa-trash"></i> Delete
-                                                </button>
-                                            </div>
+                                            <a href="<?= base_url('admin/gov-structure/provinces/'.$province['id'].'/districts') ?>" class="btn btn-outline-primary" title="View Districts" style="margin-right: 5px;">
+                                                <i class="fas fa-eye me-1"></i> View Districts
+                                            </a>
+                                            <button type="button" class="btn btn-outline-warning edit-province-btn"
+                                                    data-id="<?= $province['id'] ?>"
+                                                    data-bs-toggle="modal"
+                                                    data-bs-target="#editProvinceModal"
+                                                    title="Edit"
+                                                    style="margin-right: 5px;">
+                                                <i class="fas fa-edit me-1"></i> Edit
+                                            </button>
+                                            <?php
+                                            // Consider fetching this count more efficiently if performance is an issue
+                                            $districtCount = model('GovStructureModel')->where('parent_id', $province['id'])->where('level', 'district')->countAllResults();
+                                            $hasDistricts = $districtCount > 0;
+                                            ?>
+                                            <button type="button" class="btn btn-outline-danger delete-province-btn"
+                                                    data-id="<?= $province['id'] ?>"
+                                                    data-name="<?= esc($province['name']) ?>"
+                                                    data-bs-toggle="modal"
+                                                    data-bs-target="#deleteProvinceModal"
+                                                    <?= $hasDistricts ? 'disabled' : '' ?>
+                                                    title="<?= $hasDistricts ? 'Cannot delete province with districts' : 'Delete province' ?>">
+                                                <i class="fas fa-trash me-1"></i> Delete
+                                            </button>
                                         </td>
                                     </tr>
                                     <?php endforeach; ?>

@@ -160,9 +160,15 @@
                                         <a href="<?= base_url('workplans/' . $workplan['id'] . '/activities/' . $activity['id'] . '/edit') ?>" class="btn btn-outline-warning" title="Edit" style="margin-right: 5px;">
                                             <i class="fas fa-edit me-1"></i> Edit
                                         </a>
+                                        <?php if (!isset($activity['has_myactivities_links']) || !$activity['has_myactivities_links']): ?>
                                         <a href="<?= base_url('workplans/' . $workplan['id'] . '/activities/' . $activity['id'] . '/delete') ?>" class="btn btn-outline-danger" title="Delete" onclick="return confirm('Are you sure you want to delete this activity?');">
                                             <i class="fas fa-trash me-1"></i> Delete
                                         </a>
+                                        <?php else: ?>
+                                        <button class="btn btn-outline-secondary" title="Cannot delete - Activity is linked to My Activities" disabled>
+                                            <i class="fas fa-trash me-1"></i> Delete
+                                        </button>
+                                        <?php endif; ?>
                                     </div>
                                 </td>
                             </tr>

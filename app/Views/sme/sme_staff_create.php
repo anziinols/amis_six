@@ -3,14 +3,29 @@
 ?>
 <?= $this->extend('templates/system_template') ?>
 <?= $this->section('content') ?>
-<div class="container">
-    <div class="card">
-        <div class="card-header d-flex justify-content-between align-items-center">
-            <h4 class="mb-0">Add Staff Member</h4>
-            <a href="<?= base_url('smes/staff/' . $sme_id) ?>" class="btn btn-sm btn-secondary">
-                <i class="fas fa-arrow-left"></i> Back to Staff List
-            </a>
+<div class="container-fluid">
+    <div class="row mb-2">
+        <div class="col-12">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="<?= base_url('dashboard') ?>">Home</a></li>
+                    <li class="breadcrumb-item"><a href="<?= base_url('smes') ?>">SMEs</a></li>
+                    <li class="breadcrumb-item"><a href="<?= base_url('smes/staff/' . $sme_id) ?>">Staff</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">Add Staff</li>
+                </ol>
+            </nav>
         </div>
+    </div>
+
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h3 class="card-title mb-0">Add Staff Member</h3>
+                    <a href="<?= base_url('smes/staff/' . $sme_id) ?>" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left"></i> Back to Staff
+                    </a>
+                </div>
         <div class="card-body">
             <form action="<?= base_url('smes/staff/' . $sme_id) ?>" method="post" enctype="multipart/form-data">
                 <?= csrf_field() ?>
@@ -84,7 +99,29 @@
                     <button type="submit" class="btn btn-primary">Save Staff Member</button>
                 </div>
             </form>
+                </div>
+            </div>
         </div>
     </div>
 </div>
+<?= $this->endSection() ?>
+
+<?= $this->section('scripts') ?>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        <?php if (session()->getFlashdata('success')): ?>
+            toastr.success('<?= session()->getFlashdata('success') ?>');
+        <?php endif; ?>
+
+        <?php if (session()->getFlashdata('error')): ?>
+            toastr.error('<?= session()->getFlashdata('error') ?>');
+        <?php endif; ?>
+
+        <?php if (session()->getFlashdata('errors')): ?>
+            <?php foreach (session()->getFlashdata('errors') as $error): ?>
+                toastr.error('<?= esc($error) ?>');
+            <?php endforeach; ?>
+        <?php endif; ?>
+    });
+</script>
 <?= $this->endSection() ?>

@@ -59,7 +59,7 @@ class SmeController extends BaseController
         $logo = $this->request->getFile('logo');
         if ($logo && $logo->isValid() && !$logo->hasMoved()) {
             // Create upload directory if it doesn't exist
-            $uploadPath = 'public/uploads/sme_logos';
+            $uploadPath = ROOTPATH . 'public/uploads/sme_logos';
             if (!is_dir($uploadPath)) {
                 mkdir($uploadPath, 0777, true);
             }
@@ -69,8 +69,8 @@ class SmeController extends BaseController
 
             // Move the file to the upload directory
             if ($logo->move($uploadPath, $newName)) {
-                // Add the file path to the data array
-                $data['logo_filepath'] = $uploadPath . '/' . $newName;
+                // Add the file path to the data array (store relative path for web access)
+                $data['logo_filepath'] = 'public/uploads/sme_logos/' . $newName;
             } else {
                 // If file upload failed, set error message
                 return redirect()->back()->withInput()->with('error', 'Failed to upload logo: ' . $logo->getErrorString());
@@ -123,7 +123,7 @@ class SmeController extends BaseController
         $logo = $this->request->getFile('logo');
         if ($logo && $logo->isValid() && !$logo->hasMoved()) {
             // Create upload directory if it doesn't exist
-            $uploadPath = 'public/uploads/sme_logos';
+            $uploadPath = ROOTPATH . 'public/uploads/sme_logos';
             if (!is_dir($uploadPath)) {
                 mkdir($uploadPath, 0777, true);
             }
@@ -133,13 +133,14 @@ class SmeController extends BaseController
 
             // Move the file to the upload directory
             if ($logo->move($uploadPath, $newName)) {
-                // Add the file path to the data array
-                $data['logo_filepath'] = $uploadPath . '/' . $newName;
+                // Add the file path to the data array (store relative path for web access)
+                $data['logo_filepath'] = 'public/uploads/sme_logos/' . $newName;
 
                 // Delete old logo if it exists
                 $sme = $this->smeModel->find($id);
-                if (!empty($sme['logo_filepath']) && file_exists($sme['logo_filepath'])) {
-                    unlink($sme['logo_filepath']);
+                $oldFilePath = ROOTPATH . $sme['logo_filepath'];
+                if (!empty($sme['logo_filepath']) && file_exists($oldFilePath)) {
+                    unlink($oldFilePath);
                 }
             } else {
                 // If file upload failed, set error message
@@ -200,7 +201,7 @@ class SmeController extends BaseController
         $idPhoto = $this->request->getFile('id_photo');
         if ($idPhoto && $idPhoto->isValid() && !$idPhoto->hasMoved()) {
             // Create upload directory if it doesn't exist
-            $uploadPath = 'public/uploads/sme_staff_photos';
+            $uploadPath = ROOTPATH . 'public/uploads/sme_staff_photos';
             if (!is_dir($uploadPath)) {
                 mkdir($uploadPath, 0777, true);
             }
@@ -210,8 +211,8 @@ class SmeController extends BaseController
 
             // Move the file to the upload directory
             if ($idPhoto->move($uploadPath, $newName)) {
-                // Add the file path to the data array
-                $data['id_photo_path'] = $uploadPath . '/' . $newName;
+                // Add the file path to the data array (store relative path for web access)
+                $data['id_photo_path'] = 'public/uploads/sme_staff_photos/' . $newName;
             } else {
                 // If file upload failed, set error message
                 return redirect()->back()->withInput()->with('error', 'Failed to upload ID photo: ' . $idPhoto->getErrorString());
@@ -251,7 +252,7 @@ class SmeController extends BaseController
         $idPhoto = $this->request->getFile('id_photo');
         if ($idPhoto && $idPhoto->isValid() && !$idPhoto->hasMoved()) {
             // Create upload directory if it doesn't exist
-            $uploadPath = 'public/uploads/sme_staff_photos';
+            $uploadPath = ROOTPATH . 'public/uploads/sme_staff_photos';
             if (!is_dir($uploadPath)) {
                 mkdir($uploadPath, 0777, true);
             }
@@ -261,13 +262,14 @@ class SmeController extends BaseController
 
             // Move the file to the upload directory
             if ($idPhoto->move($uploadPath, $newName)) {
-                // Add the file path to the data array
-                $data['id_photo_path'] = $uploadPath . '/' . $newName;
+                // Add the file path to the data array (store relative path for web access)
+                $data['id_photo_path'] = 'public/uploads/sme_staff_photos/' . $newName;
 
                 // Delete old photo if it exists
                 $staff = $this->staffModel->find($staffId);
-                if (!empty($staff['id_photo_path']) && file_exists($staff['id_photo_path'])) {
-                    unlink($staff['id_photo_path']);
+                $oldFilePath = ROOTPATH . $staff['id_photo_path'];
+                if (!empty($staff['id_photo_path']) && file_exists($oldFilePath)) {
+                    unlink($oldFilePath);
                 }
             } else {
                 // If file upload failed, set error message

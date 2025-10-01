@@ -334,9 +334,6 @@
                     <li class="nav-item">
                         <a class="nav-link" href="#features">Features</a>
                     </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="#contact">Contact</a>
-                    </li>
                 </ul>
             </div>
         </div>
@@ -348,7 +345,7 @@
             <div class="row align-items-center">
                 <div class="col-lg-6">
                     <h1>Agriculture Management Information System</h1>
-                    <p>A comprehensive government platform for strategic agricultural planning, workplan management, and agricultural development coordination across Papua New Guinea.</p>
+                    <p>A comprehensive government platform integrating NASP, MTDP, and Corporate Plans for strategic agricultural planning, workplan management, activity implementation, performance evaluation, and development coordination across Papua New Guinea.</p>
                     <a href="#about" class="btn btn-primary me-3">Learn More</a>
                     <a href="#services" class="btn btn-outline-light">Our Services</a>
                 </div>
@@ -413,14 +410,14 @@
                     <div class="service-card text-center">
                         <i class="fas fa-tasks"></i>
                         <h4>Workplan Management</h4>
-                        <p>Create, track, and manage workplans and activities across different branches and departments with comprehensive oversight.</p>
+                        <p>Create, track, and manage workplans with supervisor assignment, performance periods, and comprehensive activity oversight across branches and departments.</p>
                     </div>
                 </div>
                 <div class="col-md-4">
                     <div class="service-card text-center">
-                        <i class="fas fa-lightbulb"></i>
-                        <h4>Proposal Management</h4>
-                        <p>Submit, review, and approve project proposals with integrated workflow management and status tracking.</p>
+                        <i class="fas fa-clipboard-check"></i>
+                        <h4>Activity Implementation</h4>
+                        <p>Implement and track seven activity types: trainings, infrastructure, inputs, outputs, meetings, agreements, and documents with GPS mapping and detailed monitoring.</p>
                     </div>
                 </div>
                 <div class="col-md-4">
@@ -439,9 +436,16 @@
                 </div>
                 <div class="col-md-4">
                     <div class="service-card text-center">
+                        <i class="fas fa-star-half-alt"></i>
+                        <h4>Performance Evaluation</h4>
+                        <p>Comprehensive activity evaluation and rating system with supervisor oversight, evaluator assessments, and performance tracking across all workplan activities.</p>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="service-card text-center">
                         <i class="fas fa-chart-bar"></i>
                         <h4>Reporting & Analytics</h4>
-                        <p>Generate comprehensive reports on MTDP, NASP, workplans, activities, and commodities with visual analytics and mapping.</p>
+                        <p>Generate comprehensive reports on MTDP, NASP, workplans, activities, commodities, HR, and government structure with visual analytics and interactive mapping.</p>
                     </div>
                 </div>
             </div>
@@ -458,8 +462,8 @@
                 <div class="col-lg-6 about-content ps-lg-5 mt-5 mt-lg-0">
                     <h2>About Agriculture Management Information System</h2>
                     <p>The Agriculture Management Information System (AMIS) is a comprehensive government platform designed to coordinate and manage agricultural development initiatives across Papua New Guinea.</p>
-                    <p>Developed by the Department of Agriculture and Livestock, AMIS serves as the central hub for strategic planning, workplan management, and agricultural development coordination. The system integrates NASP (National Agriculture Sector Plan), MTDP (Medium Term Development Plan), and Corporate Plans to ensure aligned agricultural development.</p>
-                    <p>Our system provides tools for strategic planning, workplan management, proposal tracking, document management, meeting coordination, SME support, commodity monitoring, and comprehensive reporting—all accessible through a secure, role-based platform.</p>
+                    <p>Developed by ITU under the EU Funded STREIT Program for the National Department of Agriculture and Livestock, AMIS serves as the central hub for strategic planning, workplan management, and agricultural development coordination. The system integrates NASP (National Agriculture Sector Plan), MTDP (Medium Term Development Plan), and Corporate Plans to ensure aligned agricultural development.</p>
+                    <p>Our system provides comprehensive tools including: strategic planning frameworks, workplan and activity management with seven implementation types (trainings, infrastructure, inputs, outputs, meetings, agreements, documents), performance evaluation and rating, supervised activities workflow, duty instructions, proposal tracking, document management, SME support, commodity monitoring, and multi-dimensional reporting—all accessible through a secure, role-based platform with hierarchical government structure integration.</p>
                     <a href="#features" class="btn btn-primary">Explore Features</a>
                 </div>
             </div>
@@ -477,37 +481,46 @@
                 <div class="col-md-4">
                     <div class="feature-card">
                         <div class="feature-icon">
+                            <i class="fas fa-clipboard-list"></i>
+                        </div>
+                        <h4>Activity Implementation Tracking</h4>
+                        <p>Implement and monitor seven activity types: trainings, infrastructure development, agricultural inputs, outputs, meetings, agreements, and document management with detailed tracking.</p>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <i class="fas fa-user-check"></i>
+                        </div>
+                        <h4>Supervised Activities Workflow</h4>
+                        <p>Supervisor oversight of workplan activities with status tracking, completion marking, output monitoring, and comprehensive activity supervision capabilities.</p>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <i class="fas fa-star"></i>
+                        </div>
+                        <h4>Performance Evaluation System</h4>
+                        <p>Comprehensive activity rating and evaluation by designated evaluators with percentage-based scoring, remarks, and performance tracking across all workplan activities.</p>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <i class="fas fa-file-signature"></i>
+                        </div>
+                        <h4>Duty Instructions Management</h4>
+                        <p>Create, assign, and track duty instructions with detailed items, responsible officers, timelines, and completion status monitoring for operational efficiency.</p>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="feature-card">
+                        <div class="feature-icon">
                             <i class="fas fa-sitemap"></i>
                         </div>
-                        <h4>Government Structure Management</h4>
-                        <p>Manage hierarchical government structure including provinces, districts, LLGs, and wards for comprehensive coverage.</p>
-                    </div>
-                </div>
-                <div class="col-md-4">
-                    <div class="feature-card">
-                        <div class="feature-icon">
-                            <i class="fas fa-file-alt"></i>
-                        </div>
-                        <h4>Document Management</h4>
-                        <p>Organize and manage documents with classification levels, folder structures, and secure access controls.</p>
-                    </div>
-                </div>
-                <div class="col-md-4">
-                    <div class="feature-card">
-                        <div class="feature-icon">
-                            <i class="fas fa-calendar-alt"></i>
-                        </div>
-                        <h4>Meeting Coordination</h4>
-                        <p>Schedule, track, and manage meetings with agenda setting, participant management, and minutes recording.</p>
-                    </div>
-                </div>
-                <div class="col-md-4">
-                    <div class="feature-card">
-                        <div class="feature-icon">
-                            <i class="fas fa-handshake"></i>
-                        </div>
-                        <h4>Agreement Management</h4>
-                        <p>Track legal agreements and contracts with status monitoring, expiry alerts, and document attachments.</p>
+                        <h4>Government Structure Integration</h4>
+                        <p>Hierarchical government structure management including provinces, districts, LLGs, and wards with comprehensive geographic coverage and administrative alignment.</p>
                     </div>
                 </div>
                 <div class="col-md-4">
@@ -515,8 +528,26 @@
                         <div class="feature-icon">
                             <i class="fas fa-map-marked-alt"></i>
                         </div>
-                        <h4>Activity Mapping</h4>
-                        <p>Visualize activities on interactive maps with GPS coordinates for infrastructure, training, and input activities.</p>
+                        <h4>GPS Activity Mapping</h4>
+                        <p>Interactive map visualization of activities with GPS coordinates, location tracking for infrastructure, training, and input activities with OpenStreetMap integration.</p>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <i class="fas fa-calendar-check"></i>
+                        </div>
+                        <h4>Performance Period Management</h4>
+                        <p>Define and manage performance periods for workplan activities with quarterly, annual, or custom timeframes for structured performance tracking and reporting.</p>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <i class="fas fa-handshake"></i>
+                        </div>
+                        <h4>Agreement & Meeting Tracking</h4>
+                        <p>Comprehensive management of legal agreements, contracts, and meetings with participant tracking, agenda setting, minutes recording, and document attachments.</p>
                     </div>
                 </div>
                 <div class="col-md-4">
@@ -524,65 +555,9 @@
                         <div class="feature-icon">
                             <i class="fas fa-users-cog"></i>
                         </div>
-                        <h4>Role-Based Access</h4>
-                        <p>Secure multi-user system with role-based permissions for administrators, supervisors, action officers, and evaluators.</p>
+                        <h4>Role-Based Access Control</h4>
+                        <p>Secure multi-user system with granular role-based permissions for administrators, supervisors, action officers, evaluators, and commodity board users with hierarchical access.</p>
                     </div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Contact Section -->
-    <section id="contact" class="contact py-5">
-        <div class="container">
-            <div class="section-title">
-                <h2>Contact Us</h2>
-                <p>Get in touch with our support team</p>
-            </div>
-            <div class="row">
-                <div class="col-lg-5">
-                    <div class="contact-info">
-                        <div class="d-flex align-items-center mb-4">
-                            <i class="fas fa-map-marker-alt me-3" style="font-size: 24px; color: var(--primary-green);"></i>
-                            <div>
-                                <h5 class="mb-0">Our Location</h5>
-                                <p class="mb-0">Department of Agriculture and Livestock Headquarters, Port Moresby</p>
-                            </div>
-                        </div>
-                        <div class="d-flex align-items-center mb-4">
-                            <i class="fas fa-envelope me-3" style="font-size: 24px; color: var(--primary-green);"></i>
-                            <div>
-                                <h5 class="mb-0">Email Us</h5>
-                                <p class="mb-0">info@amis.gov.pg</p>
-                            </div>
-                        </div>
-                        <div class="d-flex align-items-center">
-                            <i class="fas fa-phone-alt me-3" style="font-size: 24px; color: var(--primary-green);"></i>
-                            <div>
-                                <h5 class="mb-0">Call Us</h5>
-                                <p class="mb-0">+675 123 4567</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-lg-7 mt-5 mt-lg-0">
-                    <form>
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <input type="text" class="form-control" placeholder="Your Name" required>
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <input type="email" class="form-control" placeholder="Your Email" required>
-                            </div>
-                        </div>
-                        <div class="mb-3">
-                            <input type="text" class="form-control" placeholder="Subject" required>
-                        </div>
-                        <div class="mb-3">
-                            <textarea class="form-control" rows="5" placeholder="Message" required></textarea>
-                        </div>
-                        <button type="submit" class="btn btn-primary">Send Message</button>
-                    </form>
                 </div>
             </div>
         </div>
@@ -594,7 +569,7 @@
             <div class="row">
                 <div class="col-lg-4 mb-5 mb-lg-0">
                     <h5>Agriculture Management Information System</h5>
-                    <p>A comprehensive government platform for strategic agricultural planning, workplan management, and development coordination across Papua New Guinea.</p>
+                    <p>A comprehensive government platform integrating NASP, MTDP, and Corporate Plans for strategic agricultural planning, workplan management, activity implementation, performance evaluation, and development coordination across Papua New Guinea.</p>
                     <div class="social-icons">
                         <a href="#"><i class="fab fa-facebook-f"></i></a>
                         <a href="#"><i class="fab fa-twitter"></i></a>
@@ -609,28 +584,29 @@
                         <li><a href="#services">Services</a></li>
                         <li><a href="#about">About</a></li>
                         <li><a href="#features">Features</a></li>
-                        <li><a href="#contact">Contact</a></li>
                     </ul>
                 </div>
                 <div class="col-lg-3 col-md-6 mb-5 mb-md-0">
-                    <h5>Services</h5>
+                    <h5>Key Features</h5>
                     <ul>
-                        <li><a href="#">Strategic Planning</a></li>
-                        <li><a href="#">Workplan Management</a></li>
-                        <li><a href="#">Proposal Management</a></li>
-                        <li><a href="#">SME Management</a></li>
-                        <li><a href="#">Commodity Tracking</a></li>
+                        <li><a href="#services">Strategic Planning</a></li>
+                        <li><a href="#services">Workplan Management</a></li>
+                        <li><a href="#services">Activity Implementation</a></li>
+                        <li><a href="#services">Performance Evaluation</a></li>
+                        <li><a href="#services">SME Management</a></li>
+                        <li><a href="#services">Commodity Tracking</a></li>
+                        <li><a href="#features">Supervised Activities</a></li>
+                        <li><a href="#features">Duty Instructions</a></li>
                     </ul>
                 </div>
                 <div class="col-lg-3">
-                    <h5>Newsletter</h5>
-                    <p>Subscribe to our newsletter for the latest updates on agricultural policies and development programs.</p>
-                    <form>
-                        <div class="input-group mb-3">
-                            <input type="email" class="form-control" placeholder="Your Email" aria-label="Your Email" aria-describedby="button-addon2">
-                            <button class="btn btn-primary" type="button" id="button-addon2">Subscribe</button>
-                        </div>
-                    </form>
+                    <h5>Development Partners</h5>
+                    <p class="mb-3">Developed by ITU under the EU Funded STREIT Program for the National Department of Agriculture and Livestock</p>
+                    <div class="partner-logos d-flex align-items-center justify-content-start flex-wrap gap-3">
+                        <img src="<?= base_url('public/assets/images/itu_logo.png') ?>" alt="ITU Logo" style="height: 50px; width: auto;">
+                        <img src="<?= base_url('public/assets/images/funded_eu_logo.png') ?>" alt="EU Funded Logo" style="height: 50px; width: auto;">
+                        <img src="<?= base_url('public/assets/images/streit_logo.png') ?>" alt="STREIT Logo" style="height: 50px; width: auto;">
+                    </div>
                 </div>
             </div>
             <div class="footer-bottom text-center">

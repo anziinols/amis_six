@@ -19,17 +19,18 @@ $this->section('content');
     <div class="row">
         <div class="col-12">
             <div class="card">
-                <div class="card-header">
-                    <h3 class="card-title"><?= $title ?></h3>
-                    <div class="card-tools">
-                        <div class="btn-group" role="group">
-                            <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#importSpaModal">
-                                <i class="fas fa-upload"></i> Import CSV
-                            </button>
-                            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addSpaModal">
-                                <i class="fas fa-plus"></i> Add SPA
-                            </button>
-                        </div>
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h3 class="card-title mb-0"><?= esc($title) ?></h3>
+                    <div>
+                        <a href="<?= base_url('admin/mtdp-plans') ?>" class="btn btn-secondary me-2">
+                            <i class="fas fa-arrow-left"></i> Back to MTDP Plans
+                        </a>
+                        <button type="button" class="btn btn-success me-2" data-bs-toggle="modal" data-bs-target="#importSpaModal">
+                            <i class="fas fa-upload"></i> Import CSV
+                        </button>
+                        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addSpaModal">
+                            <i class="fas fa-plus"></i> Add SPA
+                        </button>
                     </div>
                 </div>
                 <div class="card-body">
@@ -56,21 +57,21 @@ $this->section('content');
                                             </span>
                                         </td>
                                         <td>
-                                            <div class="btn-group" role="group" aria-label="SPA Actions">
-                                                <a href="<?= base_url('admin/mtdp-plans/spas/' . $spa['id'] . '/dips') ?>"
-                                                   class="btn btn-sm btn-primary">
-                                                    <i class="fas fa-eye"></i> View DIPs
-                                                </a>
-                                                <button type="button" class="btn btn-sm btn-warning edit-spa-btn"
-                                                        data-id="<?= $spa['id'] ?>" data-bs-toggle="modal" data-bs-target="#editSpaModal">
-                                                    <i class="fas fa-edit"></i> Edit
-                                                </button>
-                                                <button type="button" class="btn btn-sm btn-<?= $spa['spa_status'] == 1 ? 'danger' : 'success' ?> toggle-status-btn"
-                                                        data-id="<?= $spa['id'] ?>" data-status="<?= $spa['spa_status'] ?>" data-bs-toggle="modal" data-bs-target="#toggleStatusModal">
-                                                    <i class="fas fa-toggle-<?= $spa['spa_status'] == 1 ? 'off' : 'on' ?>"></i>
-                                                    <?= $spa['spa_status'] == 1 ? 'Deactivate' : 'Activate' ?>
-                                                </button>
-                                            </div>
+                                            <a href="<?= base_url('admin/mtdp-plans/spas/' . $spa['id'] . '/dips') ?>"
+                                               class="btn btn-outline-primary btn-sm"
+                                               style="margin-right: 5px;">
+                                                <i class="fas fa-eye me-1"></i> View DIPs
+                                            </a>
+                                            <button type="button" class="btn btn-outline-warning btn-sm edit-spa-btn"
+                                                    data-id="<?= $spa['id'] ?>" data-bs-toggle="modal" data-bs-target="#editSpaModal"
+                                                    style="margin-right: 5px;">
+                                                <i class="fas fa-edit me-1"></i> Edit
+                                            </button>
+                                            <button type="button" class="btn btn-outline-<?= $spa['spa_status'] == 1 ? 'secondary' : 'success' ?> btn-sm toggle-status-btn"
+                                                    data-id="<?= $spa['id'] ?>" data-status="<?= $spa['spa_status'] ?>" data-bs-toggle="modal" data-bs-target="#toggleStatusModal">
+                                                <i class="fas fa-toggle-<?= $spa['spa_status'] == 1 ? 'off' : 'on' ?> me-1"></i>
+                                                <?= $spa['spa_status'] == 1 ? 'Deactivate' : 'Activate' ?>
+                                            </button>
                                         </td>
                                     </tr>
                                 <?php endforeach; ?>

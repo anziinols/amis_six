@@ -2,77 +2,105 @@
 
 <?= $this->section('content') ?>
 <div class="container-fluid">
-    <div class="card">
-        <div class="card-header d-flex justify-content-between align-items-center">
-            <h5 class="mb-0"><?= $title ?></h5>
-            <a href="<?= base_url('admin/regions/new') ?>" class="btn btn-primary">
-                <i class="fas fa-plus"></i> Add Region
-            </a>
+    <div class="row mb-2">
+        <div class="col-12">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item active" aria-current="page">Regions</li>
+                </ol>
+            </nav>
         </div>
-        <div class="card-body">
-            <?php if (session()->getFlashdata('success')): ?>
-                <div class="alert alert-success">
-                    <?= session()->getFlashdata('success') ?>
+    </div>
+
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h3 class="card-title mb-0">Regions</h3>
+                    <div>
+                        <a href="<?= base_url('admin/regions/new') ?>" class="btn btn-primary">
+                            <i class="fas fa-plus"></i> Add Region
+                        </a>
+                    </div>
                 </div>
-            <?php endif; ?>
+                <div class="card-body">
 
-            <?php if (session()->getFlashdata('error')): ?>
-                <div class="alert alert-danger">
-                    <?= session()->getFlashdata('error') ?>
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-striped" id="regionsTable">
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>Name</th>
+                                    <th>Provinces</th>
+                                    <th>Remarks</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php if (empty($regions)): ?>
+                                    <tr>
+                                        <td colspan="5" class="text-center">No regions found</td>
+                                    </tr>
+                                <?php else: ?>
+                                    <?php $counter = 1; ?>
+                                    <?php foreach ($regions as $region): ?>
+                                        <tr>
+                                            <td><?= $counter++ ?></td>
+                                            <td><?= esc($region['name']) ?></td>
+                                            <td>
+                                                <span class="badge bg-info"><?= $region['province_count'] ?? 0 ?> provinces</span>
+                                            </td>
+                                            <td><?= esc($region['remarks']) ?></td>
+                                            <td>
+                                                <a href="<?= base_url('admin/regions/' . $region['id']) ?>"
+                                                   class="btn btn-outline-primary"
+                                                   title="View Details"
+                                                   style="margin-right: 5px;">
+                                                    <i class="fas fa-eye me-1"></i> View
+                                                </a>
+                                                <a href="<?= base_url('admin/regions/' . $region['id'] . '/edit') ?>"
+                                                   class="btn btn-outline-warning"
+                                                   title="Edit Region"
+                                                   style="margin-right: 5px;">
+                                                    <i class="fas fa-edit me-1"></i> Edit
+                                                </a>
+                                                <a href="<?= base_url('admin/regions/' . $region['id'] . '/import-provinces') ?>"
+                                                   class="btn btn-outline-success"
+                                                   title="Import Provinces"
+                                                   style="margin-right: 5px;">
+                                                    <i class="fas fa-file-import me-1"></i> Import
+                                                </a>
+                                                <a href="<?= base_url('admin/regions/' . $region['id'] . '/delete') ?>"
+                                                   class="btn btn-outline-danger"
+                                                   title="Delete Region"
+                                                   onclick="return confirm('Are you sure you want to delete this region?');">
+                                                    <i class="fas fa-trash me-1"></i> Delete
+                                                </a>
+                                            </td>
+                                        </tr>
+                                    <?php endforeach; ?>
+                                <?php endif; ?>
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
-            <?php endif; ?>
-
-            <div class="table-responsive">
-                <table class="table table-bordered table-striped" id="regionsTable">
-                    <thead>
-                        <tr>
-                            <th>#</th>
-                            <th>Name</th>
-                            <th>Provinces</th>
-                            <th>Remarks</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <?php $counter = 1; ?>
-                        <?php foreach ($regions as $region): ?>
-                            <tr>
-                                <td><?= $counter++ ?></td>
-                                <td><?= esc($region['name']) ?></td>
-                                <td>
-                                    <span class="badge bg-info"><?= $region['province_count'] ?? 0 ?> provinces</span>
-                                </td>
-                                <td><?= esc($region['remarks']) ?></td>
-                                <td>
-                                    <div class="btn-group" role="group">
-                                        <a href="<?= base_url('admin/regions/' . $region['id']) ?>" class="btn btn-sm btn-info" title="View">
-                                            <i class="fas fa-eye"></i>
-                                        </a>
-                                        <a href="<?= base_url('admin/regions/' . $region['id'] . '/edit') ?>" class="btn btn-sm btn-primary" title="Edit">
-                                            <i class="fas fa-edit"></i>
-                                        </a>
-                                        <a href="<?= base_url('admin/regions/' . $region['id'] . '/import-provinces') ?>" class="btn btn-sm btn-success" title="Import Provinces">
-                                            <i class="fas fa-file-import"></i>
-                                        </a>
-                                        <a href="<?= base_url('admin/regions/' . $region['id'] . '/delete') ?>" class="btn btn-sm btn-danger" title="Delete" onclick="return confirm('Are you sure you want to delete this region?');">
-                                            <i class="fas fa-trash"></i>
-                                        </a>
-                                    </div>
-                                </td>
-                            </tr>
-                        <?php endforeach; ?>
-
-                        <?php if (empty($regions)): ?>
-                            <tr>
-                                <td colspan="5" class="text-center">No regions found</td>
-                            </tr>
-                        <?php endif; ?>
-                    </tbody>
-                </table>
             </div>
         </div>
     </div>
 </div>
+
+<!-- Toastr initialization -->
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        <?php if (session()->getFlashdata('success')): ?>
+            toastr.success('<?= session()->getFlashdata('success') ?>');
+        <?php endif; ?>
+
+        <?php if (session()->getFlashdata('error')): ?>
+            toastr.error('<?= session()->getFlashdata('error') ?>');
+        <?php endif; ?>
+    });
+</script>
 <?= $this->endSection() ?>
 
 <?= $this->section('scripts') ?>

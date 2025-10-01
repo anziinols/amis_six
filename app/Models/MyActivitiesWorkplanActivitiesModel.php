@@ -127,4 +127,18 @@ class MyActivitiesWorkplanActivitiesModel extends Model
 
         return !empty($result);
     }
+
+    /**
+     * Check if a workplan activity has any linked my activities
+     *
+     * @param int $workplanActivityId
+     * @return bool
+     */
+    public function hasLinkedMyActivities($workplanActivityId)
+    {
+        $count = $this->where('workplan_activities_id', $workplanActivityId)
+                      ->countAllResults();
+
+        return $count > 0;
+    }
 }

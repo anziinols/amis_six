@@ -91,24 +91,38 @@
                                     </td>
                                     <td>
                                         <div class="btn-group" role="group">
-                                            <a href="<?= base_url('duty-instructions/' . $instruction['id']) ?>" 
-                                               class="btn btn-outline-primary" 
-                                               title="View Details" 
+                                            <a href="<?= base_url('duty-instructions/' . $instruction['id']) ?>"
+                                               class="btn btn-outline-primary"
+                                               title="View Details"
                                                style="margin-right: 5px;">
                                                 <i class="fas fa-eye me-1"></i> View Duty Items
                                             </a>
-                                            <a href="<?= base_url('duty-instructions/' . $instruction['id'] . '/edit') ?>" 
-                                               class="btn btn-outline-warning" 
-                                               title="Edit" 
+                                            <?php if (!isset($instruction['has_myactivities_links']) || !$instruction['has_myactivities_links']): ?>
+                                            <a href="<?= base_url('duty-instructions/' . $instruction['id'] . '/edit') ?>"
+                                               class="btn btn-outline-warning"
+                                               title="Edit"
                                                style="margin-right: 5px;">
                                                 <i class="fas fa-edit me-1"></i> Edit
                                             </a>
-                                            <a href="<?= base_url('duty-instructions/' . $instruction['id'] . '/delete') ?>" 
-                                               class="btn btn-outline-danger" 
+                                            <a href="<?= base_url('duty-instructions/' . $instruction['id'] . '/delete') ?>"
+                                               class="btn btn-outline-danger"
                                                title="Delete"
                                                onclick="return confirm('Are you sure you want to delete this duty instruction?')">
                                                 <i class="fas fa-trash me-1"></i> Delete
                                             </a>
+                                            <?php else: ?>
+                                            <button class="btn btn-outline-secondary"
+                                                    title="Cannot edit - Duty instruction items are linked to My Activities"
+                                                    disabled
+                                                    style="margin-right: 5px;">
+                                                <i class="fas fa-edit me-1"></i> Edit
+                                            </button>
+                                            <button class="btn btn-outline-secondary"
+                                                    title="Cannot delete - Duty instruction items are linked to My Activities"
+                                                    disabled>
+                                                <i class="fas fa-trash me-1"></i> Delete
+                                            </button>
+                                            <?php endif; ?>
                                         </div>
                                     </td>
                                 </tr>

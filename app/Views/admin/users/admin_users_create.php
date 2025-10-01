@@ -46,17 +46,7 @@
                             <div class="col-md-6">
                                 <h6 class="mb-3 text-primary">Basic Information</h6>
 
-                                <div class="mb-3">
-                                    <label for="ucode" class="form-label">User Code <span class="text-danger">*</span></label>
-                                    <input type="text" class="form-control <?= session()->has('validation') && session('validation')->hasError('ucode') ? 'is-invalid' : '' ?>"
-                                           id="ucode" name="ucode" value="<?= old('ucode') ?>" placeholder="e.g., USR-2024-0001" required>
-                                    <div class="form-text">Unique identifier for the user</div>
-                                    <?php if (session()->has('validation') && session('validation')->hasError('ucode')): ?>
-                                        <div class="invalid-feedback">
-                                            <?= session('validation')->getError('ucode') ?>
-                                        </div>
-                                    <?php endif; ?>
-                                </div>
+                                <!-- User Code is auto-generated - no input field needed -->
 
                                 <div class="mb-3">
                                     <label for="email" class="form-label">Email <span class="text-danger">*</span></label>
@@ -77,9 +67,9 @@
                                 </div>
 
                                 <div class="mb-3">
-                                    <label for="phone" class="form-label">Phone <span class="text-danger">*</span></label>
+                                    <label for="phone" class="form-label">Phone</label>
                                     <input type="tel" class="form-control <?= session()->has('validation') && session('validation')->hasError('phone') ? 'is-invalid' : '' ?>"
-                                           id="phone" name="phone" value="<?= old('phone') ?>" required>
+                                           id="phone" name="phone" value="<?= old('phone') ?>">
                                     <?php if (session()->has('validation') && session('validation')->hasError('phone')): ?>
                                         <div class="invalid-feedback">
                                             <?= session('validation')->getError('phone') ?>
@@ -178,23 +168,23 @@
                                     <div class="form-text">Basic role - capabilities are set separately below</div>
                                 </div>
 
-                                <!-- Capabilities Section -->
-                                <div class="mb-3">
+                                <!-- Capabilities Section - Hidden for Guest role -->
+                                <div class="mb-3" id="capabilitiesSection">
                                     <label class="form-label">User Capabilities</label>
                                     <div class="form-check">
-                                        <input class="form-check-input" type="checkbox" id="is_admin" name="is_admin" value="1" <?= old('is_admin') ? 'checked' : '' ?>>
+                                        <input class="form-check-input capability-checkbox" type="checkbox" id="is_admin" name="is_admin" value="1" <?= old('is_admin') ? 'checked' : '' ?>>
                                         <label class="form-check-label" for="is_admin">
                                             <strong>Administrator</strong> - Full system access
                                         </label>
                                     </div>
                                     <div class="form-check">
-                                        <input class="form-check-input" type="checkbox" id="is_supervisor" name="is_supervisor" value="1" <?= old('is_supervisor') ? 'checked' : '' ?>>
+                                        <input class="form-check-input capability-checkbox" type="checkbox" id="is_supervisor" name="is_supervisor" value="1" <?= old('is_supervisor') ? 'checked' : '' ?>>
                                         <label class="form-check-label" for="is_supervisor">
                                             <strong>Supervisor</strong> - Can supervise other users
                                         </label>
                                     </div>
                                     <div class="form-check">
-                                        <input class="form-check-input" type="checkbox" id="is_evaluator" name="is_evaluator" value="1" <?= old('is_evaluator') ? 'checked' : '' ?>>
+                                        <input class="form-check-input capability-checkbox" type="checkbox" id="is_evaluator" name="is_evaluator" value="1" <?= old('is_evaluator') ? 'checked' : '' ?>>
                                         <label class="form-check-label" for="is_evaluator">
                                             <strong>Evaluator</strong> - Can perform M&E activities
                                         </label>
@@ -249,21 +239,43 @@ document.addEventListener('DOMContentLoaded', function() {
         form.classList.add('was-validated');
     }, false);
 
-
-
-    // Initialize any select2 dropdowns if needed
+    // Initialize Select2 for Reports To field only
     if (typeof $ !== 'undefined' && $.fn.select2) {
-        $('#branch_id').select2({
-            placeholder: 'Select Branch',
-            allowClear: true
-        });
-
         $('#report_to_id').select2({
             placeholder: 'Select Supervisor',
-            allowClear: true
+            allowClear: true,
+            width: '100%'
         });
+    }
 
+    // Handle role change to show/hide capabilities
+    const roleSelect = document.getElementById('role');
+    const capabilitiesSection = document.getElementById('capabilitiesSection');
+    const capabilityCheckboxes = document.querySelectorAll('.capability-checkbox');
 
+    function toggleCapabilities() {
+        const selectedRole = roleSelect.value;
+
+        if (selectedRole === 'guest') {
+            // Hide capabilities section for guest role
+            capabilitiesSection.style.display = 'none';
+
+            // Uncheck all capability checkboxes
+            capabilityCheckboxes.forEach(function(checkbox) {
+                checkbox.checked = false;
+            });
+        } else {
+            // Show capabilities section for user role
+            capabilitiesSection.style.display = 'block';
+        }
+    }
+
+    // Add event listener to role select
+    if (roleSelect) {
+        roleSelect.addEventListener('change', toggleCapabilities);
+
+        // Run on page load to set initial state
+        toggleCapabilities();
     }
 });
 </script>

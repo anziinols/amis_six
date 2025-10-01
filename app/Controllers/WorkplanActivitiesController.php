@@ -57,6 +57,7 @@ class WorkplanActivitiesController extends BaseController
         $workplanMtdpLinkModel = new \App\Models\WorkplanMtdpLinkModel();
         $workplanCorporatePlanLinkModel = new \App\Models\WorkplanCorporatePlanLinkModel();
         $workplanOthersLinkModel = new \App\Models\WorkplanOthersLinkModel();
+        $myActivitiesWorkplanActivitiesModel = new \App\Models\MyActivitiesWorkplanActivitiesModel();
 
         // Add plan link counts to each activity
         foreach ($activities as &$activity) {
@@ -90,6 +91,9 @@ class WorkplanActivitiesController extends BaseController
             $activity['corporate_linked'] = $corporateCount > 0;
             $activity['others_linked'] = $othersCount > 0;
             $activity['total_plans_linked'] = ($naspCount > 0 ? 1 : 0) + ($mtdpCount > 0 ? 1 : 0) + ($corporateCount > 0 ? 1 : 0) + ($othersCount > 0 ? 1 : 0);
+
+            // Check if activity has linked my activities (for delete button logic)
+            $activity['has_myactivities_links'] = $myActivitiesWorkplanActivitiesModel->hasLinkedMyActivities($activity['id']);
         }
 
         $data = [
@@ -465,6 +469,10 @@ class WorkplanActivitiesController extends BaseController
             }
         }
 
+        // Check if activity has linked my activities (for delete button logic)
+        $myActivitiesWorkplanActivitiesModel = new \App\Models\MyActivitiesWorkplanActivitiesModel();
+        $hasMyActivitiesLinks = $myActivitiesWorkplanActivitiesModel->hasLinkedMyActivities($id);
+
         $data = [
             'title' => 'Activity Details',
             'workplan' => $workplan,
@@ -472,7 +480,8 @@ class WorkplanActivitiesController extends BaseController
             'naspLinks' => $naspLinks,
             'mtdpLinks' => $mtdpLinks,
             'corporateLinks' => $corporateLinks,
-            'othersLinks' => $othersLinks
+            'othersLinks' => $othersLinks,
+            'hasMyActivitiesLinks' => $hasMyActivitiesLinks
         ];
 
         return view('workplans/workplan_activities_show', $data);

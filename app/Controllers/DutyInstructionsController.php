@@ -34,9 +34,34 @@ class DutyInstructionsController extends BaseController
      */
     public function index()
     {
+        // Get the logged-in user ID
+        $loggedInUserId = session()->get('user_id');
+
+        // Get all duty instructions with details, then filter by user_id or supervisor_id
+        $dutyInstructions = $this->dutyInstructionsModel
+            ->select('duty_instructions.*,
+                      workplans.title as workplan_title,
+                      CONCAT(u_assigned.fname, " ", u_assigned.lname) as user_name,
+                      CONCAT(u_supervisor.fname, " ", u_supervisor.lname) as supervisor_name')
+            ->join('workplans', 'workplans.id = duty_instructions.workplan_id', 'left')
+            ->join('users u_assigned', 'u_assigned.id = duty_instructions.user_id', 'left')
+            ->join('users u_supervisor', 'u_supervisor.id = duty_instructions.supervisor_id', 'left')
+            ->groupStart()
+                ->where('duty_instructions.user_id', $loggedInUserId) // Duty instructions assigned to this user
+                ->orWhere('duty_instructions.supervisor_id', $loggedInUserId) // OR where this user is the supervisor
+            ->groupEnd()
+            ->findAll();
+
+        // Check if each duty instruction has linked my activities
+        $myActivitiesDutyInstructionsModel = new \App\Models\MyActivitiesDutyInstructionsModel();
+
+        foreach ($dutyInstructions as &$instruction) {
+            $instruction['has_myactivities_links'] = $myActivitiesDutyInstructionsModel->dutyInstructionHasLinkedMyActivities($instruction['id']);
+        }
+
         $data = [
             'title' => 'Duty Instructions',
-            'duty_instructions' => $this->dutyInstructionsModel->getAllWithDetails()
+            'duty_instructions' => $dutyInstructions
         ];
 
         return view('duty_instructions/duty_instructions_index', $data);
@@ -47,9 +72,22 @@ class DutyInstructionsController extends BaseController
      */
     public function new()
     {
+        // Get logged-in user's branch_id
+        $userId = session()->get('user_id');
+        $user = $this->userModel->find($userId);
+        $userBranchId = $user['branch_id'] ?? null;
+
+        // Get workplans filtered by status 'in_progress' and user's branch
+        $workplans = $this->workplanModel
+            ->where('status', 'in_progress')
+            ->where('branch_id', $userBranchId)
+            ->where('deleted_at IS NULL')
+            ->orderBy('title', 'ASC')
+            ->findAll();
+
         $data = [
             'title' => 'Create New Duty Instruction',
-            'workplans' => $this->workplanModel->findAll(),
+            'workplans' => $workplans,
             'supervisors' => $this->userModel->getUsersBySupervisorCapability()
         ];
 
@@ -82,15 +120,23 @@ class DutyInstructionsController extends BaseController
             'duty_instruction_number' => $this->request->getPost('duty_instruction_number'),
             'duty_instruction_title' => $this->request->getPost('duty_instruction_title'),
             'duty_instruction_description' => $this->request->getPost('duty_instruction_description'),
+            'status' => 'active', // Set default status to 'active'
             'created_by' => session()->get('user_id')
         ];
 
         // Handle file upload if present
         $file = $this->request->getFile('duty_instruction_file');
         if ($file && $file->isValid() && !$file->hasMoved()) {
+            // Create directory if it doesn't exist
+            $uploadPath = ROOTPATH . 'public/uploads/duty_instructions/';
+            if (!is_dir($uploadPath)) {
+                mkdir($uploadPath, 0755, true);
+            }
+
             $newName = $file->getRandomName();
-            $file->move(WRITEPATH . 'uploads/duty_instructions/', $newName);
-            $data['duty_instruction_filepath'] = 'uploads/duty_instructions/' . $newName;
+            $file->move($uploadPath, $newName);
+            // Store path with public/ prefix for correct URL construction
+            $data['duty_instruction_filepath'] = 'public/uploads/duty_instructions/' . $newName;
         }
 
         if ($this->dutyInstructionsModel->save($data)) {
@@ -107,16 +153,46 @@ class DutyInstructionsController extends BaseController
      */
     public function show($id)
     {
-        $dutyInstruction = $this->dutyInstructionsModel->getDutyInstructionWithWorkplan($id);
-        
+        // Get the logged-in user ID
+        $loggedInUserId = session()->get('user_id');
+
+        // Get duty instruction with filtering
+        $dutyInstruction = $this->dutyInstructionsModel
+            ->select('duty_instructions.*,
+                      workplans.title as workplan_title,
+                      CONCAT(u_assigned.fname, " ", u_assigned.lname) as user_name,
+                      CONCAT(u_supervisor.fname, " ", u_supervisor.lname) as supervisor_name,
+                      CONCAT(u_creator.fname, " ", u_creator.lname) as created_by_name')
+            ->join('workplans', 'workplans.id = duty_instructions.workplan_id', 'left')
+            ->join('users u_assigned', 'u_assigned.id = duty_instructions.user_id', 'left')
+            ->join('users u_supervisor', 'u_supervisor.id = duty_instructions.supervisor_id', 'left')
+            ->join('users u_creator', 'u_creator.id = duty_instructions.created_by', 'left')
+            ->groupStart()
+                ->where('duty_instructions.user_id', $loggedInUserId)
+                ->orWhere('duty_instructions.supervisor_id', $loggedInUserId)
+            ->groupEnd()
+            ->find($id);
+
         if (!$dutyInstruction) {
-            throw new \CodeIgniter\Exceptions\PageNotFoundException('Duty instruction not found');
+            throw new \CodeIgniter\Exceptions\PageNotFoundException('Duty instruction not found or access denied');
+        }
+
+        $dutyItems = $this->dutyInstructionItemsModel->getByDutyInstruction($id);
+
+        // Check if duty instruction has linked my activities
+        $myActivitiesDutyInstructionsModel = new \App\Models\MyActivitiesDutyInstructionsModel();
+        $hasMyActivitiesLinks = $myActivitiesDutyInstructionsModel->dutyInstructionHasLinkedMyActivities($id);
+
+        // Check each duty item for linked my activities
+        foreach ($dutyItems as &$item) {
+            $item['has_myactivities_links'] = $myActivitiesDutyInstructionsModel->hasLinkedMyActivities($item['id']);
         }
 
         $data = [
             'title' => 'Duty Instruction Details',
             'duty_instruction' => $dutyInstruction,
-            'duty_items' => $this->dutyInstructionItemsModel->getByDutyInstruction($id)
+            'duty_items' => $dutyItems,
+            'hasMyActivitiesLinks' => $hasMyActivitiesLinks
         ];
 
         return view('duty_instructions/duty_instructions_show', $data);
@@ -127,16 +203,37 @@ class DutyInstructionsController extends BaseController
      */
     public function edit($id)
     {
-        $dutyInstruction = $this->dutyInstructionsModel->find($id);
-        
+        // Get the logged-in user ID
+        $loggedInUserId = session()->get('user_id');
+
+        // Get duty instruction with access control
+        $dutyInstruction = $this->dutyInstructionsModel
+            ->groupStart()
+                ->where('user_id', $loggedInUserId)
+                ->orWhere('supervisor_id', $loggedInUserId)
+            ->groupEnd()
+            ->find($id);
+
         if (!$dutyInstruction) {
-            throw new \CodeIgniter\Exceptions\PageNotFoundException('Duty instruction not found');
+            throw new \CodeIgniter\Exceptions\PageNotFoundException('Duty instruction not found or access denied');
         }
+
+        // Get logged-in user's branch_id
+        $user = $this->userModel->find($loggedInUserId);
+        $userBranchId = $user['branch_id'] ?? null;
+
+        // Get workplans filtered by status 'in_progress' and user's branch
+        $workplans = $this->workplanModel
+            ->where('status', 'in_progress')
+            ->where('branch_id', $userBranchId)
+            ->where('deleted_at IS NULL')
+            ->orderBy('title', 'ASC')
+            ->findAll();
 
         $data = [
             'title' => 'Edit Duty Instruction',
             'duty_instruction' => $dutyInstruction,
-            'workplans' => $this->workplanModel->findAll(),
+            'workplans' => $workplans,
             'supervisors' => $this->userModel->getUsersBySupervisorCapability()
         ];
 
@@ -148,10 +245,19 @@ class DutyInstructionsController extends BaseController
      */
     public function update($id)
     {
-        $dutyInstruction = $this->dutyInstructionsModel->find($id);
-        
+        // Get the logged-in user ID
+        $loggedInUserId = session()->get('user_id');
+
+        // Get duty instruction with access control
+        $dutyInstruction = $this->dutyInstructionsModel
+            ->groupStart()
+                ->where('user_id', $loggedInUserId)
+                ->orWhere('supervisor_id', $loggedInUserId)
+            ->groupEnd()
+            ->find($id);
+
         if (!$dutyInstruction) {
-            throw new \CodeIgniter\Exceptions\PageNotFoundException('Duty instruction not found');
+            throw new \CodeIgniter\Exceptions\PageNotFoundException('Duty instruction not found or access denied');
         }
 
         $rules = [
@@ -181,9 +287,16 @@ class DutyInstructionsController extends BaseController
         // Handle file upload if present
         $file = $this->request->getFile('duty_instruction_file');
         if ($file && $file->isValid() && !$file->hasMoved()) {
+            // Create directory if it doesn't exist
+            $uploadPath = ROOTPATH . 'public/uploads/duty_instructions/';
+            if (!is_dir($uploadPath)) {
+                mkdir($uploadPath, 0755, true);
+            }
+
             $newName = $file->getRandomName();
-            $file->move(WRITEPATH . 'uploads/duty_instructions/', $newName);
-            $data['duty_instruction_filepath'] = 'uploads/duty_instructions/' . $newName;
+            $file->move($uploadPath, $newName);
+            // Store path with public/ prefix for correct URL construction
+            $data['duty_instruction_filepath'] = 'public/uploads/duty_instructions/' . $newName;
         }
 
         if ($this->dutyInstructionsModel->update($id, $data)) {
@@ -200,10 +313,19 @@ class DutyInstructionsController extends BaseController
      */
     public function delete($id)
     {
-        $dutyInstruction = $this->dutyInstructionsModel->find($id);
-        
+        // Get the logged-in user ID
+        $loggedInUserId = session()->get('user_id');
+
+        // Get duty instruction with access control
+        $dutyInstruction = $this->dutyInstructionsModel
+            ->groupStart()
+                ->where('user_id', $loggedInUserId)
+                ->orWhere('supervisor_id', $loggedInUserId)
+            ->groupEnd()
+            ->find($id);
+
         if (!$dutyInstruction) {
-            throw new \CodeIgniter\Exceptions\PageNotFoundException('Duty instruction not found');
+            throw new \CodeIgniter\Exceptions\PageNotFoundException('Duty instruction not found or access denied');
         }
 
         if ($this->dutyInstructionsModel->delete($id)) {

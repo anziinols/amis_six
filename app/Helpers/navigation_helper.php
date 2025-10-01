@@ -36,14 +36,12 @@ if (!function_exists('canAccessMenu')) {
             'profile' => [], // Available to all
             'admin_panel' => ['admin'],
             'smes' => ['admin'],
-            'commodities' => ['admin'],
-            'commodity_boards' => ['admin'], // Only admin can manage commodity boards
             'workplans' => ['admin', 'supervisor'],
-            'supervised_activities' => ['supervisor'], // Supervised activities for supervisors
+            'supervised_activities' => ['admin', 'supervisor'], // Supervised activities for admins and supervisors
 
             'my_activities' => ['admin', 'supervisor', 'user'], // Allow ordinary users access to their activities
             'reports' => ['admin', 'supervisor', 'user'], // Allow ordinary users access to reports
-            'duty_instructions' => ['admin', 'supervisor'],
+            'duty_instructions' => ['admin', 'supervisor', 'user'], // Allow all users access to duty instructions
             'evaluation' => ['admin', 'evaluator']
         ];
 
@@ -81,19 +79,7 @@ if (!function_exists('canAccessAdminPanel')) {
     }
 }
 
-if (!function_exists('canAccessCommodities')) {
-    /**
-     * Check if user can access commodities section
-     * 
-     * @param string|null $userRole The user's role (if null, gets from session)
-     * @return bool
-     */
-    function canAccessCommodities($userRole = null)
-    {
-        // Only admin capability can access commodities
-        return session()->get('is_admin') == 1;
-    }
-}
+
 
 if (!function_exists('getNavigationMenus')) {
     /**
@@ -134,21 +120,13 @@ if (!function_exists('getNavigationMenus')) {
                     'branches' => ['title' => 'Branches', 'icon' => 'fas fa-building', 'url' => 'admin/branches'],
                     'mtdp_plans' => ['title' => 'MTDP Plans', 'icon' => 'fas fa-project-diagram', 'url' => 'admin/mtdp-plans'],
                     'nasp_plans' => ['title' => 'NASP Plans', 'icon' => 'fas fa-chart-line', 'url' => 'admin/nasp-plans'],
-                    'corporate_plans' => ['title' => 'Corporate Plans', 'icon' => 'fas fa-briefcase', 'url' => 'admin/corporate-plans'],
-                    'org_settings' => ['title' => 'Org.Settings', 'icon' => 'fas fa-cogs', 'url' => 'admin/org-settings'],
-                    'commodities' => ['title' => 'Commodities', 'icon' => 'fas fa-seedling', 'url' => 'admin/commodities']
+                    'corporate_plans' => ['title' => 'Corporate Plans', 'icon' => 'fas fa-briefcase', 'url' => 'admin/corporate-plans']
                 ]
             ],
             'smes' => [
                 'title' => 'SMEs',
                 'icon' => 'fas fa-store',
                 'url' => 'smes',
-                'capabilities' => ['admin']
-            ],
-            'commodity_boards' => [
-                'title' => 'Commodity Boards',
-                'icon' => 'fas fa-boxes',
-                'url' => 'commodity-boards',
                 'capabilities' => ['admin']
             ],
             'workplans' => [
@@ -167,7 +145,7 @@ if (!function_exists('getNavigationMenus')) {
                 'title' => 'Duty Instructions',
                 'icon' => 'fas fa-tasks',
                 'url' => 'duty-instructions',
-                'capabilities' => ['admin', 'supervisor']
+                'capabilities' => ['admin', 'supervisor', 'user']
             ],
             'my_activities' => [
                 'title' => 'My Activities',
@@ -186,7 +164,6 @@ if (!function_exists('getNavigationMenus')) {
                     'nasp_report' => ['title' => 'NASP Report', 'icon' => 'fas fa-file-alt', 'url' => 'reports/nasp'],
                     'workplan_report' => ['title' => 'Workplan Report', 'icon' => 'fas fa-file-alt', 'url' => 'reports/workplan'],
                     'activities_map' => ['title' => 'Activities Map', 'icon' => 'fas fa-map-marked-alt', 'url' => 'reports/activities-map'],
-                    'commodity_reports' => ['title' => 'Commodity Reports', 'icon' => 'fas fa-seedling', 'url' => 'reports/commodity'],
                     'hr_reports' => ['title' => 'HR Reports', 'icon' => 'fas fa-users', 'url' => 'reports/hr']
                 ]
             ],

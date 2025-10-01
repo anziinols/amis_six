@@ -5,13 +5,28 @@ $this->section('content');
 ?>
 
 <div class="container-fluid">
-    <div class="card">
-        <div class="card-header d-flex justify-content-between align-items-center">
-            <h5 class="mb-0"><?= $title ?></h5>
-            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addCorporatePlanModal">
-                <i class="fas fa-plus"></i> Add Corporate Plan
-            </button>
+    <div class="row mb-2">
+        <div class="col-12">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="<?= base_url('admin') ?>">Home</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">Corporate Plans</li>
+                </ol>
+            </nav>
         </div>
+    </div>
+
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h3 class="card-title mb-0"><?= esc($title) ?></h3>
+                    <div>
+                        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addCorporatePlanModal">
+                            <i class="fas fa-plus"></i> Add Corporate Plan
+                        </button>
+                    </div>
+                </div>
         <div class="card-body">
             <div class="table-responsive">
                 <table class="table table-bordered table-striped" id="corporatePlansTable">
@@ -28,8 +43,8 @@ $this->section('content');
                     <tbody>
                         <?php foreach ($plans as $plan) : ?>
                             <tr>
-                                <td><?= $plan['code'] ?></td>
-                                <td><?= $plan['title'] ?></td>
+                                <td><?= esc($plan['code']) ?></td>
+                                <td><?= esc($plan['title']) ?></td>
                                 <td><?= date('d-m-Y', strtotime($plan['date_from'])) ?></td>
                                 <td><?= date('d-m-Y', strtotime($plan['date_to'])) ?></td>
                                 <td>
@@ -38,38 +53,40 @@ $this->section('content');
                                     </span>
                                 </td>
                                 <td>
-                                    <div class="btn-group flex-wrap" role="group" aria-label="Plan Actions">
-                                        <a href="<?= base_url('admin/corporate-plans/objectives/' . $plan['id']) ?>"
-                                           class="btn btn-sm btn-primary">
-                                            <i class="fas fa-eye"></i><span class="d-none d-md-inline"> View Objectives</span>
-                                        </a>
-                                        <button type="button" class="btn btn-sm btn-warning edit-plan"
-                                            data-id="<?= $plan['id'] ?>"
-                                            data-code="<?= htmlspecialchars($plan['code']) ?>"
-                                            data-title="<?= htmlspecialchars($plan['title']) ?>"
-                                            data-date-from="<?= $plan['date_from'] ?>"
-                                            data-date-to="<?= $plan['date_to'] ?>"
-                                            data-remarks="<?= htmlspecialchars($plan['remarks']) ?>"
-                                            data-bs-toggle="modal" data-bs-target="#editCorporatePlanModal">
-                                            <i class="fas fa-edit"></i><span class="d-none d-md-inline"> Edit</span>
+                                    <a href="<?= base_url('admin/corporate-plans/objectives/' . $plan['id']) ?>"
+                                       class="btn btn-outline-primary btn-sm" style="margin-right: 5px;">
+                                        <i class="fas fa-eye me-1"></i> View Objectives
+                                    </a>
+                                    <button type="button" class="btn btn-outline-warning btn-sm edit-plan"
+                                        data-id="<?= $plan['id'] ?>"
+                                        data-code="<?= esc($plan['code']) ?>"
+                                        data-title="<?= esc($plan['title']) ?>"
+                                        data-date-from="<?= $plan['date_from'] ?>"
+                                        data-date-to="<?= $plan['date_to'] ?>"
+                                        data-remarks="<?= esc($plan['remarks']) ?>"
+                                        data-bs-toggle="modal" data-bs-target="#editCorporatePlanModal"
+                                        style="margin-right: 5px;">
+                                        <i class="fas fa-edit me-1"></i> Edit
+                                    </button>
+                                    <button type="button" class="btn btn-outline-<?= $plan['corp_plan_status'] == 1 ? 'secondary' : 'success' ?> btn-sm toggle-status"
+                                        data-id="<?= $plan['id'] ?>"
+                                        style="margin-right: 5px;">
+                                        <i class="fas fa-<?= $plan['corp_plan_status'] == 1 ? 'ban' : 'check' ?> me-1"></i>
+                                        <?= $plan['corp_plan_status'] == 1 ? 'Deactivate' : 'Activate' ?>
+                                    </button>
+                                    <form action="<?= base_url('admin/corporate-plans/' . $plan['id'] . '/delete') ?>" method="post" style="display: inline-block;" onsubmit="return confirm('Are you sure you want to delete this Corporate Plan and all its children? This action cannot be undone.');">
+                                        <?= csrf_field() ?>
+                                        <button type="submit" class="btn btn-outline-danger btn-sm">
+                                            <i class="fas fa-trash me-1"></i> Delete
                                         </button>
-                                        <button type="button" class="btn btn-sm btn-<?= $plan['corp_plan_status'] == 1 ? 'danger' : 'success' ?> toggle-status"
-                                            data-id="<?= $plan['id'] ?>">
-                                            <i class="fas fa-<?= $plan['corp_plan_status'] == 1 ? 'ban' : 'check' ?>"></i>
-                                            <span class="d-none d-md-inline"><?= $plan['corp_plan_status'] == 1 ? 'Deactivate' : 'Activate' ?></span>
-                                        </button>
-                                        <form action="<?= base_url('admin/corporate-plans/' . $plan['id'] . '/delete') ?>" method="post" style="display: inline-block;" onsubmit="return confirm('Are you sure you want to delete this Corporate Plan and all its children? This action cannot be undone.');">
-                                            <?= csrf_field() ?>
-                                            <button type="submit" class="btn btn-sm btn-danger">
-                                                <i class="fas fa-trash"></i><span class="d-none d-md-inline"> Delete</span>
-                                            </button>
-                                        </form>
-                                    </div>
+                                    </form>
                                 </td>
                             </tr>
                         <?php endforeach; ?>
                     </tbody>
                 </table>
+            </div>
+                </div>
             </div>
         </div>
     </div>

@@ -195,7 +195,7 @@
                                     <td><?= esc($linkedActivity['action_officer_name'] ?? 'N/A') ?></td>
                                     <td>
                                         <?php if (!empty($linkedActivity['total_cost'])): ?>
-                                            K <?= number_format($linkedActivity['total_cost'], 2) ?>
+                                            <?= CURRENCY_SYMBOL ?> <?= number_format($linkedActivity['total_cost'], 2) ?>
                                         <?php else: ?>
                                             N/A
                                         <?php endif; ?>

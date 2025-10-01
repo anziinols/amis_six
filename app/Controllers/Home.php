@@ -103,7 +103,6 @@ class Home extends ResourceController
             'is_admin' => $user['is_admin'] ?? 0,
             'is_supervisor' => $user['is_supervisor'] ?? 0,
             'is_evaluator' => $user['is_evaluator'] ?? 0,
-            'commodity_id' => $user['commodity_id'] ?? null,
             'logged_in' => true
         ]);
 

@@ -3,7 +3,8 @@
     "allow": [
       "Bash(php spark migrate:status:*)",
       "Bash(php spark:*)",
-      "Bash(php:*)"
+      "Bash(php:*)",
+      "Bash(mysql -u root amis_six_db -e \"ALTER TABLE workplan_others_link DROP COLUMN link_type, DROP COLUMN category, DROP COLUMN priority_level, DROP COLUMN duration_months;\")"
     ],
     "deny": [],
     "ask": []

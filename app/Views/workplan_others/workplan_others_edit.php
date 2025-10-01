@@ -65,27 +65,6 @@
                 <?= csrf_field() ?>
 
                 <div class="row">
-                    <div class="col-md-6">
-                        <div class="mb-3">
-                            <label for="link_type" class="form-label">Link Type <span class="text-danger">*</span></label>
-                            <select name="link_type" id="link_type" class="form-select" required>
-                                <option value="">-- Select Type --</option>
-                                <option value="recurrent" <?= $othersLink['link_type'] === 'recurrent' ? 'selected' : '' ?>>Recurrent</option>
-                                <option value="special_project" <?= $othersLink['link_type'] === 'special_project' ? 'selected' : '' ?>>Special Project</option>
-                                <option value="emergency" <?= $othersLink['link_type'] === 'emergency' ? 'selected' : '' ?>>Emergency</option>
-                                <option value="other" <?= $othersLink['link_type'] === 'other' ? 'selected' : '' ?>>Other</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="mb-3">
-                            <label for="category" class="form-label">Category</label>
-                            <input type="text" name="category" id="category" class="form-control" value="<?= esc($othersLink['category'] ?? '') ?>" placeholder="e.g., Administrative, Maintenance, etc.">
-                        </div>
-                    </div>
-                </div>
-
-                <div class="row">
                     <div class="col-md-12">
                         <div class="mb-3">
                             <label for="title" class="form-label">Title <span class="text-danger">*</span></label>
@@ -114,18 +93,7 @@
                 </div>
 
                 <div class="row">
-                    <div class="col-md-6">
-                        <div class="mb-3">
-                            <label for="priority_level" class="form-label">Priority Level</label>
-                            <select name="priority_level" id="priority_level" class="form-select">
-                                <option value="low" <?= $othersLink['priority_level'] === 'low' ? 'selected' : '' ?>>Low</option>
-                                <option value="medium" <?= $othersLink['priority_level'] === 'medium' || empty($othersLink['priority_level']) ? 'selected' : '' ?>>Medium</option>
-                                <option value="high" <?= $othersLink['priority_level'] === 'high' ? 'selected' : '' ?>>High</option>
-                                <option value="critical" <?= $othersLink['priority_level'] === 'critical' ? 'selected' : '' ?>>Critical</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div class="col-md-6">
+                    <div class="col-md-12">
                         <div class="mb-3">
                             <label for="status" class="form-label">Status</label>
                             <select name="status" id="status" class="form-select">
@@ -157,16 +125,10 @@
                 </div>
 
                 <div class="row">
-                    <div class="col-md-6">
+                    <div class="col-md-12">
                         <div class="mb-3">
                             <label for="budget_estimate" class="form-label">Budget Estimate (K)</label>
                             <input type="number" step="0.01" name="budget_estimate" id="budget_estimate" class="form-control" value="<?= esc($othersLink['budget_estimate'] ?? '') ?>">
-                        </div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="mb-3">
-                            <label for="duration_months" class="form-label">Duration (Months)</label>
-                            <input type="number" name="duration_months" id="duration_months" class="form-control" value="<?= esc($othersLink['duration_months'] ?? '') ?>" min="1">
                         </div>
                     </div>
                 </div>

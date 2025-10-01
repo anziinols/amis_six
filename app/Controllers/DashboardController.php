@@ -8,8 +8,8 @@ class DashboardController extends BaseController
     protected $workplanModel;
     protected $workplanActivityModel;
     protected $activitiesModel;
-    protected $meetingsModel;
-    protected $documentModel;
+    // protected $meetingsModel; // Removed - use ActivitiesMeetingsModel if needed
+    // protected $documentModel; // Removed - model doesn't exist
 
     public function __construct()
     {
@@ -24,8 +24,8 @@ class DashboardController extends BaseController
         $this->workplanModel = new \App\Models\WorkplanModel();
         $this->workplanActivityModel = new \App\Models\WorkplanActivityModel();
         $this->activitiesModel = new \App\Models\ActivitiesModel();
-        $this->meetingsModel = new \App\Models\MeetingsModel();
-        $this->documentModel = new \App\Models\DocumentModel();
+        // $this->meetingsModel = new \App\Models\MeetingsModel(); // Removed - model doesn't exist
+        // $this->documentModel = new \App\Models\DocumentModel(); // Removed - model doesn't exist
     }
 
     public function index()
@@ -94,14 +94,18 @@ class DashboardController extends BaseController
         }
 
         // Get upcoming meetings for the user's branch
-        $upcomingMeetings = $this->meetingsModel->getUpcomingMeetings(3);
+        // Temporarily disabled - MeetingsModel doesn't exist
+        $upcomingMeetings = [];
+        // $upcomingMeetings = $this->meetingsModel->getUpcomingMeetings(3);
 
         // Get recent documents for the user's branch
-        $recentDocuments = $this->documentModel
-            ->where('branch_id', $branchId)
-            ->where('deleted_at IS NULL')
-            ->orderBy('created_at', 'DESC')
-            ->findAll(3);
+        // Temporarily disabled - DocumentModel doesn't exist
+        $recentDocuments = [];
+        // $recentDocuments = $this->documentModel
+        //     ->where('branch_id', $branchId)
+        //     ->where('deleted_at IS NULL')
+        //     ->orderBy('created_at', 'DESC')
+        //     ->findAll(3);
 
         $data = [
             'title' => 'Dashboard',

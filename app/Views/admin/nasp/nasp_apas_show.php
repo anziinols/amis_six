@@ -18,11 +18,21 @@
     <div class="row">
         <div class="col-12">
             <div class="card">
-                <div class="card-header">
-                    <h3 class="card-title">APA Details</h3>
-                    <div class="card-tools">
-                        <a href="<?= base_url('admin/nasp-plans/' . $plan['id'] . '/apas') ?>" class="btn btn-secondary">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h3 class="card-title mb-0">APA Details</h3>
+                    <div>
+                        <a href="<?= base_url('admin/nasp-plans/' . $plan['id'] . '/apas') ?>" class="btn btn-secondary me-2">
                             <i class="fas fa-arrow-left"></i> Back to APAs
+                        </a>
+                        <a href="<?= base_url('admin/nasp-plans/apas/' . $apa['id'] . '/dips') ?>" class="btn btn-primary me-2">
+                            <i class="fas fa-list"></i> Manage DIPs
+                        </a>
+                        <a href="<?= base_url('admin/nasp-plans/apas/' . $apa['id'] . '/edit') ?>" class="btn btn-warning me-2">
+                            <i class="fas fa-edit"></i> Edit
+                        </a>
+                        <a href="<?= base_url('admin/nasp-plans/apas/' . $apa['id'] . '/toggle-status') ?>" class="btn btn-<?= $apa['nasp_status'] == 1 ? 'secondary' : 'success' ?>">
+                            <i class="fas fa-<?= $apa['nasp_status'] == 1 ? 'ban' : 'check-circle' ?>"></i>
+                            <?= $apa['nasp_status'] == 1 ? 'Deactivate' : 'Activate' ?>
                         </a>
                     </div>
                 </div>
@@ -60,19 +70,6 @@
                                 </tr>
                             </table>
                         </div>
-                    </div>
-
-                    <div class="mt-4">
-                        <a href="<?= base_url('admin/nasp-plans/apas/' . $apa['id'] . '/objectives') ?>" class="btn btn-primary">
-                            <i class="fas fa-list"></i> View Objectives
-                        </a>
-                        <a href="<?= base_url('admin/nasp-plans/apas/' . $apa['id'] . '/edit') ?>" class="btn btn-warning">
-                            <i class="fas fa-edit"></i> Edit
-                        </a>
-                        <a href="<?= base_url('admin/nasp-plans/apas/' . $apa['id'] . '/toggle-status') ?>" class="btn btn-<?= $apa['nasp_status'] == 1 ? 'danger' : 'success' ?>">
-                            <i class="fas fa-<?= $apa['nasp_status'] == 1 ? 'ban' : 'check-circle' ?>"></i>
-                            <?= $apa['nasp_status'] == 1 ? 'Deactivate' : 'Activate' ?>
-                        </a>
                     </div>
                 </div>
             </div>

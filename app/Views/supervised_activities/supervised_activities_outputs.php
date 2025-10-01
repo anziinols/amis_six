@@ -19,7 +19,7 @@
             <a href="<?= base_url('supervised-activities') ?>" class="btn btn-secondary me-2">
                 <i class="fas fa-arrow-left"></i> Back to Supervised Activities
             </a>
-            <?php if ($workplanActivity['status'] !== 'complete'): ?>
+            <?php if ($workplanActivity['status'] !== 'completed'): ?>
                 <button type="button"
                         class="btn btn-success"
                         onclick="showMarkCompleteModal(<?= $workplanActivity['id'] ?>, '<?= esc($workplanActivity['title']) ?>')">
@@ -65,22 +65,23 @@
         <div class="card-body">
             <div class="row">
                 <div class="col-md-6">
-                    <p><strong>Activity Code:</strong> 
+                    <p><strong>Activity Code:</strong>
                         <span class="badge bg-primary"><?= esc($workplanActivity['activity_code'] ?? 'N/A') ?></span>
                     </p>
                     <p><strong>Title:</strong> <?= esc($workplanActivity['title']) ?></p>
                     <p><strong>Workplan:</strong> <?= esc($workplanActivity['workplan_title'] ?? 'N/A') ?></p>
+                    <p><strong>Branch:</strong> <?= esc($workplanActivity['branch_name'] ?? 'N/A') ?></p>
                 </div>
                 <div class="col-md-6">
-                    <p><strong>Branch:</strong> <?= esc($workplanActivity['branch_name'] ?? 'N/A') ?></p>
                     <p><strong>Target Output:</strong> <?= esc($workplanActivity['target_output'] ?? 'N/A') ?></p>
-                    <p><strong>Budget:</strong> 
+                    <p><strong>Budget:</strong>
                         <?php if (!empty($workplanActivity['total_budget'])): ?>
-                            K <?= number_format($workplanActivity['total_budget'], 2) ?>
+                            <?= CURRENCY_SYMBOL ?> <?= number_format($workplanActivity['total_budget'], 2) ?>
                         <?php else: ?>
                             N/A
                         <?php endif; ?>
                     </p>
+                    <p><strong>Supervisor:</strong> <?= esc($workplanActivity['supervisor_name'] ?? 'N/A') ?></p>
                 </div>
             </div>
             <?php if (!empty($workplanActivity['description'])): ?>
@@ -91,6 +92,80 @@
                     </div>
                 </div>
             <?php endif; ?>
+
+            <!-- Status Information -->
+            <div class="row mt-3">
+                <div class="col-12">
+                    <h6 class="text-primary"><i class="fas fa-info-circle"></i> Status Information</h6>
+                    <hr>
+                </div>
+                <div class="col-md-6">
+                    <p><strong>Status:</strong>
+                        <?php
+                        $statusColors = [
+                            'pending' => 'warning',
+                            'active' => 'success',
+                            'complete' => 'primary',
+                            'on_hold' => 'secondary',
+                            'cancelled' => 'danger'
+                        ];
+                        $statusColor = $statusColors[$workplanActivity['status'] ?? 'pending'] ?? 'secondary';
+                        ?>
+                        <span class="badge bg-<?= $statusColor ?>">
+                            <?= ucfirst(esc($workplanActivity['status'] ?? 'Pending')) ?>
+                        </span>
+                    </p>
+                    <p><strong>Status By:</strong> <?= esc($workplanActivity['status_by_name'] ?? 'N/A') ?></p>
+                    <p><strong>Status At:</strong>
+                        <?php if (!empty($workplanActivity['status_at'])): ?>
+                            <?= date('M d, Y h:i A', strtotime($workplanActivity['status_at'])) ?>
+                        <?php else: ?>
+                            N/A
+                        <?php endif; ?>
+                    </p>
+                </div>
+                <div class="col-md-6">
+                    <p><strong>Status Remarks:</strong></p>
+                    <?php if (!empty($workplanActivity['status_remarks'])): ?>
+                        <p class="text-muted"><?= esc($workplanActivity['status_remarks']) ?></p>
+                    <?php else: ?>
+                        <p class="text-muted">-</p>
+                    <?php endif; ?>
+                </div>
+            </div>
+
+            <!-- Rating Information -->
+            <div class="row mt-3">
+                <div class="col-12">
+                    <h6 class="text-primary"><i class="fas fa-star"></i> Rating Information</h6>
+                    <hr>
+                </div>
+                <div class="col-md-6">
+                    <p><strong>Rating:</strong>
+                        <?php if (!empty($workplanActivity['rating'])): ?>
+                            <span class="badge bg-info"><?= esc($workplanActivity['rating']) ?>%</span>
+                        <?php else: ?>
+                            <span class="text-muted">Not Rated</span>
+                        <?php endif; ?>
+                    </p>
+                    <p><strong>Rated By:</strong> <?= esc($workplanActivity['rated_by_name'] ?? 'N/A') ?></p>
+                    <p><strong>Rated At:</strong>
+                        <?php if (!empty($workplanActivity['rated_at'])): ?>
+                            <?= date('M d, Y h:i A', strtotime($workplanActivity['rated_at'])) ?>
+                        <?php else: ?>
+                            N/A
+                        <?php endif; ?>
+                    </p>
+                </div>
+                <div class="col-md-6">
+                    <p><strong>Rating Remarks:</strong></p>
+                    <?php if (!empty($workplanActivity['reated_remarks'])): ?>
+                        <p class="text-muted"><?= esc($workplanActivity['reated_remarks']) ?></p>
+                    <?php else: ?>
+                        <p class="text-muted">-</p>
+                    <?php endif; ?>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -108,15 +183,18 @@
                     <table class="table table-bordered table-hover" id="linkedActivitiesTable">
                         <thead class="table-light">
                             <tr>
-                                <th style="width: 5%;">#</th>
-                                <th style="width: 20%;">Activity Title</th>
-                                <th style="width: 10%;">Type</th>
-                                <th style="width: 15%;">Location</th>
-                                <th style="width: 12%;">Date Range</th>
-                                <th style="width: 12%;">Action Officer</th>
-                                <th style="width: 10%;">Cost</th>
-                                <th style="width: 10%;">Status</th>
-                                <th style="width: 6%;">Actions</th>
+                                <th style="width: 3%;">#</th>
+                                <th style="width: 15%;">Activity Title</th>
+                                <th style="width: 8%;">Type</th>
+                                <th style="width: 10%;">Location</th>
+                                <th style="width: 10%;">Date Range</th>
+                                <th style="width: 10%;">Action Officer</th>
+                                <th style="width: 8%;">Cost</th>
+                                <th style="width: 8%;">Status</th>
+                                <th style="width: 10%;">Status By</th>
+                                <th style="width: 8%;">Status At</th>
+                                <th style="width: 10%;">Status Remarks</th>
+                                <th style="width: 5%;">Actions</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -193,16 +271,33 @@
                                         <span class="badge bg-<?= $statusColor ?>">
                                             <?= ucfirst(esc($linkedActivity['status'])) ?>
                                         </span>
+                                    </td>
+                                    <td>
+                                        <?= esc($linkedActivity['status_by_name'] ?? 'N/A') ?>
+                                    </td>
+                                    <td>
                                         <?php if (!empty($linkedActivity['status_at'])): ?>
-                                            <br>
-                                            <small class="text-muted">
-                                                <?= date('M d, Y', strtotime($linkedActivity['status_at'])) ?>
+                                            <small>
+                                                <?= date('M d, Y', strtotime($linkedActivity['status_at'])) ?><br>
+                                                <?= date('h:i A', strtotime($linkedActivity['status_at'])) ?>
                                             </small>
+                                        <?php else: ?>
+                                            N/A
                                         <?php endif; ?>
                                     </td>
                                     <td>
-                                        <a href="<?= base_url('activities/' . $linkedActivity['activity_id']) ?>" 
-                                           class="btn btn-sm btn-outline-primary" 
+                                        <?php if (!empty($linkedActivity['status_remarks'])): ?>
+                                            <small class="text-muted">
+                                                <?= esc(substr($linkedActivity['status_remarks'], 0, 50)) ?>
+                                                <?= strlen($linkedActivity['status_remarks']) > 50 ? '...' : '' ?>
+                                            </small>
+                                        <?php else: ?>
+                                            <small class="text-muted">-</small>
+                                        <?php endif; ?>
+                                    </td>
+                                    <td>
+                                        <a href="<?= base_url('activities/' . $linkedActivity['activity_id']) ?>"
+                                           class="btn btn-sm btn-outline-primary"
                                            title="View Activity Details"
                                            target="_blank">
                                             <i class="fas fa-eye"></i>

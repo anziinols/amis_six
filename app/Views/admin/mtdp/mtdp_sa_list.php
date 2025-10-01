@@ -21,14 +21,14 @@ $this->section('content');
     <div class="row">
         <div class="col-12">
             <div class="card">
-                <div class="card-header">
-                    <h3 class="card-title"><?= $title ?></h3>
-                    <div class="card-tools">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h3 class="card-title mb-0"><?= esc($title) ?></h3>
+                    <div>
+                        <a href="<?= base_url('admin/mtdp-plans/spas/' . $spa['id'] . '/dips') ?>" class="btn btn-secondary me-2">
+                            <i class="fas fa-arrow-left"></i> Back to DIPs
+                        </a>
                         <a href="<?= base_url('admin/mtdp-plans/dips/' . $dip['id'] . '/specific-areas/new') ?>" class="btn btn-primary">
                             <i class="fas fa-plus"></i> Add Specific Area
-                        </a>
-                        <a href="<?= base_url('admin/mtdp-plans/spas/' . $spa['id'] . '/dips') ?>" class="btn btn-secondary ms-1">
-                            <i class="fas fa-arrow-left"></i> Back to Programs
                         </a>
                     </div>
                 </div>
@@ -56,22 +56,20 @@ $this->section('content');
                                             </span>
                                         </td>
                                         <td>
-                                            <div class="btn-group" role="group" aria-label="Specific Area Actions">
-                                                <a href="<?= base_url('admin/mtdp-plans/dips/' . $dip['id'] . '/specific-areas/' . $sa['id']) ?>" class="btn btn-sm btn-info">
-                                                    <i class="fas fa-eye"></i> View
-                                                </a>
-                                                <a href="<?= base_url('admin/mtdp-plans/dips/' . $dip['id'] . '/specific-areas/' . $sa['id'] . '/investments') ?>" class="btn btn-sm btn-primary">
-                                                    <i class="fas fa-dollar-sign"></i> View Investments
-                                                </a>
-                                                <a href="<?= base_url('admin/mtdp-plans/dips/' . $dip['id'] . '/specific-areas/' . $sa['id'] . '/edit') ?>" class="btn btn-sm btn-warning">
-                                                    <i class="fas fa-edit"></i> Edit
-                                                </a>
-                                                <button type="button" class="btn btn-sm btn-<?= $sa['sa_status'] == 1 ? 'danger' : 'success' ?> toggle-status-btn"
-                                                        data-id="<?= $sa['id'] ?>" data-status="<?= $sa['sa_status'] ?>" data-bs-toggle="modal" data-bs-target="#toggleStatusModal">
-                                                    <i class="fas fa-toggle-<?= $sa['sa_status'] == 1 ? 'off' : 'on' ?>"></i>
-                                                    <?= $sa['sa_status'] == 1 ? 'Deactivate' : 'Activate' ?>
-                                                </button>
-                                            </div>
+                                            <a href="<?= base_url('admin/mtdp-plans/dips/' . $dip['id'] . '/specific-areas/' . $sa['id']) ?>" class="btn btn-outline-primary btn-sm" style="margin-right: 5px;">
+                                                <i class="fas fa-eye me-1"></i> View
+                                            </a>
+                                            <a href="<?= base_url('admin/mtdp-plans/dips/' . $dip['id'] . '/specific-areas/' . $sa['id'] . '/investments') ?>" class="btn btn-outline-primary btn-sm" style="margin-right: 5px;">
+                                                <i class="fas fa-dollar-sign me-1"></i> View Investments
+                                            </a>
+                                            <a href="<?= base_url('admin/mtdp-plans/dips/' . $dip['id'] . '/specific-areas/' . $sa['id'] . '/edit') ?>" class="btn btn-outline-warning btn-sm" style="margin-right: 5px;">
+                                                <i class="fas fa-edit me-1"></i> Edit
+                                            </a>
+                                            <button type="button" class="btn btn-outline-<?= $sa['sa_status'] == 1 ? 'secondary' : 'success' ?> btn-sm toggle-status-btn"
+                                                    data-id="<?= $sa['id'] ?>" data-status="<?= $sa['sa_status'] ?>" data-bs-toggle="modal" data-bs-target="#toggleStatusModal">
+                                                <i class="fas fa-toggle-<?= $sa['sa_status'] == 1 ? 'off' : 'on' ?> me-1"></i>
+                                                <?= $sa['sa_status'] == 1 ? 'Deactivate' : 'Activate' ?>
+                                            </button>
                                         </td>
                                     </tr>
                                 <?php endforeach; ?>

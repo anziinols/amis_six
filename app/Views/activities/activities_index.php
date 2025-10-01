@@ -137,20 +137,15 @@
                                                             <i class="fas fa-check-circle me-1"></i> Supervise
                                                         </a>
                                                         <?php endif; ?>
-                                                    <?php elseif ($activity['status'] === 'approved'): ?>
-                                                        <a href="<?= base_url('activities/' . $activity['id'] . '/evaluate') ?>" class="btn btn-outline-warning" title="Evaluate Activity" style="margin-right: 5px;">
-                                                            <i class="fas fa-star me-1"></i> Evaluate
-                                                        </a>
-                                                        <a href="<?= base_url('activities/' . $activity['id'] . '/view') ?>" class="btn btn-outline-primary" title="View Activity">
-                                                            <i class="fas fa-eye me-1"></i> View
-                                                        </a>
-                                                    <?php elseif ($activity['status'] === 'rated'): ?>
+                                                    <?php elseif ($activity['status'] === 'approved' || $activity['status'] === 'rated'): ?>
                                                         <a href="<?= base_url('activities/' . $activity['id'] . '/view') ?>" class="btn btn-outline-primary" title="View Activity" style="margin-right: 5px;">
                                                             <i class="fas fa-eye me-1"></i> View
                                                         </a>
-                                                        <span class="badge bg-warning text-dark">
-                                                            <i class="fas fa-star me-1"></i>Rated: <?= esc($activity['rating_score'] ?? 'N/A') ?>/10
+                                                        <?php if (!empty($activity['rating_score'])): ?>
+                                                        <span class="badge bg-success text-white">
+                                                            <i class="fas fa-star me-1"></i>Rated: <?= esc($activity['rating_score']) ?>/5
                                                         </span>
+                                                        <?php endif; ?>
                                                     <?php else: ?>
                                                         <?php
                                                         // Check if the current user can edit and implement this activity

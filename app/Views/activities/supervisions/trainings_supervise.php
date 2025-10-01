@@ -203,9 +203,9 @@
                                     <h6 class="card-title mb-0">Supervision Decision</h6>
                                 </div>
                                 <div class="card-body">
-                                    <form action="<?= base_url('activities/' . $activity['id'] . '/process-supervision') ?>" method="post">
+                                    <form action="<?= base_url('activities/' . $activity['id'] . '/process-supervision') ?>" method="post" id="supervisionForm">
                                         <?= csrf_field() ?>
-                                        
+
                                         <div class="mb-3">
                                             <label class="form-label">Decision <span class="text-danger">*</span></label>
                                             <div class="form-check">
@@ -223,9 +223,38 @@
                                         </div>
 
                                         <div class="mb-3">
-                                            <label for="status_remarks" class="form-label">Remarks</label>
+                                            <label for="status_remarks" class="form-label">Supervision Remarks</label>
                                             <textarea class="form-control" id="status_remarks" name="status_remarks" rows="3" placeholder="Enter your supervision remarks (optional)"></textarea>
                                             <div class="form-text">Provide feedback or reasons for your decision</div>
+                                        </div>
+
+                                        <!-- Rating Section (shown only when approving) -->
+                                        <div id="ratingSection" style="display: none;">
+                                            <hr class="my-4">
+                                            <h6 class="fw-bold mb-3">Activity Rating (Optional)</h6>
+
+                                            <div class="row">
+                                                <div class="col-md-6">
+                                                    <div class="mb-3">
+                                                        <label for="rating_score" class="form-label">Rating Score</label>
+                                                        <select class="form-select" id="rating_score" name="rating_score">
+                                                            <option value="">-- Select Rating --</option>
+                                                            <option value="5.00">5 - Excellent</option>
+                                                            <option value="4.00">4 - Very Good</option>
+                                                            <option value="3.00">3 - Good</option>
+                                                            <option value="2.00">2 - Fair</option>
+                                                            <option value="1.00">1 - Poor</option>
+                                                        </select>
+                                                        <div class="form-text">Rate the quality of activity implementation</div>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <div class="mb-3">
+                                                <label for="rate_remarks" class="form-label">Rating Remarks</label>
+                                                <textarea class="form-control" id="rate_remarks" name="rate_remarks" rows="3" placeholder="Enter rating comments (optional)"></textarea>
+                                                <div class="form-text">Provide detailed feedback on the activity performance</div>
+                                            </div>
                                         </div>
 
                                         <div class="d-flex gap-2">
@@ -241,6 +270,26 @@
                             </div>
                         </div>
                     </div>
+
+                    <script>
+                        // Show/hide rating section based on decision
+                        document.addEventListener('DOMContentLoaded', function() {
+                            const approveRadio = document.getElementById('approve');
+                            const resendRadio = document.getElementById('resend');
+                            const ratingSection = document.getElementById('ratingSection');
+
+                            function toggleRatingSection() {
+                                if (approveRadio.checked) {
+                                    ratingSection.style.display = 'block';
+                                } else {
+                                    ratingSection.style.display = 'none';
+                                }
+                            }
+
+                            approveRadio.addEventListener('change', toggleRatingSection);
+                            resendRadio.addEventListener('change', toggleRatingSection);
+                        });
+                    </script>
                 </div>
             </div>
         </div>

@@ -5,43 +5,33 @@ $this->section('content');
 ?>
 
 <div class="container-fluid">
-    <div class="card">
-        <div class="card-header d-flex justify-content-between align-items-center">
-            <h5 class="mb-0"><?= $title ?></h5>
-            <div>
-                <a href="<?= base_url('admin/corporate-plans') ?>" class="btn btn-secondary mr-2">
-                    <i class="fas fa-arrow-left"></i> Back to Corporate Plans
-                </a>
-                <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addObjectiveModal">
-                    <i class="fas fa-plus"></i> Add Objective
-                </button>
-            </div>
+    <div class="row mb-2">
+        <div class="col-12">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="<?= base_url('admin') ?>">Home</a></li>
+                    <li class="breadcrumb-item"><a href="<?= base_url('admin/corporate-plans') ?>">Corporate Plans</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">Objectives in <?= esc($corporatePlan['title']) ?></li>
+                </ol>
+            </nav>
         </div>
-        <div class="card-body">
-            <?php if (session()->getFlashdata('success')): ?>
-                <div class="alert alert-success alert-dismissible fade show" role="alert">
-                    <?= session()->getFlashdata('success') ?>
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                </div>
-            <?php endif; ?>
+    </div>
 
-            <?php if (session()->getFlashdata('error')): ?>
-                <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                    <?= session()->getFlashdata('error') ?>
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h3 class="card-title mb-0"><?= esc($title) ?></h3>
+                    <div>
+                        <a href="<?= base_url('admin/corporate-plans') ?>" class="btn btn-secondary me-2">
+                            <i class="fas fa-arrow-left"></i> Back to Corporate Plans
+                        </a>
+                        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addObjectiveModal">
+                            <i class="fas fa-plus"></i> Add Objective
+                        </button>
+                    </div>
                 </div>
-            <?php endif; ?>
-
-            <?php if (session()->getFlashdata('errors')): ?>
-                <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                    <ul class="mb-0">
-                        <?php foreach (session()->getFlashdata('errors') as $error): ?>
-                            <li><?= esc($error) ?></li>
-                        <?php endforeach; ?>
-                    </ul>
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                </div>
-            <?php endif; ?>
+                <div class="card-body">
 
             <div class="table-responsive">
                 <table class="table table-bordered table-striped" id="objectivesTable">
@@ -57,43 +47,62 @@ $this->section('content');
                     <tbody>
                         <?php foreach ($objectives as $objective) : ?>
                             <tr>
-                                <td><?= $objective['code'] ?></td>
-                                <td><?= $objective['title'] ?></td>
-                                <td><?= $objective['remarks'] ?></td>
+                                <td><?= esc($objective['code']) ?></td>
+                                <td><?= esc($objective['title']) ?></td>
+                                <td><?= esc($objective['remarks']) ?></td>
                                 <td>
                                     <span class="badge bg-<?= $objective['corp_plan_status'] == 1 ? 'success' : 'danger' ?>">
                                         <?= $objective['corp_plan_status'] == 1 ? 'Active' : 'Inactive' ?>
                                     </span>
                                 </td>
                                 <td>
-                                    <div class="btn-group" role="group" aria-label="Objective Actions">
-                                        <a href="<?= base_url('admin/corporate-plans/kras/' . $objective['id']) ?>"
-                                           class="btn btn-sm btn-primary">
-                                            <i class="fas fa-eye"></i><span class="d-none d-md-inline"> View KRAs</span>
-                                        </a>
-                                        <button type="button" class="btn btn-sm btn-warning edit-objective"
-                                            data-id="<?= $objective['id'] ?>"
-                                            data-code="<?= htmlspecialchars($objective['code']) ?>"
-                                            data-title="<?= htmlspecialchars($objective['title']) ?>"
-                                            data-remarks="<?= htmlspecialchars($objective['remarks']) ?>"
-                                            data-bs-toggle="modal" data-bs-target="#editObjectiveModal">
-                                            <i class="fas fa-edit"></i><span class="d-none d-md-inline"> Edit</span>
-                                        </button>
-                                        <button type="button" class="btn btn-sm btn-<?= $objective['corp_plan_status'] == 1 ? 'danger' : 'success' ?> toggle-status"
-                                            data-id="<?= $objective['id'] ?>">
-                                            <i class="fas fa-<?= $objective['corp_plan_status'] == 1 ? 'ban' : 'check' ?>"></i>
-                                            <span class="d-none d-md-inline"> <?= $objective['corp_plan_status'] == 1 ? 'Deactivate' : 'Activate' ?></span>
-                                        </button>
-                                    </div>
+                                    <a href="<?= base_url('admin/corporate-plans/kras/' . $objective['id']) ?>"
+                                       class="btn btn-outline-primary btn-sm" style="margin-right: 5px;">
+                                        <i class="fas fa-eye me-1"></i> View KRAs
+                                    </a>
+                                    <button type="button" class="btn btn-outline-warning btn-sm edit-objective"
+                                        data-id="<?= $objective['id'] ?>"
+                                        data-code="<?= esc($objective['code']) ?>"
+                                        data-title="<?= esc($objective['title']) ?>"
+                                        data-remarks="<?= esc($objective['remarks']) ?>"
+                                        data-bs-toggle="modal" data-bs-target="#editObjectiveModal"
+                                        style="margin-right: 5px;">
+                                        <i class="fas fa-edit me-1"></i> Edit
+                                    </button>
+                                    <button type="button" class="btn btn-outline-<?= $objective['corp_plan_status'] == 1 ? 'secondary' : 'success' ?> btn-sm toggle-status"
+                                        data-id="<?= $objective['id'] ?>">
+                                        <i class="fas fa-<?= $objective['corp_plan_status'] == 1 ? 'ban' : 'check' ?> me-1"></i>
+                                        <?= $objective['corp_plan_status'] == 1 ? 'Deactivate' : 'Activate' ?>
+                                    </button>
                                 </td>
                             </tr>
                         <?php endforeach; ?>
                     </tbody>
                 </table>
             </div>
+                </div>
+            </div>
         </div>
     </div>
 </div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        <?php if (session()->getFlashdata('success')): ?>
+            toastr.success('<?= session()->getFlashdata('success') ?>');
+        <?php endif; ?>
+
+        <?php if (session()->getFlashdata('error')): ?>
+            toastr.error('<?= session()->getFlashdata('error') ?>');
+        <?php endif; ?>
+
+        <?php if (session()->getFlashdata('errors')): ?>
+            <?php foreach (session()->getFlashdata('errors') as $error): ?>
+                toastr.error('<?= esc($error) ?>');
+            <?php endforeach; ?>
+        <?php endif; ?>
+    });
+</script>
 
 <!-- Add Objective Modal -->
 <div class="modal fade" id="addObjectiveModal" tabindex="-1" role="dialog" aria-labelledby="addObjectiveModalLabel" aria-hidden="true">

@@ -22,6 +22,9 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <!-- DataTables CSS -->
     <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
+    <!-- Select2 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" />
     <!-- Custom CSS -->
     <style>
         :root {
@@ -286,6 +289,19 @@
             height: 40px;
             border-radius: 50%;
             box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            transition: all 0.3s ease;
+        }
+
+        .mobile-nav-toggle:hover {
+            background-color: var(--dark-green);
+            transform: scale(1.1);
+        }
+
+        /* Show burger button when sidebar is collapsed on desktop */
+        @media (min-width: 992px) {
+            .sidebar.collapsed ~ .mobile-nav-toggle {
+                display: block !important;
+            }
         }
 
         /* Button styles */
@@ -404,18 +420,6 @@
                                     <span class="nav-text">Corporate Plans</span>
                                 </a>
                             </li>
-                            <li class="nav-item">
-                                <a class="nav-link <?= strpos(current_url(), 'admin/org-settings') !== false ? 'active' : '' ?>" href="<?= base_url('admin/org-settings') ?>">
-                                    <i class="fas fa-cogs"></i>
-                                    <span class="nav-text">Org.Settings</span>
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link <?= strpos(current_url(), 'admin/commodities') !== false ? 'active' : '' ?>" href="<?= base_url('admin/commodities') ?>">
-                                    <i class="fas fa-seedling"></i>
-                                    <span class="nav-text">Commodities</span>
-                                </a>
-                            </li>
                         </ul>
                     </div>
                 </li>
@@ -431,16 +435,6 @@
                 </li>
                 <?php endif; ?>
 
-                <!-- Commodity Boards Menu - For Admin and Commodity Users -->
-                <?php if (canAccessMenu('commodity_boards', $userRole)): ?>
-                <li class="nav-item">
-                    <a class="nav-link <?= strpos(current_url(), 'commodity-boards') !== false ? 'active' : '' ?>" href="<?= base_url('commodity-boards') ?>">
-                        <i class="fas fa-boxes"></i>
-                        <span class="nav-text">Commodity Boards</span>
-                    </a>
-                </li>
-                <?php endif; ?>
-
                 <!-- Workplans Menu - For Admin and Supervisor -->
                 <?php if (canAccessMenu('workplans', $userRole)): ?>
                 <li class="nav-item">
@@ -451,7 +445,7 @@
                 </li>
                 <?php endif; ?>
 
-                <!-- Supervised Activities Menu - For Supervisors -->
+                <!-- Supervised Activities Menu - For Admin and Supervisors -->
                 <?php if (canAccessMenu('supervised_activities', $userRole)): ?>
                 <li class="nav-item">
                     <a class="nav-link <?= strpos(current_url(), 'supervised-activities') !== false ? 'active' : '' ?>" href="<?= base_url('supervised-activities') ?>">
@@ -495,12 +489,12 @@
                 <!-- Reports Menu - For All Roles -->
                 <?php if (canAccessMenu('reports', $userRole)): ?>
                 <li class="nav-item">
-                    <a class="nav-link <?= (strpos(current_url(), 'reports/mtdp') !== false || strpos(current_url(), 'reports/nasp') !== false || strpos(current_url(), 'reports/workplan') !== false || strpos(current_url(), 'reports/activities-map') !== false || strpos(current_url(), 'reports/commodity') !== false || strpos(current_url(), 'reports/hr') !== false) ? 'active' : '' ?>" href="#reportsSubmenu" data-bs-toggle="collapse">
+                    <a class="nav-link <?= (strpos(current_url(), 'reports/mtdp') !== false || strpos(current_url(), 'reports/nasp') !== false || strpos(current_url(), 'reports/workplan') !== false || strpos(current_url(), 'reports/activities-map') !== false || strpos(current_url(), 'reports/hr') !== false) ? 'active' : '' ?>" href="#reportsSubmenu" data-bs-toggle="collapse">
                         <i class="fas fa-chart-bar"></i>
                         <span class="nav-text">Reports</span>
                         <i class="fas fa-chevron-down ms-auto"></i>
                     </a>
-                    <div class="collapse <?= (strpos(current_url(), 'reports/mtdp') !== false || strpos(current_url(), 'reports/nasp') !== false || strpos(current_url(), 'reports/workplan') !== false || strpos(current_url(), 'reports/activities-map') !== false || strpos(current_url(), 'reports/commodity') !== false || strpos(current_url(), 'reports/hr') !== false) ? 'show' : '' ?>" id="reportsSubmenu">
+                    <div class="collapse <?= (strpos(current_url(), 'reports/mtdp') !== false || strpos(current_url(), 'reports/nasp') !== false || strpos(current_url(), 'reports/workplan') !== false || strpos(current_url(), 'reports/activities-map') !== false || strpos(current_url(), 'reports/hr') !== false) ? 'show' : '' ?>" id="reportsSubmenu">
                         <ul class="nav flex-column ms-3">
                             <li class="nav-item">
                                 <a class="nav-link <?= strpos(current_url(), 'reports/mtdp') !== false ? 'active' : '' ?>" href="<?= base_url('reports/mtdp') ?>">
@@ -524,12 +518,6 @@
                                 <a class="nav-link <?= strpos(current_url(), 'reports/activities-map') !== false ? 'active' : '' ?>" href="<?= base_url('reports/activities-map') ?>">
                                     <i class="fas fa-map-marked-alt"></i>
                                     <span class="nav-text">Activities Map</span>
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link <?= strpos(current_url(), 'reports/commodity') !== false ? 'active' : '' ?>" href="<?= base_url('reports/commodity') ?>">
-                                    <i class="fas fa-seedling"></i>
-                                    <span class="nav-text">Commodity Reports</span>
                                 </a>
                             </li>
                             <li class="nav-item">
@@ -618,11 +606,8 @@
     <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
     <!-- Toastr JS -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
-    <!-- Additional JS libraries can be added here -->
-    <!-- Select2 -->
-    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <!-- Select2 JS -->
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
-
     <!-- HTML2PDF Library for PDF Generation -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
@@ -693,7 +678,7 @@
                 checkScreenSize();
             });
 
-            // Toggle sidebar on desktop
+            // Toggle sidebar on desktop (from sidebar header button)
             $('#toggleSidebar').click(function() {
                 $('#sidebar').toggleClass('collapsed');
                 $('#mainContent').toggleClass('expanded');
@@ -706,9 +691,23 @@
                 }
             });
 
-            // Mobile menu toggle
+            // Mobile/Desktop burger menu toggle
             $('#mobileNavToggle').click(function() {
-                $('#sidebar').toggleClass('expanded');
+                if ($(window).width() >= 992) {
+                    // Desktop: toggle collapsed state
+                    $('#sidebar').toggleClass('collapsed');
+                    $('#mainContent').toggleClass('expanded');
+
+                    // Update sidebar header button icon
+                    if ($('#sidebar').hasClass('collapsed')) {
+                        $('#toggleSidebar i').removeClass('fa-chevron-left').addClass('fa-bars');
+                    } else {
+                        $('#toggleSidebar i').removeClass('fa-bars').addClass('fa-chevron-left');
+                    }
+                } else {
+                    // Mobile: toggle expanded state
+                    $('#sidebar').toggleClass('expanded');
+                }
             });
 
             // Close mobile sidebar when clicking outside

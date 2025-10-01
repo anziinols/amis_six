@@ -12,6 +12,32 @@
                             <h4 class="card-title">Welcome, <?= esc($user['name']) ?>!</h4>
                             <p class="card-text">
                                 <span class="badge bg-light text-primary"><?= ucfirst(esc($user['role'])) ?></span>
+
+                                <?php
+                                // Display user accessibility flags from session
+                                $isAdmin = session()->get('is_admin') ?? 0;
+                                $isSupervisor = session()->get('is_supervisor') ?? 0;
+                                $isEvaluator = session()->get('is_evaluator') ?? 0;
+                                ?>
+
+                                <?php if($isAdmin == 1): ?>
+                                    <span class="badge bg-danger">
+                                        <i class="fas fa-user-shield me-1"></i>Admin
+                                    </span>
+                                <?php endif; ?>
+
+                                <?php if($isSupervisor == 1): ?>
+                                    <span class="badge bg-warning text-dark">
+                                        <i class="fas fa-user-tie me-1"></i>Supervisor
+                                    </span>
+                                <?php endif; ?>
+
+                                <?php if($isEvaluator == 1): ?>
+                                    <span class="badge bg-info">
+                                        <i class="fas fa-clipboard-check me-1"></i>Evaluator
+                                    </span>
+                                <?php endif; ?>
+
                                 <?php if(isset($userData['branch_id']) && $userData['branch_id']): ?>
                                     <span class="badge bg-light text-primary">
                                         <?= isset($myWorkplans[0]['branch_name']) ? esc($myWorkplans[0]['branch_name']) : 'Branch' ?>

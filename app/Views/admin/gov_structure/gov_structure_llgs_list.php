@@ -17,20 +17,21 @@
     <div class="row">
         <div class="col-12">
             <div class="card">
-                <div class="card-header">
-                    <h3 class="card-title">LLGs in <?= esc($district['name']) ?> District</h3>
-                    <div class="card-tools">
-                        <div class="btn-group" role="group">
-                            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addLLGModal">
-                                <i class="fas fa-plus"></i> Add LLG
-                            </button>
-                            <a href="<?= base_url('admin/gov-structure/districts/'.$district['id'].'/llgs/csv-template') ?>" class="btn btn-success">
-                                <i class="fas fa-download"></i> Download CSV Template
-                            </a>
-                            <button type="button" class="btn btn-info" data-bs-toggle="modal" data-bs-target="#importLlgModal">
-                                <i class="fas fa-upload"></i> Import CSV
-                            </button>
-                        </div>
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h3 class="card-title mb-0">LLGs in <?= esc($district['name']) ?> District</h3>
+                    <div>
+                        <a href="<?= base_url('admin/gov-structure/provinces/'.$province['id'].'/districts') ?>" class="btn btn-secondary me-2">
+                            <i class="fas fa-arrow-left"></i> Back to Districts
+                        </a>
+                        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addLLGModal">
+                            <i class="fas fa-plus"></i> Add LLG
+                        </button>
+                        <a href="<?= base_url('admin/gov-structure/districts/'.$district['id'].'/llgs/csv-template') ?>" class="btn btn-success">
+                            <i class="fas fa-download"></i> Download CSV Template
+                        </a>
+                        <button type="button" class="btn btn-info" data-bs-toggle="modal" data-bs-target="#importLlgModal">
+                            <i class="fas fa-upload"></i> Import CSV
+                        </button>
                     </div>
                 </div>
                 <div class="card-body">
@@ -61,31 +62,31 @@
                                         <td><?= $llg['map_center'] ?></td>
                                         <td><?= esc($llg['map_zoom']) ?></td>
                                         <td>
-                                            <div class="btn-group" role="group" aria-label="LLG actions">
-                                                <a href="<?= base_url('admin/gov-structure/llgs/'.$llg['id'].'/wards') ?>" class="btn btn-info btn-sm">
-                                                    <i class="fas fa-eye"></i> View Wards
-                                                </a>
-                                                <button type="button" class="btn btn-warning btn-sm edit-llg-btn"
-                                                        data-id="<?= $llg['id'] ?>"
-                                                        data-bs-toggle="modal"
-                                                        data-bs-target="#editLLGModal">
-                                                    <i class="fas fa-edit"></i> Edit
-                                                </button>
-                                                <?php
-                                                // Check for ward dependencies (assuming 'ward' level exists)
-                                                $wardCount = model('GovStructureModel')->where('parent_id', $llg['id'])->where('level', 'ward')->countAllResults();
-                                                $hasWards = $wardCount > 0;
-                                                ?>
-                                                <button type="button" class="btn btn-danger btn-sm delete-llg-btn"
-                                                        data-id="<?= $llg['id'] ?>"
-                                                        data-name="<?= esc($llg['name']) ?>"
-                                                        data-bs-toggle="modal"
-                                                        data-bs-target="#deleteLLGModal"
-                                                        <?= $hasWards ? 'disabled' : '' ?>
-                                                        title="<?= $hasWards ? 'Cannot delete LLG with wards' : 'Delete LLG' ?>">
-                                                    <i class="fas fa-trash"></i> Delete
-                                                </button>
-                                            </div>
+                                            <a href="<?= base_url('admin/gov-structure/llgs/'.$llg['id'].'/wards') ?>" class="btn btn-outline-primary" title="View Wards" style="margin-right: 5px;">
+                                                <i class="fas fa-eye me-1"></i> View Wards
+                                            </a>
+                                            <button type="button" class="btn btn-outline-warning edit-llg-btn"
+                                                    data-id="<?= $llg['id'] ?>"
+                                                    data-bs-toggle="modal"
+                                                    data-bs-target="#editLLGModal"
+                                                    title="Edit"
+                                                    style="margin-right: 5px;">
+                                                <i class="fas fa-edit me-1"></i> Edit
+                                            </button>
+                                            <?php
+                                            // Check for ward dependencies (assuming 'ward' level exists)
+                                            $wardCount = model('GovStructureModel')->where('parent_id', $llg['id'])->where('level', 'ward')->countAllResults();
+                                            $hasWards = $wardCount > 0;
+                                            ?>
+                                            <button type="button" class="btn btn-outline-danger delete-llg-btn"
+                                                    data-id="<?= $llg['id'] ?>"
+                                                    data-name="<?= esc($llg['name']) ?>"
+                                                    data-bs-toggle="modal"
+                                                    data-bs-target="#deleteLLGModal"
+                                                    <?= $hasWards ? 'disabled' : '' ?>
+                                                    title="<?= $hasWards ? 'Cannot delete LLG with wards' : 'Delete LLG' ?>">
+                                                <i class="fas fa-trash me-1"></i> Delete
+                                            </button>
                                         </td>
                                     </tr>
                                     <?php endforeach; ?>

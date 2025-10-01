@@ -64,9 +64,6 @@
             <form method="post" action="<?= base_url('workplans/' . $workplan['id'] . '/activities/' . $activity['id'] . '/others') ?>">
                 <?= csrf_field() ?>
 
-                <!-- Hidden field for link_type -->
-                <input type="hidden" name="link_type" value="other">
-
                 <!-- Title Field -->
                 <div class="row">
                     <div class="col-md-12">

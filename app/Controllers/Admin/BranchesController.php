@@ -125,11 +125,11 @@ class BranchesController extends BaseController
             'abbrev' => $this->request->getPost('abbrev'),
             'remarks' => $this->request->getPost('remarks'),
             'branch_status' => 1, // Active by default
-            'branch_status_by' => session()->get('id') ?: 1, // Fallback to default user if session ID not available
+            'branch_status_by' => session()->get('user_id') ?: 1, // Fallback to default user if session ID not available
             'branch_status_at' => date('Y-m-d H:i:s'),
             'branch_status_remarks' => 'Initial activation',
-            'created_by' => session()->get('user_name') ?: 'System',
-            'updated_by' => session()->get('user_name') ?: 'System'
+            'created_by' => session()->get('user_id') ?: 1,
+            'updated_by' => session()->get('user_id') ?: 1
         ];
         
         if ($this->branchesModel->save($data)) {
@@ -234,7 +234,7 @@ class BranchesController extends BaseController
             'name' => $this->request->getPost('name'),
             'abbrev' => $this->request->getPost('abbrev'),
             'remarks' => $this->request->getPost('remarks'),
-            'updated_by' => session()->get('user_name') ?: 'System'
+            'updated_by' => session()->get('user_id') ?: 1
         ];
         
         if ($this->branchesModel->save($data)) {

@@ -4,33 +4,29 @@
 <div class="container-fluid">
     <div class="row mb-2">
         <div class="col-12">
-            <a href="<?= base_url('admin/nasp-plans/apas/' . $apa['id'] . '/dips/' . $dip['id'] . '/specific-areas/' . $specificArea['id'] . '/objectives') ?>" class="btn btn-sm btn-outline-secondary me-2">
-                <i class="fas fa-arrow-left"></i> Back to Objectives
-            </a>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="<?= base_url('admin') ?>">Home</a></li>
+                    <li class="breadcrumb-item"><a href="<?= base_url('admin/nasp-plans') ?>">NASP Plans</a></li>
+                    <li class="breadcrumb-item"><a href="<?= base_url('admin/nasp-plans/' . $plan['id'] . '/apas') ?>"><?= esc($plan['title']) ?></a></li>
+                    <li class="breadcrumb-item"><a href="<?= base_url('admin/nasp-plans/apas/' . $apa['id'] . '/dips') ?>"><?= esc($apa['title']) ?></a></li>
+                    <li class="breadcrumb-item"><a href="<?= base_url('admin/nasp-plans/apas/' . $apa['id'] . '/dips/' . $dip['id'] . '/specific-areas') ?>"><?= esc($dip['title']) ?></a></li>
+                    <li class="breadcrumb-item"><a href="<?= base_url('admin/nasp-plans/apas/' . $apa['id'] . '/dips/' . $dip['id'] . '/specific-areas/' . $specificArea['id'] . '/objectives') ?>"><?= esc($specificArea['title']) ?></a></li>
+                    <li class="breadcrumb-item active" aria-current="page">Outputs in <?= esc($objective['title']) ?></li>
+                </ol>
+            </nav>
         </div>
     </div>
-
-    <!-- Display flash messages -->
-    <?php if (session()->has('success')) : ?>
-        <div class="alert alert-success alert-dismissible fade show" role="alert">
-            <?= session('success') ?>
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
-    <?php endif; ?>
-
-    <?php if (session()->has('error')) : ?>
-        <div class="alert alert-danger alert-dismissible fade show" role="alert">
-            <?= session('error') ?>
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
-    <?php endif; ?>
 
     <div class="row">
         <div class="col-12">
             <div class="card">
-                <div class="card-header">
-                    <h3 class="card-title">Outputs for <?= esc($objective['title']) ?> (<?= esc($objective['code']) ?>)</h3>
-                    <div class="card-tools">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h3 class="card-title mb-0">Outputs for <?= esc($objective['title']) ?> (<?= esc($objective['code']) ?>)</h3>
+                    <div>
+                        <a href="<?= base_url('admin/nasp-plans/apas/' . $apa['id'] . '/dips/' . $dip['id'] . '/specific-areas/' . $specificArea['id'] . '/objectives') ?>" class="btn btn-secondary me-2">
+                            <i class="fas fa-arrow-left"></i> Back to Objectives
+                        </a>
                         <a href="<?= base_url('admin/nasp-plans/apas/' . $apa['id'] . '/dips/' . $dip['id'] . '/specific-areas/' . $specificArea['id'] . '/objectives/' . $objective['id'] . '/outputs/new') ?>" class="btn btn-primary">
                             <i class="fas fa-plus"></i> Add New Output
                         </a>
@@ -72,21 +68,19 @@
                                                 </span>
                                             </td>
                                             <td>
-                                                <div class="btn-group" role="group" aria-label="Output actions">
-                                                    <a href="<?= base_url('admin/nasp-plans/apas/' . $apa['id'] . '/dips/' . $dip['id'] . '/specific-areas/' . $specificArea['id'] . '/objectives/' . $objective['id'] . '/outputs/' . $output['id']) ?>" class="btn btn-info btn-sm">
-                                                        <i class="fas fa-eye"></i> View
-                                                    </a>
-                                                    <a href="<?= base_url('admin/nasp-plans/apas/' . $apa['id'] . '/dips/' . $dip['id'] . '/specific-areas/' . $specificArea['id'] . '/objectives/' . $objective['id'] . '/outputs/' . $output['id'] . '/indicators') ?>" class="btn btn-primary btn-sm">
-                                                        <i class="fas fa-list"></i> Manage Indicators
-                                                    </a>
-                                                    <a href="<?= base_url('admin/nasp-plans/apas/' . $apa['id'] . '/dips/' . $dip['id'] . '/specific-areas/' . $specificArea['id'] . '/objectives/' . $objective['id'] . '/outputs/' . $output['id'] . '/edit') ?>" class="btn btn-warning btn-sm">
-                                                        <i class="fas fa-edit"></i> Edit
-                                                    </a>
-                                                    <a href="<?= base_url('admin/nasp-plans/apas/' . $apa['id'] . '/dips/' . $dip['id'] . '/specific-areas/' . $specificArea['id'] . '/objectives/' . $objective['id'] . '/outputs/' . $output['id'] . '/toggle-status') ?>" class="btn btn-<?= $output['nasp_status'] == 1 ? 'danger' : 'success' ?> btn-sm">
-                                                        <i class="fas fa-<?= $output['nasp_status'] == 1 ? 'ban' : 'check-circle' ?>"></i>
-                                                        <?= $output['nasp_status'] == 1 ? 'Deactivate' : 'Activate' ?>
-                                                    </a>
-                                                </div>
+                                                <a href="<?= base_url('admin/nasp-plans/apas/' . $apa['id'] . '/dips/' . $dip['id'] . '/specific-areas/' . $specificArea['id'] . '/objectives/' . $objective['id'] . '/outputs/' . $output['id']) ?>" class="btn btn-outline-primary btn-sm" style="margin-right: 5px;">
+                                                    <i class="fas fa-eye me-1"></i> View
+                                                </a>
+                                                <a href="<?= base_url('admin/nasp-plans/apas/' . $apa['id'] . '/dips/' . $dip['id'] . '/specific-areas/' . $specificArea['id'] . '/objectives/' . $objective['id'] . '/outputs/' . $output['id'] . '/indicators') ?>" class="btn btn-outline-primary btn-sm" style="margin-right: 5px;">
+                                                    <i class="fas fa-list me-1"></i> Manage Indicators
+                                                </a>
+                                                <a href="<?= base_url('admin/nasp-plans/apas/' . $apa['id'] . '/dips/' . $dip['id'] . '/specific-areas/' . $specificArea['id'] . '/objectives/' . $objective['id'] . '/outputs/' . $output['id'] . '/edit') ?>" class="btn btn-outline-warning btn-sm" style="margin-right: 5px;">
+                                                    <i class="fas fa-edit me-1"></i> Edit
+                                                </a>
+                                                <a href="<?= base_url('admin/nasp-plans/apas/' . $apa['id'] . '/dips/' . $dip['id'] . '/specific-areas/' . $specificArea['id'] . '/objectives/' . $objective['id'] . '/outputs/' . $output['id'] . '/toggle-status') ?>" class="btn btn-outline-<?= $output['nasp_status'] == 1 ? 'secondary' : 'success' ?> btn-sm">
+                                                    <i class="fas fa-<?= $output['nasp_status'] == 1 ? 'ban' : 'check-circle' ?> me-1"></i>
+                                                    <?= $output['nasp_status'] == 1 ? 'Deactivate' : 'Activate' ?>
+                                                </a>
                                             </td>
                                         </tr>
                                     <?php endforeach; ?>

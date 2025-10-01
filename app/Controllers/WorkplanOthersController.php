@@ -33,7 +33,8 @@ class WorkplanOthersController extends ResourceController
     /**
      * Display Others links for a specific workplan activity
      * GET /workplans/{workplanId}/activities/{activityId}/others
-     * 
+     * Accessible by all users
+     *
      * @param int|null $workplanId
      * @param int|null $activityId
      * @return mixed
@@ -54,15 +55,11 @@ class WorkplanOthersController extends ResourceController
         // Get existing others links for this activity
         $othersLinks = $this->workplanOthersLinkModel->getOthersLinksForActivity($activityId);
 
-        // Get recurrent activities (templates)
-        $recurrentActivities = $this->workplanOthersLinkModel->getRecurrentActivities();
-
         $data = [
             'title' => 'Others Links - ' . $activity['title'],
             'workplan' => $workplan,
             'activity' => $activity,
-            'othersLinks' => $othersLinks,
-            'recurrentActivities' => $recurrentActivities
+            'othersLinks' => $othersLinks
         ];
 
         return view('workplan_others/workplan_others_index', $data);
@@ -71,7 +68,8 @@ class WorkplanOthersController extends ResourceController
     /**
      * Show form to create new Others link
      * GET /workplans/{workplanId}/activities/{activityId}/others/new
-     * 
+     * Accessible by all users
+     *
      * @param int|null $workplanId
      * @param int|null $activityId
      * @return mixed
@@ -101,7 +99,8 @@ class WorkplanOthersController extends ResourceController
     /**
      * Create new Others link
      * POST /workplans/{workplanId}/activities/{activityId}/others
-     * 
+     * Accessible by all users
+     *
      * @param int|null $workplanId
      * @param int|null $activityId
      * @return mixed
@@ -121,55 +120,21 @@ class WorkplanOthersController extends ResourceController
 
         $userId = session()->get('user_id');
 
-        // Check if linking to a recurrent activity
-        $recurrentActivityId = $this->request->getPost('recurrent_activity_id');
-        
-        if (!empty($recurrentActivityId)) {
-            // Link to existing recurrent activity
-            $recurrentActivity = $this->workplanOthersLinkModel->find($recurrentActivityId);
-            if (!$recurrentActivity) {
-                return redirect()->back()->withInput()->with('error', 'Selected recurrent activity not found.');
-            }
-
-            $data = [
-                'workplan_activity_id' => $activityId,
-                'link_type' => $recurrentActivity['link_type'],
-                'title' => $recurrentActivity['title'],
-                'description' => $recurrentActivity['description'],
-                'justification' => $this->request->getPost('justification') ?: $recurrentActivity['justification'],
-                'category' => $recurrentActivity['category'],
-                'priority_level' => $this->request->getPost('priority_level') ?: $recurrentActivity['priority_level'],
-                'expected_outcome' => $recurrentActivity['expected_outcome'],
-                'target_beneficiaries' => $recurrentActivity['target_beneficiaries'],
-                'budget_estimate' => $this->request->getPost('budget_estimate'),
-                'duration_months' => $this->request->getPost('duration_months'),
-                'start_date' => $this->request->getPost('start_date'),
-                'end_date' => $this->request->getPost('end_date'),
-                'remarks' => $this->request->getPost('remarks'),
-                'created_by' => $userId,
-                'updated_by' => $userId
-            ];
-        } else {
-            // Create custom others link
-            $data = [
-                'workplan_activity_id' => $activityId,
-                'link_type' => $this->request->getPost('link_type'),
-                'title' => $this->request->getPost('title'),
-                'description' => $this->request->getPost('description'),
-                'justification' => $this->request->getPost('justification'),
-                'category' => $this->request->getPost('category'),
-                'priority_level' => $this->request->getPost('priority_level'),
-                'expected_outcome' => $this->request->getPost('expected_outcome'),
-                'target_beneficiaries' => $this->request->getPost('target_beneficiaries'),
-                'budget_estimate' => $this->request->getPost('budget_estimate'),
-                'duration_months' => $this->request->getPost('duration_months'),
-                'start_date' => $this->request->getPost('start_date'),
-                'end_date' => $this->request->getPost('end_date'),
-                'remarks' => $this->request->getPost('remarks'),
-                'created_by' => $userId,
-                'updated_by' => $userId
-            ];
-        }
+        // Create others link
+        $data = [
+            'workplan_activity_id' => $activityId,
+            'title' => $this->request->getPost('title'),
+            'description' => $this->request->getPost('description'),
+            'justification' => $this->request->getPost('justification'),
+            'expected_outcome' => $this->request->getPost('expected_outcome'),
+            'target_beneficiaries' => $this->request->getPost('target_beneficiaries'),
+            'budget_estimate' => $this->request->getPost('budget_estimate'),
+            'start_date' => $this->request->getPost('start_date'),
+            'end_date' => $this->request->getPost('end_date'),
+            'remarks' => $this->request->getPost('remarks'),
+            'created_by' => $userId,
+            'updated_by' => $userId
+        ];
 
         if ($this->workplanOthersLinkModel->save($data)) {
             return redirect()->to('/workplans/' . $workplanId . '/activities/' . $activityId . '/plans')
@@ -183,7 +148,8 @@ class WorkplanOthersController extends ResourceController
     /**
      * Show form to edit Others link
      * GET /workplans/{workplanId}/activities/{activityId}/others/{id}/edit
-     * 
+     * Accessible by all users
+     *
      * @param int|null $workplanId
      * @param int|null $activityId
      * @param int|null $id
@@ -221,7 +187,8 @@ class WorkplanOthersController extends ResourceController
     /**
      * Update Others link
      * POST /workplans/{workplanId}/activities/{activityId}/others/{id}
-     * 
+     * Accessible by all users
+     *
      * @param int|null $workplanId
      * @param int|null $activityId
      * @param int|null $id
@@ -250,16 +217,12 @@ class WorkplanOthersController extends ResourceController
 
         $data = [
             'id' => $id,
-            'link_type' => $this->request->getPost('link_type'),
             'title' => $this->request->getPost('title'),
             'description' => $this->request->getPost('description'),
             'justification' => $this->request->getPost('justification'),
-            'category' => $this->request->getPost('category'),
-            'priority_level' => $this->request->getPost('priority_level'),
             'expected_outcome' => $this->request->getPost('expected_outcome'),
             'target_beneficiaries' => $this->request->getPost('target_beneficiaries'),
             'budget_estimate' => $this->request->getPost('budget_estimate'),
-            'duration_months' => $this->request->getPost('duration_months'),
             'start_date' => $this->request->getPost('start_date'),
             'end_date' => $this->request->getPost('end_date'),
             'status' => $this->request->getPost('status'),
@@ -279,7 +242,8 @@ class WorkplanOthersController extends ResourceController
     /**
      * Delete Others link
      * POST /workplans/{workplanId}/activities/{activityId}/others/{id}/delete
-     * 
+     * Accessible by all users
+     *
      * @param int|null $workplanId
      * @param int|null $activityId
      * @param int|null $id

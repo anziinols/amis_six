@@ -9,9 +9,14 @@ AMIS (Agricultural Management Information System) - a CodeIgniter 4 web applicat
 ## Critical Development Rules
 
 **IMPORTANT - Database:**
-- **NEVER modify existing database structure or create migration files to change tables**
+- **Database modifications (CREATE, ALTER, DROP) are ONLY allowed when explicitly instructed by the user**
+- **NEVER modify existing database structure or create migration files to change tables without explicit user instruction**
 - When database conflicts occur, adapt Controllers, Views, and Models to match the existing database
 - Use existing models only - do not create new models or tables without explicit permission
+- When database changes are needed:
+  - Document the required changes in `dev_guide/DB_tables_updates_01_10_2025.md`
+  - Create SQL scripts for the user to review and execute manually
+  - Wait for explicit user approval before proceeding with any database modifications
 
 **Code Style:**
 - Use standard CodeIgniter 4 RESTful approach - separate GET and PUT methods
@@ -44,12 +49,18 @@ chmod -R 755 public/uploads/
 composer test                  # Run tests
 php spark migrate              # Run new migrations
 php spark migrate:rollback     # Rollback last batch
+php spark migrate:status       # Check migration status
 php spark cache:clear          # Clear caches
 
-# Code generation
+# Code generation (use sparingly per project rules)
 php spark make:migration CreateTableName
 php spark make:model ModelName
 php spark make:controller ControllerName
+
+# Running the application
+# Web server must point document root to public/ folder
+# Development: Use PHP built-in server or XAMPP/WAMP
+# The application runs at the baseURL configured in .env
 ```
 
 ## Architecture Overview
@@ -161,9 +172,10 @@ When adding new activity types, ensure all three controller methods are updated:
 - File upload validation with size and type restrictions
 
 ### AJAX Integration
-- API routes in `/api` group for dynamic data loading
+- **DO NOT use AJAX for form submissions** - use standard CodeIgniter form submission
+- API routes in `/api` group for dynamic data loading only
 - Common pattern for hierarchical dropdowns (Province → District → LLG → Ward)
-- JSON responses for form population
+- JSON responses for form population and dynamic data
 
 ## Testing Guidelines
 
@@ -257,3 +269,17 @@ $formattedTime = date('Y-m-d H:i:s', strtotime("$date $time"));
 
 **Uploads:**
 - `public/uploads/` - File storage directory with subdirectories by type
+
+## Reference Documentation
+
+Development guides and feature documentation are available in:
+- `dev_guide/` - Implementation plans and guides for activities features
+- Root directory - Feature-specific markdown files (e.g., `EVALUATION_FEATURE.md`, `SUPERVISED_ACTIVITIES_FEATURE.md`)
+
+Common activity implementation types:
+- Meetings (`activities_meetings`)
+- Trainings (`activities_training`)
+- Agreements (`activities_agreements`)
+- Infrastructure (`activities_infrastructure`)
+- Inputs (`activities_inputs`)
+- Outputs (`activities_outputs`)

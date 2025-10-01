@@ -210,6 +210,7 @@ class CorporatePlanController extends BaseController
 
         $data = [
             'title' => 'Objectives for ' . $parentPlan['title'],
+            'corporatePlan' => $parentPlan,
             'parentPlan' => $parentPlan,
             'objectives' => $this->corporatePlanModel->getItemsByTypeAndParent('objective', $corporatePlanId)
         ];

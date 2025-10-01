@@ -4,20 +4,36 @@
 <?= $this->extend('templates/system_template') ?>
 <?= $this->section('content') ?>
 <div class="container-fluid">
-    <div class="card mb-4">
-        <div class="card-header d-flex justify-content-between align-items-center">
-            <h4 class="mb-0">Staff List for SME: <?= esc($sme['sme_name']) ?></h4>
-            <div>
-                <a href="<?= base_url('smes/staff/' . $sme['id'] . '/new') ?>" class="btn btn-primary">
-                    <i class="fas fa-plus"></i> New Staff
-                </a>
-                <a href="<?= base_url('smes/' . $sme['id']) ?>" class="btn btn-secondary">
-                    <i class="fas fa-arrow-left"></i> Back to SME
-                </a>
-            </div>
+    <div class="row mb-2">
+        <div class="col-12">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="<?= base_url('dashboard') ?>">Home</a></li>
+                    <li class="breadcrumb-item"><a href="<?= base_url('smes') ?>">SMEs</a></li>
+                    <li class="breadcrumb-item"><a href="<?= base_url('smes/' . $sme['id']) ?>"><?= esc($sme['sme_name']) ?></a></li>
+                    <li class="breadcrumb-item active" aria-current="page">Staff</li>
+                </ol>
+            </nav>
         </div>
-        <div class="card-body">
-    <table id="staffTable" class="table table-striped table-bordered">
+    </div>
+
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h3 class="card-title mb-0">Staff for <?= esc($sme['sme_name']) ?></h3>
+                    <div>
+                        <a href="<?= base_url('smes/' . $sme['id']) ?>" class="btn btn-secondary me-2">
+                            <i class="fas fa-arrow-left"></i> Back to SME
+                        </a>
+                        <a href="<?= base_url('smes/staff/' . $sme['id'] . '/new') ?>" class="btn btn-primary">
+                            <i class="fas fa-plus"></i> New Staff
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table id="staffTable" class="table table-bordered table-striped">
         <thead>
             <tr>
                 <th>#</th>
@@ -41,19 +57,36 @@
                     <td><?= esc($s['contacts']) ?></td>
                     <td><span class="badge bg-<?= $s['status'] == 'active' ? 'success' : 'secondary' ?>"><?= esc($s['status']) ?></span></td>
                     <td>
-                        <a href="<?= base_url('smes/staff/' . $sme['id'] . '/' . $s['id'] . '/edit') ?>" class="btn btn-sm btn-warning"><i class="fas fa-edit"></i></a>
-                        <a href="<?= base_url('smes/staff/' . $sme['id'] . '/' . $s['id'] . '/delete') ?>" class="btn btn-sm btn-danger" onclick="return confirm('Delete?')"><i class="fas fa-trash"></i></a>
+                        <a href="<?= base_url('smes/staff/' . $sme['id'] . '/' . $s['id'] . '/edit') ?>" class="btn btn-outline-warning" title="Edit Staff" style="margin-right: 5px;">
+                            <i class="fas fa-edit me-1"></i> Edit
+                        </a>
+                        <a href="<?= base_url('smes/staff/' . $sme['id'] . '/' . $s['id'] . '/delete') ?>" class="btn btn-outline-danger" title="Delete Staff" onclick="return confirm('Are you sure you want to delete this staff member?')">
+                            <i class="fas fa-trash me-1"></i> Delete
+                        </a>
                     </td>
                 </tr>
             <?php endforeach; ?>
         </tbody>
     </table>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 </div>
 <?= $this->endSection() ?>
 <?= $this->section('scripts') ?>
 <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        <?php if (session()->getFlashdata('success')): ?>
+            toastr.success('<?= session()->getFlashdata('success') ?>');
+        <?php endif; ?>
+
+        <?php if (session()->getFlashdata('error')): ?>
+            toastr.error('<?= session()->getFlashdata('error') ?>');
+        <?php endif; ?>
+    });
+
 $(function(){
     $('#staffTable').DataTable({
         // Configure the counter column to work with pagination

@@ -7,19 +7,36 @@
 <!-- Add Leaflet CSS in the content section -->
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
 
-<div class="container">
-    <div class="card">
-        <div class="card-header d-flex justify-content-between align-items-center">
-            <h4 class="mb-0">SME Details</h4>
-            <div>
-                <a href="<?= base_url('smes/' . $sme['id'] . '/edit') ?>" class="btn btn-warning">
-                    <i class="fas fa-edit"></i> Edit
-                </a>
-                <a href="<?= base_url('smes') ?>" class="btn btn-secondary">
-                    <i class="fas fa-arrow-left"></i> Back
-                </a>
-            </div>
+<div class="container-fluid">
+    <div class="row mb-2">
+        <div class="col-12">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="<?= base_url('dashboard') ?>">Home</a></li>
+                    <li class="breadcrumb-item"><a href="<?= base_url('smes') ?>">SMEs</a></li>
+                    <li class="breadcrumb-item active" aria-current="page"><?= esc($sme['sme_name']) ?></li>
+                </ol>
+            </nav>
         </div>
+    </div>
+
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h3 class="card-title mb-0">SME Details</h3>
+                    <div>
+                        <a href="<?= base_url('smes/staff/' . $sme['id']) ?>" class="btn btn-success me-2">
+                            <i class="fas fa-users"></i> View Staff
+                        </a>
+                        <a href="<?= base_url('smes/' . $sme['id'] . '/edit') ?>" class="btn btn-warning me-2">
+                            <i class="fas fa-edit"></i> Edit
+                        </a>
+                        <a href="<?= base_url('smes') ?>" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left"></i> Back to SMEs
+                        </a>
+                    </div>
+                </div>
         <div class="card-body">
             <div class="row">
                 <!-- Left Column - Basic Info -->
@@ -128,12 +145,25 @@
                     <?php endif; ?>
                 </div>
             </div>
+                </div>
+            </div>
         </div>
     </div>
 </div>
 <?= $this->endSection() ?>
 
 <?= $this->section('scripts') ?>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        <?php if (session()->getFlashdata('success')): ?>
+            toastr.success('<?= session()->getFlashdata('success') ?>');
+        <?php endif; ?>
+
+        <?php if (session()->getFlashdata('error')): ?>
+            toastr.error('<?= session()->getFlashdata('error') ?>');
+        <?php endif; ?>
+    });
+</script>
 <?php if (!empty($sme['gps_coordinates'])): ?>
     <!-- Leaflet JavaScript -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>

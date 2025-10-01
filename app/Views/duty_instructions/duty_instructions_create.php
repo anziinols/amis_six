@@ -61,7 +61,7 @@
                     <div class="col-md-6">
                         <div class="mb-3">
                             <label for="supervisor_id" class="form-label">Supervisor <span class="text-danger">*</span></label>
-                            <select class="form-select" id="supervisor_id" name="supervisor_id" required>
+                            <select class="form-select select2" id="supervisor_id" name="supervisor_id" required>
                                 <option value="">Select Supervisor</option>
                                 <?php foreach ($supervisors as $supervisor): ?>
                                     <option value="<?= $supervisor['id'] ?>" <?= old('supervisor_id') == $supervisor['id'] ? 'selected' : '' ?>>
@@ -104,13 +104,22 @@
         </div>
     </div>
 </div>
+<?= $this->endSection() ?>
 
+<?= $this->section('scripts') ?>
 <script>
-document.addEventListener('DOMContentLoaded', function() {
+$(document).ready(function() {
+    // Initialize Select2 for supervisor dropdown
+    $('.select2').select2({
+        theme: 'bootstrap-5',
+        width: '100%',
+        placeholder: 'Select Supervisor'
+    });
+
     // Auto-generate instruction number based on workplan selection
     const workplanSelect = document.getElementById('workplan_id');
     const instructionNumberInput = document.getElementById('duty_instruction_number');
-    
+
     workplanSelect.addEventListener('change', function() {
         if (this.value && !instructionNumberInput.value) {
             // Generate a simple instruction number

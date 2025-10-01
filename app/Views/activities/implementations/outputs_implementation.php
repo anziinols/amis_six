@@ -157,9 +157,9 @@
 
                         <!-- Total Value -->
                         <div class="mb-3">
-                            <label class="form-label">Total Value (KES)</label>
+                            <label class="form-label">Total Value (<?= CURRENCY_SYMBOL ?>)</label>
                             <input type="number" step="0.01" class="form-control" name="total_value"
-                                   placeholder="e.g., 50000.00" 
+                                   placeholder="e.g., 50000.00"
                                    value="<?= old('total_value', $implementationData['total_value'] ?? '') ?>">
                             <div class="form-text">Enter the total monetary value of the outputs delivered</div>
                         </div>

@@ -20,9 +20,12 @@ $this->section('content');
     <div class="row">
         <div class="col-12">
             <div class="card">
-                <div class="card-header">
-                    <h3 class="card-title"><?= $title ?></h3>
-                    <div class="card-tools">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h3 class="card-title mb-0"><?= esc($title) ?></h3>
+                    <div>
+                        <a href="<?= base_url('admin/mtdp-plans/spas/' . $mtdp['id']) ?>" class="btn btn-secondary me-2">
+                            <i class="fas fa-arrow-left"></i> Back to SPAs
+                        </a>
                         <a href="<?= base_url('admin/mtdp-plans/spas/' . $spa['id'] . '/dips/new') ?>" class="btn btn-primary">
                             <i class="fas fa-plus"></i> Add Program
                         </a>
@@ -52,22 +55,20 @@ $this->section('content');
                                             </span>
                                         </td>
                                         <td>
-                                            <div class="btn-group" role="group" aria-label="Program Actions">
-                                                <a href="<?= base_url('admin/mtdp-plans/spas/' . $spa['id'] . '/dips/' . $dip['id']) ?>" class="btn btn-sm btn-info">
-                                                    <i class="fas fa-eye"></i> View Details
-                                                </a>
-                                                <a href="<?= base_url('admin/mtdp-plans/dips/' . $dip['id'] . '/specific-areas') ?>" class="btn btn-sm btn-primary">
-                                                    <i class="fas fa-list"></i> View Specific Areas
-                                                </a>
-                                                <a href="<?= base_url('admin/mtdp-plans/spas/' . $spa['id'] . '/dips/' . $dip['id'] . '/edit') ?>" class="btn btn-sm btn-warning">
-                                                    <i class="fas fa-edit"></i> Edit
-                                                </a>
-                                                <button type="button" class="btn btn-sm btn-<?= $dip['dip_status'] == 1 ? 'danger' : 'success' ?> toggle-status-btn"
-                                                        data-id="<?= $dip['id'] ?>" data-status="<?= $dip['dip_status'] ?>" data-bs-toggle="modal" data-bs-target="#toggleStatusModal">
-                                                    <i class="fas fa-toggle-<?= $dip['dip_status'] == 1 ? 'off' : 'on' ?>"></i>
-                                                    <?= $dip['dip_status'] == 1 ? 'Deactivate' : 'Activate' ?>
-                                                </button>
-                                            </div>
+                                            <a href="<?= base_url('admin/mtdp-plans/spas/' . $spa['id'] . '/dips/' . $dip['id']) ?>" class="btn btn-outline-primary btn-sm" style="margin-right: 5px;">
+                                                <i class="fas fa-eye me-1"></i> View Details
+                                            </a>
+                                            <a href="<?= base_url('admin/mtdp-plans/dips/' . $dip['id'] . '/specific-areas') ?>" class="btn btn-outline-primary btn-sm" style="margin-right: 5px;">
+                                                <i class="fas fa-list me-1"></i> View Specific Areas
+                                            </a>
+                                            <a href="<?= base_url('admin/mtdp-plans/spas/' . $spa['id'] . '/dips/' . $dip['id'] . '/edit') ?>" class="btn btn-outline-warning btn-sm" style="margin-right: 5px;">
+                                                <i class="fas fa-edit me-1"></i> Edit
+                                            </a>
+                                            <button type="button" class="btn btn-outline-<?= $dip['dip_status'] == 1 ? 'secondary' : 'success' ?> btn-sm toggle-status-btn"
+                                                    data-id="<?= $dip['id'] ?>" data-status="<?= $dip['dip_status'] ?>" data-bs-toggle="modal" data-bs-target="#toggleStatusModal">
+                                                <i class="fas fa-toggle-<?= $dip['dip_status'] == 1 ? 'off' : 'on' ?> me-1"></i>
+                                                <?= $dip['dip_status'] == 1 ? 'Deactivate' : 'Activate' ?>
+                                            </button>
                                         </td>
                                     </tr>
                                 <?php endforeach; ?>

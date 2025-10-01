@@ -38,12 +38,12 @@ class ActivitiesDocumentsModel extends Model
 
     // Validation rules
     protected $validationRules = [
-        'activity_id'      => 'permit_empty|integer',
-        'document_files'   => 'permit_empty',
-        'remarks'          => 'required',
-        'created_by'       => 'permit_empty|integer',
-        'updated_by'       => 'permit_empty|integer',
-        'deleted_by'       => 'permit_empty|integer'
+        'activity_id'     => 'permit_empty|integer',
+        'document_files'  => 'permit_empty',
+        'remarks'         => 'permit_empty',
+        'created_by'      => 'permit_empty|integer',
+        'updated_by'      => 'permit_empty|integer',
+        'deleted_by'      => 'permit_empty|integer'
     ];
 
     protected $validationMessages   = [];
@@ -119,7 +119,7 @@ class ActivitiesDocumentsModel extends Model
     }
 
     /**
-     * Get document with activity details
+     * Get documents with activity details
      *
      * @param int $id
      * @return array|null
@@ -159,19 +159,6 @@ class ActivitiesDocumentsModel extends Model
             ->get();
 
         return $query->getResultArray();
-    }
-
-    /**
-     * Search documents by remarks
-     *
-     * @param string $searchTerm
-     * @return array
-     */
-    public function searchByRemarks($searchTerm)
-    {
-        return $this->like('remarks', $searchTerm)
-                    ->orderBy('created_at', 'DESC')
-                    ->findAll();
     }
 
     /**
@@ -277,4 +264,22 @@ class ActivitiesDocumentsModel extends Model
             'updated_by' => session()->get('user_id')
         ]);
     }
+
+    /**
+     * Get documents summary statistics
+     *
+     * @return array
+     */
+    public function getSummaryStats()
+    {
+        $db = \Config\Database::connect();
+
+        $query = $db->table('activities_documents')
+            ->select('COUNT(*) as total_documents')
+            ->where('deleted_at', null)
+            ->get();
+
+        return $query->getRowArray();
+    }
 }
+

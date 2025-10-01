@@ -139,31 +139,8 @@ class ActivitiesController extends ResourceController
             $activity['has_links'] = $activity['has_duty_links'] || $activity['has_workplan_links'];
         }
 
-        // Sort activities by start date (closest approaching first) and then by status priority
-        usort($activities, function($a, $b) {
-            // Define status priority (lower number = higher priority)
-            $statusPriority = [
-                'pending' => 1,
-                'active' => 2,
-                'approved' => 3,
-                'submitted' => 4,
-                'rated' => 5
-            ];
-
-            // Get status priorities (default to 999 for unknown status)
-            $priorityA = $statusPriority[$a['status']] ?? 999;
-            $priorityB = $statusPriority[$b['status']] ?? 999;
-
-            // First sort by status priority
-            if ($priorityA !== $priorityB) {
-                return $priorityA - $priorityB;
-            }
-
-            // If same status priority, sort by start date (ascending - closest dates first)
-            $dateA = strtotime($a['date_start']);
-            $dateB = strtotime($b['date_start']);
-            return $dateA - $dateB;
-        });
+        // Note: Sorting is now handled in the model methods (getAllWithDetails, getBySupervisor, getByActionOfficer)
+        // Activities are sorted by: 3 upcoming activities (date_start >= today) in ASC order, then past activities in DESC order
 
         $data = [
             'title' => $title,
@@ -545,20 +522,45 @@ class ActivitiesController extends ResourceController
         $linkedDutyInstructions = $myActivitiesDutyModel->getDutyInstructionsByMyActivity($id);
         $linkedWorkplanActivities = $myActivitiesWorkplanModel->getWorkplanActivitiesByMyActivity($id);
 
-        // Get available duty instructions
-        $dutyInstructions = $dutyInstructionsModel->findAll();
+        // Get logged-in user ID and branch
+        $loggedInUserId = session()->get('user_id');
+        $userModel = new \App\Models\UserModel();
+        $user = $userModel->find($loggedInUserId);
+        $userBranchId = $user['branch_id'] ?? null;
+
+        // Get available duty instructions - only for logged-in user (assigned or supervisor)
+        $dutyInstructions = $dutyInstructionsModel
+            ->groupStart()
+                ->where('user_id', $loggedInUserId)
+                ->orWhere('supervisor_id', $loggedInUserId)
+            ->groupEnd()
+            ->where('deleted_at', null)
+            ->findAll();
 
         // Get all duty instruction items (for dropdown and existing links display)
+        // Filter to only items from duty instructions assigned to logged-in user
         $dutyInstructionItems = $dutyInstructionItemsModel
             ->select('duty_instruction_items.*, duty_instructions.duty_instruction_title')
             ->join('duty_instructions', 'duty_instructions.id = duty_instruction_items.duty_instruction_id')
+            ->groupStart()
+                ->where('duty_instructions.user_id', $loggedInUserId)
+                ->orWhere('duty_instructions.supervisor_id', $loggedInUserId)
+            ->groupEnd()
+            ->where('duty_instruction_items.deleted_at', null)
             ->findAll();
 
-        // Get available workplan activities
-        $workplanActivities = $workplanActivityModel->findAll();
+        // Get available workplan activities - only active status
+        $workplanActivities = $workplanActivityModel
+            ->where('status', 'active')
+            ->where('deleted_at', null)
+            ->findAll();
 
-        // Get available workplans
-        $workplans = $workplanModel->where('deleted_at', null)->findAll();
+        // Get available workplans - only from user's branch and status = 'in_progress'
+        $workplans = $workplanModel
+            ->where('branch_id', $userBranchId)
+            ->where('status', 'in_progress')
+            ->where('deleted_at', null)
+            ->findAll();
 
         $data = [
             'title' => 'Manage Activity Links - ' . $activity['activity_title'],
@@ -651,9 +653,10 @@ class ActivitiesController extends ResourceController
         $workplanActivityModel = new \App\Models\WorkplanActivityModel();
         $myActivitiesWorkplanModel = new \App\Models\MyActivitiesWorkplanActivitiesModel();
 
-        // Get all activities for this workplan
+        // Get all activities for this workplan - only active status
         $activities = $workplanActivityModel
             ->where('workplan_id', $workplanId)
+            ->where('status', 'active')
             ->where('deleted_at', null)
             ->findAll();
 
@@ -1255,6 +1258,12 @@ class ActivitiesController extends ResourceController
 
         // Save the data
         if ($this->activitiesTrainingModel->save($data)) {
+            // Update activity status to 'active'
+            $this->activitiesModel->update($activity['id'], [
+                'status' => 'active',
+                'updated_by' => $userId
+            ]);
+
             return redirect()->to('/activities/' . $activity['id'])->with('success', 'Training activity implementation saved successfully.');
         } else {
             return redirect()->back()->withInput()->with('error', 'Failed to save training activity implementation: ' . implode(', ', $this->activitiesTrainingModel->errors()));
@@ -1954,7 +1963,9 @@ class ActivitiesController extends ResourceController
         // Validate input
         $rules = [
             'supervision_decision' => 'required|in_list[approve,resend]',
-            'status_remarks' => 'permit_empty|string'
+            'status_remarks' => 'permit_empty|string',
+            'rating_score' => 'permit_empty|decimal|greater_than[0]|less_than_equal_to[5]',
+            'rate_remarks' => 'permit_empty|string'
         ];
 
         if (!$this->validate($rules)) {
@@ -1963,6 +1974,8 @@ class ActivitiesController extends ResourceController
 
         $decision = $this->request->getPost('supervision_decision');
         $remarks = $this->request->getPost('status_remarks') ?? '';
+        $ratingScore = $this->request->getPost('rating_score');
+        $rateRemarks = $this->request->getPost('rate_remarks') ?? '';
 
         // Determine new status based on decision
         $newStatus = ($decision === 'approve') ? 'approved' : 'active';
@@ -1972,8 +1985,33 @@ class ActivitiesController extends ResourceController
 
         $finalRemarks = !empty($remarks) ? $remarks : $defaultRemarks;
 
-        // Update the activity status
-        $result = $this->activitiesModel->updateStatus($id, $newStatus, $finalRemarks);
+        // Prepare data for update
+        $updateData = [
+            'status' => $newStatus,
+            'status_at' => date('Y-m-d H:i:s'),
+            'status_by' => $userId,
+            'status_remarks' => $finalRemarks,
+            'updated_by' => $userId
+        ];
+
+        // If approved, save rating data
+        if ($decision === 'approve') {
+            if (!empty($ratingScore)) {
+                $updateData['rating_score'] = $ratingScore;
+                $updateData['rated_at'] = date('Y-m-d H:i:s');
+                $updateData['rated_by'] = $userId;
+                $updateData['rate_remarks'] = $rateRemarks;
+            }
+        } else {
+            // If resent for revision, reset all rating fields to NULL
+            $updateData['rating_score'] = null;
+            $updateData['rated_at'] = null;
+            $updateData['rated_by'] = null;
+            $updateData['rate_remarks'] = null;
+        }
+
+        // Update the activity
+        $result = $this->activitiesModel->update($id, $updateData);
 
         if ($result) {
             $message = ($decision === 'approve')
@@ -2075,11 +2113,13 @@ class ActivitiesController extends ResourceController
     }
 
     /**
-     * Show evaluation view for an approved activity
+     * DISABLED: Show evaluation view for an approved activity
+     * Rating is now handled in the supervision workflow
      *
      * @param int $id Activity ID
      * @return mixed
      */
+    /*
     public function evaluate($id = null)
     {
         $userId = session()->get('user_id');
@@ -2170,13 +2210,16 @@ class ActivitiesController extends ResourceController
         $view = $viewMap[$activity['type']] ?? 'activities/activities_show';
         return view($view, $data);
     }
+    */
 
     /**
-     * Process evaluation (rate the activity)
+     * DISABLED: Process evaluation (rate the activity)
+     * Rating is now handled in the supervision workflow
      *
      * @param int $id Activity ID
      * @return mixed
      */
+    /*
     public function processEvaluation($id = null)
     {
         $userId = session()->get('user_id');
@@ -2230,6 +2273,7 @@ class ActivitiesController extends ResourceController
             return redirect()->back()->with('error', 'Failed to rate activity.');
         }
     }
+    */
 
     /**
      * Export activity details as PDF
@@ -2532,8 +2576,14 @@ class ActivitiesController extends ResourceController
         if (isset($uploadedFiles['document_files']) && is_array($captions)) {
             foreach ($uploadedFiles['document_files'] as $index => $file) {
                 if ($file->isValid() && !$file->hasMoved()) {
+                    // Create directory if it doesn't exist
+                    $uploadPath = ROOTPATH . 'public/uploads/documents/';
+                    if (!is_dir($uploadPath)) {
+                        mkdir($uploadPath, 0755, true);
+                    }
+
                     $newName = $file->getRandomName();
-                    $file->move(WRITEPATH . '../public/uploads/documents', $newName);
+                    $file->move($uploadPath, $newName);
                     $documentsData[] = [
                         'file_path' => 'public/uploads/documents/' . $newName,
                         'caption' => $captions[$index] ?? '',

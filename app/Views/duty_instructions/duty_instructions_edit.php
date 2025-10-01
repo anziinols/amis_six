@@ -63,7 +63,7 @@
                     <div class="col-md-6">
                         <div class="mb-3">
                             <label for="supervisor_id" class="form-label">Supervisor <span class="text-danger">*</span></label>
-                            <select class="form-select" id="supervisor_id" name="supervisor_id" required>
+                            <select class="form-select select2" id="supervisor_id" name="supervisor_id" required>
                                 <option value="">Select Supervisor</option>
                                 <?php foreach ($supervisors as $supervisor): ?>
                                     <option value="<?= $supervisor['id'] ?>"
@@ -117,9 +117,18 @@
         </div>
     </div>
 </div>
+<?= $this->endSection() ?>
 
+<?= $this->section('scripts') ?>
 <script>
-document.addEventListener('DOMContentLoaded', function() {
+$(document).ready(function() {
+    // Initialize Select2 for supervisor dropdown
+    $('.select2').select2({
+        theme: 'bootstrap-5',
+        width: '100%',
+        placeholder: 'Select Supervisor'
+    });
+
     // File size validation
     const fileInput = document.getElementById('duty_instruction_file');
     fileInput.addEventListener('change', function() {

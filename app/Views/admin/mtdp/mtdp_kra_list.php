@@ -23,14 +23,14 @@ $this->section('content');
     <div class="row">
         <div class="col-12">
             <div class="card">
-                <div class="card-header">
-                    <h3 class="card-title"><?= $title ?></h3>
-                    <div class="card-tools">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h3 class="card-title mb-0"><?= esc($title) ?></h3>
+                    <div>
+                        <a href="<?= base_url('admin/mtdp-plans/dips/' . $dip['id'] . '/specific-areas/' . $specificArea['id'] . '/investments') ?>" class="btn btn-secondary me-2">
+                            <i class="fas fa-arrow-left"></i> Back to Investments
+                        </a>
                         <a href="<?= base_url('admin/mtdp-plans/investments/' . $investment['id'] . '/kras/new') ?>" class="btn btn-primary">
                             <i class="fas fa-plus"></i> Add KRA
-                        </a>
-                        <a href="<?= base_url('admin/mtdp-plans/dips/' . $dip['id'] . '/specific-areas/' . $specificArea['id'] . '/investments') ?>" class="btn btn-secondary ms-1">
-                            <i class="fas fa-arrow-left"></i> Back to Investments
                         </a>
                     </div>
                 </div>
@@ -69,22 +69,21 @@ $this->section('content');
                                             </span>
                                         </td>
                                         <td>
-                                            <div class="btn-group" role="group" aria-label="KRA Actions">
-                                                <a href="<?= base_url('admin/mtdp-plans/kras/' . $kra['id']) ?>" class="btn btn-sm btn-info">
-                                                    <i class="fas fa-eye"></i> View
-                                                </a>
-                                                <a href="<?= base_url('admin/mtdp-plans/kras/' . $kra['id'] . '/edit') ?>" class="btn btn-sm btn-warning">
-                                                    <i class="fas fa-edit"></i> Edit
-                                                </a>
-                                                <button type="button" class="btn btn-sm btn-<?= $kra['kra_status'] == 1 ? 'danger' : 'success' ?> toggle-status-btn"
-                                                        data-id="<?= $kra['id'] ?>" data-status="<?= $kra['kra_status'] ?>" data-bs-toggle="modal" data-bs-target="#toggleStatusModal">
-                                                    <i class="fas fa-toggle-<?= $kra['kra_status'] == 1 ? 'off' : 'on' ?>"></i>
-                                                    <?= $kra['kra_status'] == 1 ? 'Deactivate' : 'Activate' ?>
-                                                </button>
-                                                <a href="<?= base_url('admin/mtdp-plans/kras/' . $kra['id'] . '/strategies') ?>" class="btn btn-sm btn-primary">
-                                                    <i class="fas fa-list-check"></i> View Strategies
-                                                </a>
-                                            </div>
+                                            <a href="<?= base_url('admin/mtdp-plans/kras/' . $kra['id']) ?>" class="btn btn-outline-primary btn-sm" style="margin-right: 5px;">
+                                                <i class="fas fa-eye me-1"></i> View
+                                            </a>
+                                            <a href="<?= base_url('admin/mtdp-plans/kras/' . $kra['id'] . '/edit') ?>" class="btn btn-outline-warning btn-sm" style="margin-right: 5px;">
+                                                <i class="fas fa-edit me-1"></i> Edit
+                                            </a>
+                                            <button type="button" class="btn btn-outline-<?= $kra['kra_status'] == 1 ? 'secondary' : 'success' ?> btn-sm toggle-status-btn"
+                                                    data-id="<?= $kra['id'] ?>" data-status="<?= $kra['kra_status'] ?>" data-bs-toggle="modal" data-bs-target="#toggleStatusModal"
+                                                    style="margin-right: 5px;">
+                                                <i class="fas fa-toggle-<?= $kra['kra_status'] == 1 ? 'off' : 'on' ?> me-1"></i>
+                                                <?= $kra['kra_status'] == 1 ? 'Deactivate' : 'Activate' ?>
+                                            </button>
+                                            <a href="<?= base_url('admin/mtdp-plans/kras/' . $kra['id'] . '/strategies') ?>" class="btn btn-outline-primary btn-sm">
+                                                <i class="fas fa-list-check me-1"></i> View Strategies
+                                            </a>
                                         </td>
                                     </tr>
                                 <?php endforeach; ?>

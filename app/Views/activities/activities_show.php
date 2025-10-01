@@ -59,11 +59,7 @@
                             <h6 class="fw-bold">Workplan Information</h6>
                             <table class="table table-bordered">
                                 <tr>
-                                    <th style="width: 30%">Performance Output</th>
-                                    <td><?= esc($activity['performance_output_title'] ?? 'N/A') ?></td>
-                                </tr>
-                                <tr>
-                                    <th>Activity Title</th>
+                                    <th style="width: 30%">Activity Title</th>
                                     <td><?= esc($activity['activity_title']) ?></td>
                                 </tr>
                                 <tr>
@@ -120,7 +116,7 @@
                                 <?php endif; ?>
                                 <tr>
                                     <th>Total Cost</th>
-                                    <td><?= !empty($activity['total_cost']) ? 'USD ' . number_format($activity['total_cost'], 2) : 'N/A' ?></td>
+                                    <td><?= !empty($activity['total_cost']) ? CURRENCY_SYMBOL . ' ' . number_format($activity['total_cost'], 2) : 'N/A' ?></td>
                                 </tr>
                             </table>
                         </div>
@@ -143,7 +139,7 @@
                                 </tr>
                                 <tr>
                                     <th>Total Cost</th>
-                                    <td><?= !empty($activity['total_cost']) ? 'USD ' . number_format($activity['total_cost'], 2) : 'N/A' ?></td>
+                                    <td><?= !empty($activity['total_cost']) ? CURRENCY_SYMBOL . ' ' . number_format($activity['total_cost'], 2) : 'N/A' ?></td>
                                 </tr>
                                 <tr>
                                     <th>Supervisor</th>
@@ -185,16 +181,102 @@
                 </div>
             </div>
 
+            <!-- Status Information Section -->
+            <?php if (!empty($activity['status_at']) || !empty($activity['status_remarks']) || !empty($activity['status_by_name'])): ?>
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-info-circle me-2"></i>Status Information
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label class="fw-bold text-muted d-block mb-1">
+                                    <i class="fas fa-calendar-alt me-1"></i>Status Updated At
+                                </label>
+                                <div class="text-dark">
+                                    <?php if (!empty($activity['status_at'])): ?>
+                                        <?= date('M d, Y H:i', strtotime($activity['status_at'])) ?>
+                                    <?php else: ?>
+                                        <span class="text-muted">N/A</span>
+                                    <?php endif; ?>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label class="fw-bold text-muted d-block mb-1">
+                                    <i class="fas fa-user me-1"></i>Status Updated By
+                                </label>
+                                <div class="text-dark">
+                                    <?php if (!empty($activity['status_by_name'])): ?>
+                                        <?= esc($activity['status_by_name']) ?>
+                                    <?php else: ?>
+                                        <span class="text-muted">N/A</span>
+                                    <?php endif; ?>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label class="fw-bold text-muted d-block mb-1">
+                                    <i class="fas fa-flag me-1"></i>Current Status
+                                </label>
+                                <div>
+                                    <?php
+                                    $statusBadgeClass = 'bg-secondary';
+                                    switch ($activity['status']) {
+                                        case 'pending':
+                                            $statusBadgeClass = 'bg-warning text-dark';
+                                            break;
+                                        case 'active':
+                                            $statusBadgeClass = 'bg-success';
+                                            break;
+                                        case 'submitted':
+                                            $statusBadgeClass = 'bg-info text-dark';
+                                            break;
+                                        case 'approved':
+                                            $statusBadgeClass = 'bg-primary';
+                                            break;
+                                        case 'rated':
+                                            $statusBadgeClass = 'bg-dark';
+                                            break;
+                                    }
+                                    ?>
+                                    <span class="badge <?= $statusBadgeClass ?>"><?= ucfirst(esc($activity['status'])) ?></span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <?php if (!empty($activity['status_remarks'])): ?>
+                    <div class="row mt-2">
+                        <div class="col-12">
+                            <div class="card bg-light">
+                                <div class="card-body">
+                                    <label class="fw-bold text-muted d-block mb-2">
+                                        <i class="fas fa-comment me-1"></i>Status Remarks
+                                    </label>
+                                    <p class="mb-0 text-dark"><?= nl2br(esc($activity['status_remarks'])) ?></p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <?php endif; ?>
+                </div>
+            </div>
+            <?php endif; ?>
+
             <!-- Activity Links Section -->
             <div class="card mb-4">
                 <div class="card-header">
                     <h5 class="card-title mb-0">
                         <i class="fas fa-link me-2"></i>Activity Links
-                        <?php if ($canImplement): ?>
+                        <!-- All authenticated users can manage links -->
                         <a href="<?= base_url('activities/' . $activity['id'] . '/links') ?>" class="btn btn-sm btn-outline-primary float-end">
                             <i class="fas fa-cog me-1"></i> Manage Links
                         </a>
-                        <?php endif; ?>
                     </h5>
                 </div>
                 <div class="card-body">

@@ -1,73 +1,84 @@
 <?= $this->extend('templates/system_template') ?>
 
 <?= $this->section('content') ?>
+<div class="container-fluid">
+    <div class="row mb-2">
+        <div class="col-12">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item active" aria-current="page">Branches</li>
+                </ol>
+            </nav>
+        </div>
+    </div>
 
-<div class="row">
-    <div class="col-12">
-        <div class="card">
-            <div class="card-header d-flex justify-content-between align-items-center">
-                <h5 class="mb-0">List of Branches</h5>
-                <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#addBranchModal">
-                    <i class="fas fa-plus"></i> Add Branch
-                </button>
-            </div>
-            <div class="card-body">
-                <div class="table-responsive">
-                    <table class="table table-striped table-hover" id="branchesTable">
-                        <thead>
-                            <tr>
-                                <th>Branch Name</th>
-                                <th>Abbreviation</th>
-                                <th>Parent Branch</th>
-                                <th>Remarks</th>
-                                <th>Status</th>
-                                <th>Created By</th>
-                                <th>Updated By</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <?php foreach ($branches as $branch): ?>
-                            <tr>
-                                <td><?= $branch['name'] ?></td>
-                                <td><?= $branch['abbrev'] ?></td>
-                                <td><?= $branch['parent_name'] ?? 'Top Level' ?></td>
-                                <td><?= $branch['remarks'] ?></td>
-                                <td>
-                                    <?php if ($branch['branch_status'] == 1): ?>
-                                    <span class="badge bg-success">Active</span>
-                                    <?php else: ?>
-                                    <span class="badge bg-danger">Inactive</span>
-                                    <?php endif; ?>
-                                </td>
-                                <td><?= $branch['created_by'] ?><br><small class="text-muted"><?= $branch['created_at'] ?></small></td>
-                                <td>
-                                    <?php if ($branch['updated_by']): ?>
-                                    <?= $branch['updated_by'] ?><br><small class="text-muted"><?= $branch['updated_at'] ?></small>
-                                    <?php else: ?>
-                                    -
-                                    <?php endif; ?>
-                                </td>
-                                <td>
-                                    <div class="btn-group">
-                                        <button type="button" class="btn btn-sm btn-info edit-branch" data-id="<?= $branch['id'] ?>">
-                                            <i class="fas fa-edit"></i>
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h3 class="card-title mb-0">List of Branches</h3>
+                    <div>
+                        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addBranchModal">
+                            <i class="fas fa-plus"></i> Add Branch
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-striped" id="branchesTable">
+                            <thead>
+                                <tr>
+                                    <th>Branch Name</th>
+                                    <th>Abbreviation</th>
+                                    <th>Parent Branch</th>
+                                    <th>Remarks</th>
+                                    <th>Status</th>
+                                    <th>Created By</th>
+                                    <th>Updated By</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php foreach ($branches as $branch): ?>
+                                <tr>
+                                    <td><?= esc($branch['name']) ?></td>
+                                    <td><?= esc($branch['abbrev']) ?></td>
+                                    <td><?= $branch['parent_name'] ?? 'Top Level' ?></td>
+                                    <td><?= esc($branch['remarks']) ?></td>
+                                    <td>
+                                        <?php if ($branch['branch_status'] == 1): ?>
+                                        <span class="badge bg-success">Active</span>
+                                        <?php else: ?>
+                                        <span class="badge bg-danger">Inactive</span>
+                                        <?php endif; ?>
+                                    </td>
+                                    <td><?= $branch['created_by_name'] ?? 'System' ?><br><small class="text-muted"><?= $branch['created_at'] ?></small></td>
+                                    <td>
+                                        <?php if ($branch['updated_by']): ?>
+                                        <?= $branch['updated_by_name'] ?? 'System' ?><br><small class="text-muted"><?= $branch['updated_at'] ?></small>
+                                        <?php else: ?>
+                                        -
+                                        <?php endif; ?>
+                                    </td>
+                                    <td>
+                                        <button type="button" class="btn btn-outline-warning edit-branch" data-id="<?= $branch['id'] ?>" title="Edit" style="margin-right: 5px;">
+                                            <i class="fas fa-edit me-1"></i> Edit
                                         </button>
                                         <?php if ($branch['branch_status'] == 1): ?>
-                                        <button type="button" class="btn btn-sm btn-warning toggle-status" data-id="<?= $branch['id'] ?>" data-branch_status="<?= $branch['branch_status'] ?>" title="Deactivate">
-                                            <i class="fas fa-ban"></i>
+                                        <button type="button" class="btn btn-outline-secondary toggle-status" data-id="<?= $branch['id'] ?>" data-branch_status="<?= $branch['branch_status'] ?>" title="Deactivate">
+                                            <i class="fas fa-ban me-1"></i> Deactivate
                                         </button>
                                         <?php else: ?>
-                                        <button type="button" class="btn btn-sm btn-success toggle-status" data-id="<?= $branch['id'] ?>" data-branch_status="<?= $branch['branch_status'] ?>" title="Activate">
-                                            <i class="fas fa-check"></i>
+                                        <button type="button" class="btn btn-outline-success toggle-status" data-id="<?= $branch['id'] ?>" data-branch_status="<?= $branch['branch_status'] ?>" title="Activate">
+                                            <i class="fas fa-check me-1"></i> Activate
                                         </button>
                                         <?php endif; ?>
-                                    </div>
-                                </td>
-                            </tr>
-                            <?php endforeach; ?>
-                        </tbody>
-                    </table>
+                                    </td>
+                                </tr>
+                                <?php endforeach; ?>
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
         </div>
@@ -85,24 +96,24 @@
             <form id="addBranchForm">
                 <?= csrf_field() ?>
                 <div class="modal-body">
-                    <div class="mb-3">
+                    <div class="form-group mb-3">
                         <label for="parentBranch" class="form-label">Parent Branch</label>
                         <select class="form-select" id="parentBranch" name="parent_id">
                             <option value="">-- Select Parent Branch (optional) --</option>
                             <?php foreach ($branchOptions as $option): ?>
-                            <option value="<?= $option['id'] ?>"><?= $option['name'] ?></option>
+                            <option value="<?= $option['id'] ?>"><?= esc($option['name']) ?></option>
                             <?php endforeach; ?>
                         </select>
                     </div>
-                    <div class="mb-3">
+                    <div class="form-group mb-3">
                         <label for="branchName" class="form-label">Branch Name</label>
                         <input type="text" class="form-control" id="branchName" name="name" required>
                     </div>
-                    <div class="mb-3">
+                    <div class="form-group mb-3">
                         <label for="branchAbbrev" class="form-label">Abbreviation</label>
                         <input type="text" class="form-control" id="branchAbbrev" name="abbrev" required>
                     </div>
-                    <div class="mb-3">
+                    <div class="form-group mb-3">
                         <label for="branchRemarks" class="form-label">Remarks</label>
                         <textarea class="form-control" id="branchRemarks" name="remarks" rows="3" required></textarea>
                     </div>
@@ -128,24 +139,24 @@
                 <?= csrf_field() ?>
                 <input type="hidden" id="editBranchId" name="id">
                 <div class="modal-body">
-                    <div class="mb-3">
+                    <div class="form-group mb-3">
                         <label for="editParentBranch" class="form-label">Parent Branch</label>
                         <select class="form-select" id="editParentBranch" name="parent_id">
                             <option value="">-- Select Parent Branch (optional) --</option>
                             <?php foreach ($branchOptions as $option): ?>
-                            <option value="<?= $option['id'] ?>"><?= $option['name'] ?></option>
+                            <option value="<?= $option['id'] ?>"><?= esc($option['name']) ?></option>
                             <?php endforeach; ?>
                         </select>
                     </div>
-                    <div class="mb-3">
+                    <div class="form-group mb-3">
                         <label for="editBranchName" class="form-label">Branch Name</label>
                         <input type="text" class="form-control" id="editBranchName" name="name" required>
                     </div>
-                    <div class="mb-3">
+                    <div class="form-group mb-3">
                         <label for="editBranchAbbrev" class="form-label">Abbreviation</label>
                         <input type="text" class="form-control" id="editBranchAbbrev" name="abbrev" required>
                     </div>
-                    <div class="mb-3">
+                    <div class="form-group mb-3">
                         <label for="editBranchRemarks" class="form-label">Remarks</label>
                         <textarea class="form-control" id="editBranchRemarks" name="remarks" rows="3" required></textarea>
                     </div>
@@ -173,7 +184,7 @@
                 <input type="hidden" id="toggleCurrentStatus" name="current_status">
                 <div class="modal-body">
                     <p id="toggleStatusMessage"></p>
-                    <div class="mb-3">
+                    <div class="form-group mb-3">
                         <label for="statusRemarks" class="form-label">Status Change Remarks</label>
                         <textarea class="form-control" id="statusRemarks" name="branch_status_remarks" rows="3" required></textarea>
                     </div>

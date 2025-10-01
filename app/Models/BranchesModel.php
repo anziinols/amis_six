@@ -24,12 +24,17 @@ class BranchesModel extends Model
     protected $updatedField  = 'updated_at';
     protected $deletedField  = 'deleted_at';
     
-    // Get all branches with parent name info
+    // Get all branches with parent name info and user information
     public function getAllBranches()
     {
         $builder = $this->db->table('branches b');
-        $builder->select('b.*, p.name as parent_name');
+        $builder->select('b.*, p.name as parent_name,
+                         CONCAT(cu.fname, " ", cu.lname) as created_by_name,
+                         CONCAT(uu.fname, " ", uu.lname) as updated_by_name');
         $builder->join('branches p', 'p.id = b.parent_id', 'left');
+        $builder->join('users cu', 'cu.id = b.created_by', 'left');
+        $builder->join('users uu', 'uu.id = b.updated_by', 'left');
+        $builder->where('b.deleted_at IS NULL');
         $builder->orderBy('b.name', 'ASC');
         return $builder->get()->getResultArray();
     }

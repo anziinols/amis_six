@@ -66,6 +66,28 @@ class WorkplanActivityModel extends Model
         ]
     ];
 
+    // Callbacks
+    protected $beforeInsert = ['setDefaultStatus'];
+    protected $afterInsert  = [];
+    protected $beforeUpdate = [];
+    protected $afterUpdate  = [];
+    protected $beforeDelete = [];
+    protected $afterDelete  = [];
+
+    /**
+     * Set default status for new workplan activities
+     */
+    protected function setDefaultStatus(array $data)
+    {
+        if (!isset($data['data']['status'])) {
+            $data['data']['status'] = 'active';
+            $data['data']['status_at'] = date('Y-m-d H:i:s');
+            $data['data']['status_by'] = session()->get('user_id') ?? null;
+        }
+
+        return $data;
+    }
+
     public function getActivitiesWithWorkplan($workplanId = null)
     {
         $builder = $this->select('workplan_activities.*, workplans.title as workplan_title')

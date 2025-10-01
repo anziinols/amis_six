@@ -6,20 +6,18 @@
     <div class="row">
         <div class="col-12">
             <div class="card">
-                <div class="card-header">
-                    <h3 class="card-title"><?= $title ?></h3>
-                    <div class="card-tools">
-                        <div class="btn-group" role="group">
-                            <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#importIndicatorModal">
-                                <i class="fas fa-upload"></i> Import CSV
-                            </button>
-                            <a href="<?= base_url('admin/mtdp-plans/strategies/' . $strategy['id'] . '/indicators/new') ?>" class="btn btn-primary">
-                                <i class="fas fa-plus"></i> Add Indicator
-                            </a>
-                            <a href="<?= base_url('admin/mtdp-plans/kras/' . $kra['id'] . '/strategies') ?>" class="btn btn-secondary ms-1">
-                                <i class="fas fa-arrow-left"></i> Back to Strategies
-                            </a>
-                        </div>
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h3 class="card-title mb-0"><?= esc($title) ?></h3>
+                    <div>
+                        <a href="<?= base_url('admin/mtdp-plans/kras/' . $kra['id'] . '/strategies') ?>" class="btn btn-secondary me-2">
+                            <i class="fas fa-arrow-left"></i> Back to Strategies
+                        </a>
+                        <button type="button" class="btn btn-success me-2" data-bs-toggle="modal" data-bs-target="#importIndicatorModal">
+                            <i class="fas fa-upload"></i> Import CSV
+                        </button>
+                        <a href="<?= base_url('admin/mtdp-plans/strategies/' . $strategy['id'] . '/indicators/new') ?>" class="btn btn-primary">
+                            <i class="fas fa-plus"></i> Add Indicator
+                        </a>
                     </div>
                 </div>
                 <div class="card-body">
@@ -66,19 +64,17 @@
                                             </span>
                                         </td>
                                         <td>
-                                            <div class="btn-group" role="group" aria-label="Indicator Actions">
-                                                <a href="<?= base_url('admin/mtdp-plans/indicators/' . $indicator['id']) ?>" class="btn btn-sm btn-info">
-                                                    <i class="fas fa-eye"></i> View
-                                                </a>
-                                                <a href="<?= base_url('admin/mtdp-plans/indicators/' . $indicator['id'] . '/edit') ?>" class="btn btn-sm btn-warning">
-                                                    <i class="fas fa-edit"></i> Edit
-                                                </a>
-                                                <button type="button" class="btn btn-sm btn-<?= $indicator['indicators_status'] == 1 ? 'danger' : 'success' ?> toggle-status-btn"
-                                                        data-id="<?= $indicator['id'] ?>" data-status="<?= $indicator['indicators_status'] ?>" data-bs-toggle="modal" data-bs-target="#toggleStatusModal">
-                                                    <i class="fas fa-toggle-<?= $indicator['indicators_status'] == 1 ? 'off' : 'on' ?>"></i>
-                                                    <?= $indicator['indicators_status'] == 1 ? 'Deactivate' : 'Activate' ?>
-                                                </button>
-                                            </div>
+                                            <a href="<?= base_url('admin/mtdp-plans/indicators/' . $indicator['id']) ?>" class="btn btn-outline-primary btn-sm" style="margin-right: 5px;">
+                                                <i class="fas fa-eye me-1"></i> View
+                                            </a>
+                                            <a href="<?= base_url('admin/mtdp-plans/indicators/' . $indicator['id'] . '/edit') ?>" class="btn btn-outline-warning btn-sm" style="margin-right: 5px;">
+                                                <i class="fas fa-edit me-1"></i> Edit
+                                            </a>
+                                            <button type="button" class="btn btn-outline-<?= $indicator['indicators_status'] == 1 ? 'secondary' : 'success' ?> btn-sm toggle-status-btn"
+                                                    data-id="<?= $indicator['id'] ?>" data-status="<?= $indicator['indicators_status'] ?>" data-bs-toggle="modal" data-bs-target="#toggleStatusModal">
+                                                <i class="fas fa-toggle-<?= $indicator['indicators_status'] == 1 ? 'off' : 'on' ?> me-1"></i>
+                                                <?= $indicator['indicators_status'] == 1 ? 'Deactivate' : 'Activate' ?>
+                                            </button>
                                         </td>
                                     </tr>
                                 <?php endforeach; ?>

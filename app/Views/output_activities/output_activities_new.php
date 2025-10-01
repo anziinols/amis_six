@@ -90,8 +90,8 @@
                             <?php endif; ?>
                         </div>
                         <div class="col-md-6">
-                            <label for="total_value" class="form-label">Total Value (Kina)</label>
-                            <input type="number" class="form-control" id="total_value" name="total_value" 
+                            <label for="total_value" class="form-label">Total Value (<?= CURRENCY_SYMBOL ?>)</label>
+                            <input type="number" class="form-control" id="total_value" name="total_value"
                                    step="0.01" min="0" value="<?= old('total_value') ?>" placeholder="0.00">
                             <?php if (isset($validation) && $validation->hasError('total_value')): ?>
                                 <div class="text-danger"><?= $validation->getError('total_value') ?></div>

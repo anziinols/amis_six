@@ -29,11 +29,16 @@ class WorkplanController extends BaseController
      */
     public function index()
     {
+        // Get the logged-in user ID
+        $loggedInUserId = session()->get('user_id');
+
+        // Filter workplans where the logged-in user is the supervisor
         $workplans = $this->workplanModel
             ->select('workplans.*, branches.name as branch_name, CONCAT(users.fname, " ", users.lname) as supervisor_name')
             ->join('branches', 'branches.id = workplans.branch_id', 'left')
             ->join('users', 'users.id = workplans.supervisor_id', 'left')
-            ->findAll(); // Fetch all non-deleted workplans
+            ->where('workplans.supervisor_id', $loggedInUserId) // Only show workplans assigned to this supervisor
+            ->findAll();
 
         // Add activity count to each workplan
         foreach ($workplans as &$workplan) {
@@ -55,11 +60,37 @@ class WorkplanController extends BaseController
      */
     public function new()
     {
+        // Get logged-in user info
+        $loggedInUserId = session()->get('user_id');
+        $isAdmin = session()->get('is_admin') == 1;
+
+        // Get the logged-in user's full details including branch_id
+        $loggedInUser = $this->userModel->find($loggedInUserId);
+        $loggedInUserBranchId = $loggedInUser['branch_id'] ?? null;
+
+        // If not admin, only show the logged-in user as supervisor option
+        if (!$isAdmin) {
+            $supervisors = $this->userModel->where('id', $loggedInUserId)->findAll();
+            // If not admin, only show the user's assigned branch
+            if ($loggedInUserBranchId) {
+                $branches = $this->branchModel->where('id', $loggedInUserBranchId)->findAll();
+            } else {
+                $branches = []; // No branch assigned
+            }
+        } else {
+            // If admin, show all supervisors and all branches
+            $supervisors = $this->userModel->getUsersBySupervisorCapability();
+            $branches = $this->branchModel->findAll();
+        }
+
         $data = [
             'title' => 'Create New Workplan',
             'validation' => \Config\Services::validation(), // Pass validation object
-            'branches' => $this->branchModel->findAll(), // Fetch all branches
-            'supervisors' => $this->userModel->getUsersBySupervisorCapability(), // Fetch all supervisors
+            'branches' => $branches,
+            'supervisors' => $supervisors,
+            'isAdmin' => $isAdmin,
+            'loggedInUserId' => $loggedInUserId,
+            'loggedInUserBranchId' => $loggedInUserBranchId
         ];
 
         return view('workplans/workplan_new', $data);
@@ -131,14 +162,18 @@ class WorkplanController extends BaseController
      */
     public function show($id = null)
     {
+        // Get the logged-in user ID
+        $loggedInUserId = session()->get('user_id');
+
         $workplan = $this->workplanModel
             ->select('workplans.*, branches.name as branch_name, CONCAT(users.fname, " ", users.lname) as supervisor_name')
             ->join('branches', 'branches.id = workplans.branch_id', 'left')
             ->join('users', 'users.id = workplans.supervisor_id', 'left')
+            ->where('workplans.supervisor_id', $loggedInUserId) // Ensure user can only view their own workplans
             ->find($id);
 
         if (!$workplan) {
-            return redirect()->to('/workplans')->with('error', 'Workplan not found.');
+            return redirect()->to('/workplans')->with('error', 'Workplan not found or access denied.');
         }
 
         // No need to process objectives as it's handled as plain text
@@ -166,12 +201,39 @@ class WorkplanController extends BaseController
 
         // No need to process objectives as it's handled as plain text
 
+        // Get logged-in user info
+        $loggedInUserId = session()->get('user_id');
+        $isAdmin = session()->get('is_admin') == 1;
+
+        // Get the logged-in user's full details including branch_id
+        $loggedInUser = $this->userModel->find($loggedInUserId);
+        $loggedInUserBranchId = $loggedInUser['branch_id'] ?? null;
+
+        // Apply the same filtering logic as the create form
+        // If not admin, only show the logged-in user as supervisor option
+        if (!$isAdmin) {
+            $supervisors = $this->userModel->where('id', $loggedInUserId)->findAll();
+            // If not admin, only show the user's assigned branch
+            if ($loggedInUserBranchId) {
+                $branches = $this->branchModel->where('id', $loggedInUserBranchId)->findAll();
+            } else {
+                $branches = []; // No branch assigned
+            }
+        } else {
+            // If admin, show all supervisors and all branches
+            $supervisors = $this->userModel->getUsersBySupervisorCapability();
+            $branches = $this->branchModel->findAll();
+        }
+
         $data = [
             'title' => 'Edit Workplan',
             'workplan' => $workplan,
             'validation' => \Config\Services::validation(),
-            'branches' => $this->branchModel->findAll(),
-            'supervisors' => $this->userModel->getUsersBySupervisorCapability(),
+            'branches' => $branches,
+            'supervisors' => $supervisors,
+            'isAdmin' => $isAdmin,
+            'loggedInUserId' => $loggedInUserId,
+            'loggedInUserBranchId' => $loggedInUserBranchId
         ];
 
         return view('workplans/workplan_edit', $data);

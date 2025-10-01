@@ -96,7 +96,7 @@ class ActivitiesModel extends Model
     protected function setDefaultStatus(array $data)
     {
         if (!isset($data['data']['status'])) {
-            $data['data']['status'] = 'active';
+            $data['data']['status'] = 'pending';
             $data['data']['status_at'] = date('Y-m-d H:i:s');
             $data['data']['status_by'] = session()->get('user_id') ?? null;
         }
@@ -168,6 +168,7 @@ class ActivitiesModel extends Model
 
     /**
      * Get all activities with detailed information
+     * Sorted by: 3 upcoming activities (date_start >= today) in ASC order, then past activities in DESC order
      *
      * @return array
      */
@@ -175,28 +176,60 @@ class ActivitiesModel extends Model
     {
         $db = \Config\Database::connect();
 
-        $query = $db->table('activities a')
-            ->select('a.*,
-                     CONCAT(u1.fname, " ", u1.lname) as supervisor_name,
-                     CONCAT(u2.fname, " ", u2.lname) as action_officer_name,
-                     CONCAT(u3.fname, " ", u3.lname) as created_by_name,
-                     CONCAT(u4.fname, " ", u4.lname) as status_by_name,
-                     CONCAT(u5.fname, " ", u5.lname) as rated_by_name,
-                     p.name as province_name,
-                     d.name as district_name')
-            ->join('users u1', 'a.supervisor_id = u1.id', 'left')
-            ->join('users u2', 'a.action_officer_id = u2.id', 'left')
-            ->join('users u3', 'a.created_by = u3.id', 'left')
-            ->join('users u4', 'a.status_by = u4.id', 'left')
-            ->join('users u5', 'a.rated_by = u5.id', 'left')
-            ->join('gov_structure p', 'a.province_id = p.id AND p.level = "province"', 'left')
-            ->join('gov_structure d', 'a.district_id = d.id AND d.level = "district"', 'left')
-            ->where('a.deleted_at', null)
-            ->orderBy('a.date_start', 'ASC')
-            ->orderBy('a.created_at', 'DESC')
-            ->get();
+        // Get current date
+        $currentDate = date('Y-m-d');
 
-        return $query->getResultArray();
+        // Query for upcoming activities (3 closest to today)
+        $upcomingQuery = "
+            SELECT a.*,
+                   CONCAT(u1.fname, ' ', u1.lname) as supervisor_name,
+                   CONCAT(u2.fname, ' ', u2.lname) as action_officer_name,
+                   CONCAT(u3.fname, ' ', u3.lname) as created_by_name,
+                   CONCAT(u4.fname, ' ', u4.lname) as status_by_name,
+                   CONCAT(u5.fname, ' ', u5.lname) as rated_by_name,
+                   p.name as province_name,
+                   d.name as district_name
+            FROM activities a
+            LEFT JOIN users u1 ON a.supervisor_id = u1.id
+            LEFT JOIN users u2 ON a.action_officer_id = u2.id
+            LEFT JOIN users u3 ON a.created_by = u3.id
+            LEFT JOIN users u4 ON a.status_by = u4.id
+            LEFT JOIN users u5 ON a.rated_by = u5.id
+            LEFT JOIN gov_structure p ON a.province_id = p.id AND p.level = 'province'
+            LEFT JOIN gov_structure d ON a.district_id = d.id AND d.level = 'district'
+            WHERE a.deleted_at IS NULL AND a.date_start >= ?
+            ORDER BY a.date_start ASC
+            LIMIT 3
+        ";
+
+        // Query for past activities
+        $pastQuery = "
+            SELECT a.*,
+                   CONCAT(u1.fname, ' ', u1.lname) as supervisor_name,
+                   CONCAT(u2.fname, ' ', u2.lname) as action_officer_name,
+                   CONCAT(u3.fname, ' ', u3.lname) as created_by_name,
+                   CONCAT(u4.fname, ' ', u4.lname) as status_by_name,
+                   CONCAT(u5.fname, ' ', u5.lname) as rated_by_name,
+                   p.name as province_name,
+                   d.name as district_name
+            FROM activities a
+            LEFT JOIN users u1 ON a.supervisor_id = u1.id
+            LEFT JOIN users u2 ON a.action_officer_id = u2.id
+            LEFT JOIN users u3 ON a.created_by = u3.id
+            LEFT JOIN users u4 ON a.status_by = u4.id
+            LEFT JOIN users u5 ON a.rated_by = u5.id
+            LEFT JOIN gov_structure p ON a.province_id = p.id AND p.level = 'province'
+            LEFT JOIN gov_structure d ON a.district_id = d.id AND d.level = 'district'
+            WHERE a.deleted_at IS NULL AND a.date_start < ?
+            ORDER BY a.date_start DESC
+        ";
+
+        // Execute queries
+        $upcoming = $db->query($upcomingQuery, [$currentDate])->getResultArray();
+        $past = $db->query($pastQuery, [$currentDate])->getResultArray();
+
+        // Merge results: upcoming first, then past
+        return array_merge($upcoming, $past);
     }
 
     /**
@@ -313,6 +346,7 @@ class ActivitiesModel extends Model
 
     /**
      * Get activities by supervisor
+     * Sorted by: 3 upcoming activities (date_start >= today) in ASC order, then past activities in DESC order
      *
      * @param int $supervisorId
      * @return array
@@ -321,33 +355,65 @@ class ActivitiesModel extends Model
     {
         $db = \Config\Database::connect();
 
-        $query = $db->table('activities a')
-            ->select('a.*,
-                     CONCAT(u1.fname, " ", u1.lname) as supervisor_name,
-                     CONCAT(u2.fname, " ", u2.lname) as action_officer_name,
-                     CONCAT(u3.fname, " ", u3.lname) as created_by_name,
-                     CONCAT(u4.fname, " ", u4.lname) as status_by_name,
-                     CONCAT(u5.fname, " ", u5.lname) as rated_by_name,
-                     p.name as province_name,
-                     d.name as district_name')
-            ->join('users u1', 'a.supervisor_id = u1.id', 'left')
-            ->join('users u2', 'a.action_officer_id = u2.id', 'left')
-            ->join('users u3', 'a.created_by = u3.id', 'left')
-            ->join('users u4', 'a.status_by = u4.id', 'left')
-            ->join('users u5', 'a.rated_by = u5.id', 'left')
-            ->join('gov_structure p', 'a.province_id = p.id AND p.level = "province"', 'left')
-            ->join('gov_structure d', 'a.district_id = d.id AND d.level = "district"', 'left')
-            ->where('a.supervisor_id', $supervisorId)
-            ->where('a.deleted_at', null)
-            ->orderBy('a.date_start', 'ASC')
-            ->orderBy('a.created_at', 'DESC')
-            ->get();
+        // Get current date
+        $currentDate = date('Y-m-d');
 
-        return $query->getResultArray();
+        // Query for upcoming activities (3 closest to today)
+        $upcomingQuery = "
+            SELECT a.*,
+                   CONCAT(u1.fname, ' ', u1.lname) as supervisor_name,
+                   CONCAT(u2.fname, ' ', u2.lname) as action_officer_name,
+                   CONCAT(u3.fname, ' ', u3.lname) as created_by_name,
+                   CONCAT(u4.fname, ' ', u4.lname) as status_by_name,
+                   CONCAT(u5.fname, ' ', u5.lname) as rated_by_name,
+                   p.name as province_name,
+                   d.name as district_name
+            FROM activities a
+            LEFT JOIN users u1 ON a.supervisor_id = u1.id
+            LEFT JOIN users u2 ON a.action_officer_id = u2.id
+            LEFT JOIN users u3 ON a.created_by = u3.id
+            LEFT JOIN users u4 ON a.status_by = u4.id
+            LEFT JOIN users u5 ON a.rated_by = u5.id
+            LEFT JOIN gov_structure p ON a.province_id = p.id AND p.level = 'province'
+            LEFT JOIN gov_structure d ON a.district_id = d.id AND d.level = 'district'
+            WHERE a.deleted_at IS NULL AND a.supervisor_id = ? AND a.date_start >= ?
+            ORDER BY a.date_start ASC
+            LIMIT 3
+        ";
+
+        // Query for past activities
+        $pastQuery = "
+            SELECT a.*,
+                   CONCAT(u1.fname, ' ', u1.lname) as supervisor_name,
+                   CONCAT(u2.fname, ' ', u2.lname) as action_officer_name,
+                   CONCAT(u3.fname, ' ', u3.lname) as created_by_name,
+                   CONCAT(u4.fname, ' ', u4.lname) as status_by_name,
+                   CONCAT(u5.fname, ' ', u5.lname) as rated_by_name,
+                   p.name as province_name,
+                   d.name as district_name
+            FROM activities a
+            LEFT JOIN users u1 ON a.supervisor_id = u1.id
+            LEFT JOIN users u2 ON a.action_officer_id = u2.id
+            LEFT JOIN users u3 ON a.created_by = u3.id
+            LEFT JOIN users u4 ON a.status_by = u4.id
+            LEFT JOIN users u5 ON a.rated_by = u5.id
+            LEFT JOIN gov_structure p ON a.province_id = p.id AND p.level = 'province'
+            LEFT JOIN gov_structure d ON a.district_id = d.id AND d.level = 'district'
+            WHERE a.deleted_at IS NULL AND a.supervisor_id = ? AND a.date_start < ?
+            ORDER BY a.date_start DESC
+        ";
+
+        // Execute queries
+        $upcoming = $db->query($upcomingQuery, [$supervisorId, $currentDate])->getResultArray();
+        $past = $db->query($pastQuery, [$supervisorId, $currentDate])->getResultArray();
+
+        // Merge results: upcoming first, then past
+        return array_merge($upcoming, $past);
     }
 
     /**
      * Get activities by action officer
+     * Sorted by: 3 upcoming activities (date_start >= today) in ASC order, then past activities in DESC order
      *
      * @param int $actionOfficerId
      * @return array
@@ -356,29 +422,60 @@ class ActivitiesModel extends Model
     {
         $db = \Config\Database::connect();
 
-        $query = $db->table('activities a')
-            ->select('a.*,
-                     CONCAT(u1.fname, " ", u1.lname) as supervisor_name,
-                     CONCAT(u2.fname, " ", u2.lname) as action_officer_name,
-                     CONCAT(u3.fname, " ", u3.lname) as created_by_name,
-                     CONCAT(u4.fname, " ", u4.lname) as status_by_name,
-                     CONCAT(u5.fname, " ", u5.lname) as rated_by_name,
-                     p.name as province_name,
-                     d.name as district_name')
-            ->join('users u1', 'a.supervisor_id = u1.id', 'left')
-            ->join('users u2', 'a.action_officer_id = u2.id', 'left')
-            ->join('users u3', 'a.created_by = u3.id', 'left')
-            ->join('users u4', 'a.status_by = u4.id', 'left')
-            ->join('users u5', 'a.rated_by = u5.id', 'left')
-            ->join('gov_structure p', 'a.province_id = p.id AND p.level = "province"', 'left')
-            ->join('gov_structure d', 'a.district_id = d.id AND d.level = "district"', 'left')
-            ->where('a.action_officer_id', $actionOfficerId)
-            ->where('a.deleted_at', null)
-            ->orderBy('a.date_start', 'ASC')
-            ->orderBy('a.created_at', 'DESC')
-            ->get();
+        // Get current date
+        $currentDate = date('Y-m-d');
 
-        return $query->getResultArray();
+        // Query for upcoming activities (3 closest to today)
+        $upcomingQuery = "
+            SELECT a.*,
+                   CONCAT(u1.fname, ' ', u1.lname) as supervisor_name,
+                   CONCAT(u2.fname, ' ', u2.lname) as action_officer_name,
+                   CONCAT(u3.fname, ' ', u3.lname) as created_by_name,
+                   CONCAT(u4.fname, ' ', u4.lname) as status_by_name,
+                   CONCAT(u5.fname, ' ', u5.lname) as rated_by_name,
+                   p.name as province_name,
+                   d.name as district_name
+            FROM activities a
+            LEFT JOIN users u1 ON a.supervisor_id = u1.id
+            LEFT JOIN users u2 ON a.action_officer_id = u2.id
+            LEFT JOIN users u3 ON a.created_by = u3.id
+            LEFT JOIN users u4 ON a.status_by = u4.id
+            LEFT JOIN users u5 ON a.rated_by = u5.id
+            LEFT JOIN gov_structure p ON a.province_id = p.id AND p.level = 'province'
+            LEFT JOIN gov_structure d ON a.district_id = d.id AND d.level = 'district'
+            WHERE a.deleted_at IS NULL AND a.action_officer_id = ? AND a.date_start >= ?
+            ORDER BY a.date_start ASC
+            LIMIT 3
+        ";
+
+        // Query for past activities
+        $pastQuery = "
+            SELECT a.*,
+                   CONCAT(u1.fname, ' ', u1.lname) as supervisor_name,
+                   CONCAT(u2.fname, ' ', u2.lname) as action_officer_name,
+                   CONCAT(u3.fname, ' ', u3.lname) as created_by_name,
+                   CONCAT(u4.fname, ' ', u4.lname) as status_by_name,
+                   CONCAT(u5.fname, ' ', u5.lname) as rated_by_name,
+                   p.name as province_name,
+                   d.name as district_name
+            FROM activities a
+            LEFT JOIN users u1 ON a.supervisor_id = u1.id
+            LEFT JOIN users u2 ON a.action_officer_id = u2.id
+            LEFT JOIN users u3 ON a.created_by = u3.id
+            LEFT JOIN users u4 ON a.status_by = u4.id
+            LEFT JOIN users u5 ON a.rated_by = u5.id
+            LEFT JOIN gov_structure p ON a.province_id = p.id AND p.level = 'province'
+            LEFT JOIN gov_structure d ON a.district_id = d.id AND d.level = 'district'
+            WHERE a.deleted_at IS NULL AND a.action_officer_id = ? AND a.date_start < ?
+            ORDER BY a.date_start DESC
+        ";
+
+        // Execute queries
+        $upcoming = $db->query($upcomingQuery, [$actionOfficerId, $currentDate])->getResultArray();
+        $past = $db->query($pastQuery, [$actionOfficerId, $currentDate])->getResultArray();
+
+        // Merge results: upcoming first, then past
+        return array_merge($upcoming, $past);
     }
 
     /**

@@ -30,11 +30,28 @@
     }
 </style>
 
-<div class="container">
-    <div class="card">
-        <div class="card-header">
-            <h4 class="mb-0">Create SME</h4>
+<div class="container-fluid">
+    <div class="row mb-2">
+        <div class="col-12">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="<?= base_url('dashboard') ?>">Home</a></li>
+                    <li class="breadcrumb-item"><a href="<?= base_url('smes') ?>">SMEs</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">Create SME</li>
+                </ol>
+            </nav>
         </div>
+    </div>
+
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h3 class="card-title mb-0">Create SME</h3>
+                    <a href="<?= base_url('smes') ?>" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left"></i> Back to SMEs
+                    </a>
+                </div>
         <div class="card-body">
             <form action="<?= base_url('smes') ?>" method="post" enctype="multipart/form-data">
                 <?= csrf_field() ?>
@@ -111,6 +128,8 @@
                     <button type="submit" class="btn btn-primary">Save SME</button>
                 </div>
             </form>
+                </div>
+            </div>
         </div>
     </div>
 </div>
@@ -118,6 +137,22 @@
 
 <?= $this->section('scripts') ?>
 <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        <?php if (session()->getFlashdata('success')): ?>
+            toastr.success('<?= session()->getFlashdata('success') ?>');
+        <?php endif; ?>
+
+        <?php if (session()->getFlashdata('error')): ?>
+            toastr.error('<?= session()->getFlashdata('error') ?>');
+        <?php endif; ?>
+
+        <?php if (session()->getFlashdata('errors')): ?>
+            <?php foreach (session()->getFlashdata('errors') as $error): ?>
+                toastr.error('<?= esc($error) ?>');
+            <?php endforeach; ?>
+        <?php endif; ?>
+    });
+
 $(document).ready(function() {
     // Initialize Select2 with Bootstrap 5 theme
     $('.select2').select2({

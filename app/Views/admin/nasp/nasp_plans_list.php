@@ -14,28 +14,14 @@
     </div>
 
     <!-- Display flash messages -->
-    <?php if (session()->has('success')) : ?>
-        <div class="alert alert-success alert-dismissible fade show" role="alert">
-            <?= session('success') ?>
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
-    <?php endif; ?>
-
-    <?php if (session()->has('error')) : ?>
-        <div class="alert alert-danger alert-dismissible fade show" role="alert">
-            <?= session('error') ?>
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
-    <?php endif; ?>
-
     <div class="row">
         <div class="col-12">
             <div class="card">
-                <div class="card-header">
-                    <h3 class="card-title">NASP Plans</h3>
-                    <div class="card-tools">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h3 class="card-title mb-0">NASP Plans</h3>
+                    <div>
                         <a href="<?= base_url('admin/nasp-plans/new') ?>" class="btn btn-primary">
-                            <i class="fas fa-plus"></i> Add New Plan
+                            <i class="fas fa-plus me-1"></i> Add New Plan
                         </a>
                     </div>
                 </div>
@@ -75,27 +61,25 @@
                                                 </span>
                                             </td>
                                             <td>
-                                                <div class="btn-group" role="group" aria-label="Plan actions">
-                                                    <a href="<?= base_url('admin/nasp-plans/' . $plan['id']) ?>" class="btn btn-info btn-sm">
-                                                        <i class="fas fa-eye"></i> View
-                                                    </a>
-                                                    <a href="<?= base_url('admin/nasp-plans/' . $plan['id'] . '/apas') ?>" class="btn btn-primary btn-sm">
-                                                        <i class="fas fa-list"></i> Manage APAs
-                                                    </a>
-                                                    <a href="<?= base_url('admin/nasp-plans/' . $plan['id'] . '/edit') ?>" class="btn btn-warning btn-sm">
-                                                        <i class="fas fa-edit"></i> Edit
-                                                    </a>
-                                                    <a href="<?= base_url('admin/nasp-plans/' . $plan['id'] . '/toggle-status') ?>" class="btn btn-<?= $plan['nasp_status'] == 1 ? 'danger' : 'success' ?> btn-sm">
-                                                        <i class="fas fa-<?= $plan['nasp_status'] == 1 ? 'ban' : 'check-circle' ?>"></i>
-                                                        <?= $plan['nasp_status'] == 1 ? 'Deactivate' : 'Activate' ?>
-                                                    </a>
-                                                    <form action="<?= base_url('admin/nasp-plans/' . $plan['id'] . '/delete') ?>" method="post" style="display: inline;" onsubmit="return confirm('Are you sure you want to delete this plan and all its children? This action cannot be undone.');">
-                                                        <?= csrf_field() ?>
-                                                        <button type="submit" class="btn btn-danger btn-sm">
-                                                            <i class="fas fa-trash"></i> Delete
-                                                        </button>
-                                                    </form>
-                                                </div>
+                                                <a href="<?= base_url('admin/nasp-plans/' . $plan['id']) ?>" class="btn btn-outline-primary btn-sm" style="margin-right: 5px;">
+                                                    <i class="fas fa-eye me-1"></i> View
+                                                </a>
+                                                <a href="<?= base_url('admin/nasp-plans/' . $plan['id'] . '/apas') ?>" class="btn btn-outline-primary btn-sm" style="margin-right: 5px;">
+                                                    <i class="fas fa-list me-1"></i> Manage APAs
+                                                </a>
+                                                <a href="<?= base_url('admin/nasp-plans/' . $plan['id'] . '/edit') ?>" class="btn btn-outline-warning btn-sm" style="margin-right: 5px;">
+                                                    <i class="fas fa-edit me-1"></i> Edit
+                                                </a>
+                                                <a href="<?= base_url('admin/nasp-plans/' . $plan['id'] . '/toggle-status') ?>" class="btn btn-outline-<?= $plan['nasp_status'] == 1 ? 'secondary' : 'success' ?> btn-sm" style="margin-right: 5px;">
+                                                    <i class="fas fa-<?= $plan['nasp_status'] == 1 ? 'ban' : 'check-circle' ?> me-1"></i>
+                                                    <?= $plan['nasp_status'] == 1 ? 'Deactivate' : 'Activate' ?>
+                                                </a>
+                                                <form action="<?= base_url('admin/nasp-plans/' . $plan['id'] . '/delete') ?>" method="post" style="display: inline;" onsubmit="return confirm('Are you sure you want to delete this plan and all its children? This action cannot be undone.');">
+                                                    <?= csrf_field() ?>
+                                                    <button type="submit" class="btn btn-outline-danger btn-sm">
+                                                        <i class="fas fa-trash me-1"></i> Delete
+                                                    </button>
+                                                </form>
                                             </td>
                                         </tr>
                                     <?php endforeach; ?>
@@ -108,5 +92,17 @@
         </div>
     </div>
 </div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        <?php if (session()->getFlashdata('success')): ?>
+            toastr.success('<?= session()->getFlashdata('success') ?>');
+        <?php endif; ?>
+
+        <?php if (session()->getFlashdata('error')): ?>
+            toastr.error('<?= session()->getFlashdata('error') ?>');
+        <?php endif; ?>
+    });
+</script>
 
 <?= $this->endSection() ?>

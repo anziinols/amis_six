@@ -7,14 +7,14 @@ $this->section('content');
     <div class="row">
         <div class="col-12">
             <div class="card">
-                <div class="card-header">
-                    <h3 class="card-title"><?= $title ?></h3>
-                    <div class="card-tools">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h3 class="card-title mb-0"><?= esc($title) ?></h3>
+                    <div>
+                        <a href="<?= base_url('admin/mtdp-plans/investments/' . $investment['id'] . '/kras') ?>" class="btn btn-secondary me-2">
+                            <i class="fas fa-arrow-left"></i> Back to KRAs
+                        </a>
                         <a href="<?= base_url('admin/mtdp-plans/kras/' . $kra['id'] . '/strategies/new') ?>" class="btn btn-primary">
                             <i class="fas fa-plus"></i> Add Strategy
-                        </a>
-                        <a href="<?= base_url('admin/mtdp-plans/investments/' . $investment['id'] . '/kras') ?>" class="btn btn-secondary ms-1">
-                            <i class="fas fa-arrow-left"></i> Back to KRAs
                         </a>
                     </div>
                 </div>
@@ -43,22 +43,20 @@ $this->section('content');
                                             </span>
                                         </td>
                                         <td>
-                                            <div class="btn-group" role="group" aria-label="Strategy Actions">
-                                                <a href="<?= base_url('admin/mtdp-plans/strategies/' . $strategy['id']) ?>" class="btn btn-sm btn-info">
-                                                    <i class="fas fa-eye"></i> View
-                                                </a>
-                                                <a href="<?= base_url('admin/mtdp-plans/strategies/' . $strategy['id'] . '/indicators') ?>" class="btn btn-sm btn-primary">
-                                                    <i class="fas fa-chart-line"></i> View Indicators
-                                                </a>
-                                                <a href="<?= base_url('admin/mtdp-plans/strategies/' . $strategy['id'] . '/edit') ?>" class="btn btn-sm btn-warning">
-                                                    <i class="fas fa-edit"></i> Edit
-                                                </a>
-                                                <button type="button" class="btn btn-sm btn-<?= $strategy['strategies_status'] == 1 ? 'danger' : 'success' ?> toggle-status-btn"
-                                                        data-id="<?= $strategy['id'] ?>" data-status="<?= $strategy['strategies_status'] ?>" data-bs-toggle="modal" data-bs-target="#toggleStatusModal">
-                                                    <i class="fas fa-toggle-<?= $strategy['strategies_status'] == 1 ? 'off' : 'on' ?>"></i>
-                                                    <?= $strategy['strategies_status'] == 1 ? 'Deactivate' : 'Activate' ?>
-                                                </button>
-                                            </div>
+                                            <a href="<?= base_url('admin/mtdp-plans/strategies/' . $strategy['id']) ?>" class="btn btn-outline-primary btn-sm" style="margin-right: 5px;">
+                                                <i class="fas fa-eye me-1"></i> View
+                                            </a>
+                                            <a href="<?= base_url('admin/mtdp-plans/strategies/' . $strategy['id'] . '/indicators') ?>" class="btn btn-outline-primary btn-sm" style="margin-right: 5px;">
+                                                <i class="fas fa-chart-line me-1"></i> View Indicators
+                                            </a>
+                                            <a href="<?= base_url('admin/mtdp-plans/strategies/' . $strategy['id'] . '/edit') ?>" class="btn btn-outline-warning btn-sm" style="margin-right: 5px;">
+                                                <i class="fas fa-edit me-1"></i> Edit
+                                            </a>
+                                            <button type="button" class="btn btn-outline-<?= $strategy['strategies_status'] == 1 ? 'secondary' : 'success' ?> btn-sm toggle-status-btn"
+                                                    data-id="<?= $strategy['id'] ?>" data-status="<?= $strategy['strategies_status'] ?>" data-bs-toggle="modal" data-bs-target="#toggleStatusModal">
+                                                <i class="fas fa-toggle-<?= $strategy['strategies_status'] == 1 ? 'off' : 'on' ?> me-1"></i>
+                                                <?= $strategy['strategies_status'] == 1 ? 'Deactivate' : 'Activate' ?>
+                                            </button>
                                         </td>
                                     </tr>
                                 <?php endforeach; ?>

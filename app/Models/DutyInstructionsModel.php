@@ -80,7 +80,7 @@ class DutyInstructionsModel extends Model
     protected function setDefaultStatus(array $data)
     {
         if (!isset($data['data']['status'])) {
-            $data['data']['status'] = 'pending';
+            $data['data']['status'] = 'active';
             $data['data']['status_at'] = date('Y-m-d H:i:s');
             $data['data']['status_by'] = session()->get('user_id') ?? null;
         }

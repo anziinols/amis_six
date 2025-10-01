@@ -11,7 +11,35 @@
                          class="rounded-circle mb-3" alt="Profile Picture"
                          style="width: 150px; height: 150px; object-fit: cover;">
                     <h4 class="card-title"><?= $user['name'] ?></h4>
-                    <p class="text-muted"><?= ucfirst($user['role']) ?></p>
+                    <p class="text-muted mb-2"><?= ucfirst($user['role']) ?></p>
+
+                    <?php
+                    // Display user accessibility flags from session
+                    $isAdmin = session()->get('is_admin') ?? 0;
+                    $isSupervisor = session()->get('is_supervisor') ?? 0;
+                    $isEvaluator = session()->get('is_evaluator') ?? 0;
+                    ?>
+
+                    <div class="mb-3">
+                        <?php if($isAdmin == 1): ?>
+                            <span class="badge bg-danger">
+                                <i class="fas fa-user-shield me-1"></i>Admin
+                            </span>
+                        <?php endif; ?>
+
+                        <?php if($isSupervisor == 1): ?>
+                            <span class="badge bg-warning text-dark">
+                                <i class="fas fa-user-tie me-1"></i>Supervisor
+                            </span>
+                        <?php endif; ?>
+
+                        <?php if($isEvaluator == 1): ?>
+                            <span class="badge bg-info">
+                                <i class="fas fa-clipboard-check me-1"></i>Evaluator
+                            </span>
+                        <?php endif; ?>
+                    </div>
+
                     <button type="button" id="changePhotoBtn" class="btn btn-outline-primary btn-sm">Change Photo</button>
 
                     <!-- Hidden file input for profile photo -->

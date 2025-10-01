@@ -436,10 +436,8 @@
                                 <thead class="table-light">
                                     <tr>
                                         <th>#</th>
-                                        <th>Type</th>
                                         <th>Title</th>
-                                        <th>Category</th>
-                                        <th>Priority</th>
+                                        <th>Description</th>
                                         <th>Status</th>
                                         <th>Actions</th>
                                     </tr>
@@ -452,49 +450,14 @@
                                     <tr>
                                         <td><?= $counter++ ?></td>
                                         <td>
-                                            <?php
-                                            $typeClass = '';
-                                            switch ($link['link_type']) {
-                                                case 'recurrent':
-                                                    $typeClass = 'bg-primary';
-                                                    break;
-                                                case 'special_project':
-                                                    $typeClass = 'bg-success';
-                                                    break;
-                                                case 'emergency':
-                                                    $typeClass = 'bg-danger';
-                                                    break;
-                                                default:
-                                                    $typeClass = 'bg-secondary';
-                                            }
-                                            ?>
-                                            <span class="badge <?= $typeClass ?>"><?= ucfirst(str_replace('_', ' ', esc($link['link_type']))) ?></span>
-                                        </td>
-                                        <td>
                                             <strong><?= esc($link['title']) ?></strong>
-                                            <?php if (!empty($link['description'])): ?>
-                                                <br><small class="text-muted"><?= esc(substr($link['description'], 0, 50)) ?><?= strlen($link['description']) > 50 ? '...' : '' ?></small>
-                                            <?php endif; ?>
                                         </td>
-                                        <td><?= esc($link['category'] ?? 'N/A') ?></td>
                                         <td>
-                                            <?php
-                                            $priorityClass = '';
-                                            switch ($link['priority_level']) {
-                                                case 'critical':
-                                                    $priorityClass = 'bg-danger';
-                                                    break;
-                                                case 'high':
-                                                    $priorityClass = 'bg-warning';
-                                                    break;
-                                                case 'medium':
-                                                    $priorityClass = 'bg-info';
-                                                    break;
-                                                default:
-                                                    $priorityClass = 'bg-secondary';
-                                            }
-                                            ?>
-                                            <span class="badge <?= $priorityClass ?>"><?= ucfirst(esc($link['priority_level'] ?? 'medium')) ?></span>
+                                            <?php if (!empty($link['description'])): ?>
+                                                <?= esc(substr($link['description'], 0, 100)) ?><?= strlen($link['description']) > 100 ? '...' : '' ?>
+                                            <?php else: ?>
+                                                <span class="text-muted">No description</span>
+                                            <?php endif; ?>
                                         </td>
                                         <td>
                                             <?php

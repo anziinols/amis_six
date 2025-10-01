@@ -127,4 +127,49 @@ class MyActivitiesDutyInstructionsModel extends Model
 
         return !empty($result);
     }
+
+    /**
+     * Check if a duty instruction item has any linked my activities
+     *
+     * @param int $dutyInstructionItemId
+     * @return bool
+     */
+    public function hasLinkedMyActivities($dutyInstructionItemId)
+    {
+        $count = $this->where('duty_instructions_id', $dutyInstructionItemId)
+                      ->countAllResults();
+
+        return $count > 0;
+    }
+
+    /**
+     * Check if a duty instruction (parent) has any items with linked my activities
+     *
+     * @param int $dutyInstructionId
+     * @return bool
+     */
+    public function dutyInstructionHasLinkedMyActivities($dutyInstructionId)
+    {
+        // Get all items for this duty instruction
+        $db = \Config\Database::connect();
+        $itemIds = $db->table('duty_instruction_items')
+                     ->select('id')
+                     ->where('duty_instruction_id', $dutyInstructionId)
+                     ->where('deleted_at IS NULL')
+                     ->get()
+                     ->getResultArray();
+
+        if (empty($itemIds)) {
+            return false;
+        }
+
+        // Extract just the IDs
+        $itemIdList = array_column($itemIds, 'id');
+
+        // Check if any of these items have linked my activities
+        $count = $this->whereIn('duty_instructions_id', $itemIdList)
+                      ->countAllResults();
+
+        return $count > 0;
+    }
 }

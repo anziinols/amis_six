@@ -31,21 +31,41 @@ $statusOptions = [
     <div class="row g-3">
         <div class="col-md-6">
             <label for="branch_id" class="form-label">Branch <span class="text-danger">*</span></label>
-            <select name="branch_id" id="branch_id" class="form-select select2" required>
-                <option value="">Select Branch</option>
-                <?php foreach($branches ?? [] as $branch): ?>
-                    <option value="<?= $branch['id'] ?>" <?= (set_value('branch_id', $workplanData['branch_id'] ?? '') == $branch['id']) ? 'selected' : '' ?>><?= esc($branch['name']) ?></option>
-                <?php endforeach; ?>
+            <select name="branch_id" id="branch_id" class="form-select select2" required <?= (isset($isAdmin) && !$isAdmin) ? 'readonly' : '' ?>>
+                <?php if (empty($branches ?? [])): ?>
+                    <option value="">No branches available</option>
+                <?php else: ?>
+                    <?php if (isset($isAdmin) && $isAdmin): ?>
+                        <option value="">Select Branch</option>
+                    <?php endif; ?>
+                    <?php foreach($branches ?? [] as $branch): ?>
+                        <?php
+                        // Auto-select the logged-in user's branch if not admin, otherwise use existing selection
+                        $selectedBranchId = $workplanData['branch_id'] ?? (isset($loggedInUserBranchId) ? $loggedInUserBranchId : '');
+                        ?>
+                        <option value="<?= $branch['id'] ?>" <?= (set_value('branch_id', $selectedBranchId) == $branch['id']) ? 'selected' : '' ?>><?= esc($branch['name']) ?></option>
+                    <?php endforeach; ?>
+                <?php endif; ?>
             </select>
         </div>
 
         <div class="col-md-6">
             <label for="supervisor_id" class="form-label">Supervisor <span class="text-danger">*</span></label>
-            <select name="supervisor_id" id="supervisor_id" class="form-select select2" required>
-                <option value="">Select Supervisor</option>
-                <?php foreach($supervisors ?? [] as $supervisor): ?>
-                    <option value="<?= $supervisor['id'] ?>" <?= (set_value('supervisor_id', $workplanData['supervisor_id'] ?? '') == $supervisor['id']) ? 'selected' : '' ?>><?= esc($supervisor['fname'] . ' ' . $supervisor['lname']) ?></option>
-                <?php endforeach; ?>
+            <select name="supervisor_id" id="supervisor_id" class="form-select select2" required <?= (isset($isAdmin) && !$isAdmin) ? 'readonly' : '' ?>>
+                <?php if (empty($supervisors ?? [])): ?>
+                    <option value="">No supervisors available</option>
+                <?php else: ?>
+                    <?php if (isset($isAdmin) && $isAdmin): ?>
+                        <option value="">Select Supervisor</option>
+                    <?php endif; ?>
+                    <?php foreach($supervisors ?? [] as $supervisor): ?>
+                        <?php
+                        // Auto-select the logged-in user if not admin, otherwise use existing selection
+                        $selectedUserId = $workplanData['supervisor_id'] ?? (isset($loggedInUserId) ? $loggedInUserId : '');
+                        ?>
+                        <option value="<?= $supervisor['id'] ?>" <?= (set_value('supervisor_id', $selectedUserId) == $supervisor['id']) ? 'selected' : '' ?>><?= esc($supervisor['fname'] . ' ' . $supervisor['lname']) ?></option>
+                    <?php endforeach; ?>
+                <?php endif; ?>
             </select>
         </div>
 
@@ -78,7 +98,7 @@ $statusOptions = [
             <label for="status" class="form-label">Status</label>
             <select name="status" id="status" class="form-select" required>
                 <?php foreach($statusOptions as $value => $label): ?>
-                    <option value="<?= $value ?>" <?= (set_value('status', $workplanData['status'] ?? 'draft') == $value) ? 'selected' : '' ?>><?= esc($label) ?></option>
+                    <option value="<?= $value ?>" <?= (set_value('status', $workplanData['status'] ?? 'in_progress') == $value) ? 'selected' : '' ?>><?= esc($label) ?></option>
                 <?php endforeach; ?>
             </select>
         </div>

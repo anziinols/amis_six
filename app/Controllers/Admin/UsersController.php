@@ -144,38 +144,38 @@ class UsersController extends BaseController
         $userData['ucode'] = $this->generateUniqueUserCode();
 
         // Handle checkbox fields - set to 0 if not checked
-        if (!isset($userData['is_evaluator'])) {
+        // If role is 'guest', force all capabilities to 0
+        if (isset($userData['role']) && $userData['role'] === 'guest') {
             $userData['is_evaluator'] = '0';
-        }
-        if (!isset($userData['is_supervisor'])) {
             $userData['is_supervisor'] = '0';
-        }
-        if (!isset($userData['is_admin'])) {
             $userData['is_admin'] = '0';
+        } else {
+            // For 'user' role, check if capabilities are set
+            if (!isset($userData['is_evaluator'])) {
+                $userData['is_evaluator'] = '0';
+            }
+            if (!isset($userData['is_supervisor'])) {
+                $userData['is_supervisor'] = '0';
+            }
+            if (!isset($userData['is_admin'])) {
+                $userData['is_admin'] = '0';
+            }
         }
 
         // Handle file upload for ID photo
         $file = $this->request->getFile('id_photo_filepath');
         if ($file && $file->isValid() && !$file->hasMoved()) {
-            $newName = $file->getRandomName();
-            $file->move(WRITEPATH . 'uploads/user_photos/', $newName);
-            $userData['id_photo_filepath'] = 'uploads/user_photos/' . $newName;
-        }
-        if (!isset($userData['is_supervisor'])) {
-            $userData['is_supervisor'] = '0';
-        }
-        if (!isset($userData['is_admin'])) {
-            $userData['is_admin'] = '0';
-        }
-        if (!isset($userData['is_supervisor'])) {
-            $userData['is_supervisor'] = '0';
-        }
-        if (!isset($userData['is_admin'])) {
-            $userData['is_admin'] = '0';
-        }
+            // Create directory if it doesn't exist
+            $uploadPath = ROOTPATH . 'public/uploads/user_photos/';
+            if (!is_dir($uploadPath)) {
+                mkdir($uploadPath, 0755, true);
+            }
 
-        // Clear commodity_id - commodity management is now admin-only
-        $userData['commodity_id'] = null;
+            $newName = $file->getRandomName();
+            $file->move($uploadPath, $newName);
+            // Store path with public/ prefix for correct URL construction
+            $userData['id_photo_filepath'] = 'public/uploads/user_photos/' . $newName;
+        }
 
         // Generate activation token for email-based activation
         $activationToken = $this->userModel->generateActivationToken();
@@ -307,16 +307,20 @@ class UsersController extends BaseController
             // Handle file upload for ID photo
             $file = $this->request->getFile('id_photo_filepath');
             if ($file && $file->isValid() && !$file->hasMoved()) {
+                // Create directory if it doesn't exist
+                $uploadPath = ROOTPATH . 'public/uploads/user_photos/';
+                if (!is_dir($uploadPath)) {
+                    mkdir($uploadPath, 0755, true);
+                }
+
                 $newName = $file->getRandomName();
-                $file->move(WRITEPATH . 'uploads/user_photos/', $newName);
-                $userData['id_photo_filepath'] = 'uploads/user_photos/' . $newName;
+                $file->move($uploadPath, $newName);
+                // Store path with public/ prefix for correct URL construction
+                $userData['id_photo_filepath'] = 'public/uploads/user_photos/' . $newName;
             } else {
                 // Keep existing photo if no new file uploaded
                 $userData['id_photo_filepath'] = $user['id_photo_filepath'];
             }
-
-            // Clear commodity_id - commodity management is now admin-only
-            $userData['commodity_id'] = null;
 
             // Manual check for email uniqueness
             $emailToCheck = $userData['email'];
@@ -435,8 +439,7 @@ class UsersController extends BaseController
             'role' => $userData['role'],
             'is_admin' => $userData['is_admin'] ?? 0,
             'is_supervisor' => $userData['is_supervisor'] ?? 0,
-            'is_evaluator' => $userData['is_evaluator'] ?? 0,
-            'commodity_id' => null // Commodity management is admin-only
+            'is_evaluator' => $userData['is_evaluator'] ?? 0
         ];
 
         session()->set($sessionData);

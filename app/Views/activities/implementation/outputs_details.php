@@ -5,7 +5,7 @@
             <strong>Total Value:</strong>
             <p class="text-muted">
                 <?php if (!empty($implementationData['total_value'])): ?>
-                    KES <?= number_format($implementationData['total_value'], 2) ?>
+                    <?= CURRENCY_SYMBOL ?> <?= number_format($implementationData['total_value'], 2) ?>
                 <?php else: ?>
                     N/A
                 <?php endif; ?>

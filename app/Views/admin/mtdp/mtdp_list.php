@@ -19,9 +19,9 @@ $this->section('content');
     <div class="row">
         <div class="col-12">
             <div class="card">
-                <div class="card-header">
-                    <h3 class="card-title"><?= $title ?></h3>
-                    <div class="card-tools">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h3 class="card-title mb-0">MTDP Plans</h3>
+                    <div>
                         <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addMtdpPlanModal">
                             <i class="fas fa-plus"></i> Add MTDP Plan
                         </button>
@@ -43,8 +43,8 @@ $this->section('content');
                             <tbody>
                                 <?php foreach ($plans as $plan) : ?>
                                     <tr>
-                                        <td><?= $plan['abbrev'] ?></td>
-                                        <td><?= $plan['title'] ?></td>
+                                        <td><?= esc($plan['abbrev']) ?></td>
+                                        <td><?= esc($plan['title']) ?></td>
                                         <td><?= date('d/m/Y', strtotime($plan['date_from'])) ?></td>
                                         <td><?= date('d/m/Y', strtotime($plan['date_to'])) ?></td>
                                         <td>
@@ -53,40 +53,41 @@ $this->section('content');
                                             </span>
                                         </td>
                                         <td>
-                                            <div class="btn-group" role="group" aria-label="MTDP Plan Actions">
-                                                <a href="<?= base_url('admin/mtdp-plans/spas/' . $plan['id']) ?>"
-                                                   class="btn btn-sm btn-primary">
-                                                    <i class="fas fa-eye"></i> View SPAs
-                                                </a>
+                                            <a href="<?= base_url('admin/mtdp-plans/spas/' . $plan['id']) ?>"
+                                               class="btn btn-outline-primary btn-sm"
+                                               style="margin-right: 5px;">
+                                                <i class="fas fa-eye me-1"></i> View SPAs
+                                            </a>
 
-                                                <button type="button" class="btn btn-sm btn-warning edit-plan"
-                                                    data-id="<?= $plan['id'] ?>"
-                                                    data-abbrev="<?= $plan['abbrev'] ?>"
-                                                    data-title="<?= $plan['title'] ?>"
-                                                    data-date-from="<?= $plan['date_from'] ?>"
-                                                    data-date-to="<?= $plan['date_to'] ?>"
-                                                    data-remarks="<?= $plan['remarks'] ?>"
-                                                    data-mtdp-status="<?= $plan['mtdp_status'] ?>"
-                                                    data-mtdp-status-by="<?= $plan['mtdp_status_by'] ?>"
-                                                    data-mtdp-status-at="<?= $plan['mtdp_status_at'] ?>"
-                                                    data-mtdp-status-remarks="<?= $plan['mtdp_status_remarks'] ?>"
-                                                    data-bs-toggle="modal" data-bs-target="#editMtdpPlanModal">
-                                                    <i class="fas fa-edit"></i> Edit
-                                                </button>
+                                            <button type="button" class="btn btn-outline-warning btn-sm edit-plan"
+                                                data-id="<?= $plan['id'] ?>"
+                                                data-abbrev="<?= esc($plan['abbrev']) ?>"
+                                                data-title="<?= esc($plan['title']) ?>"
+                                                data-date-from="<?= $plan['date_from'] ?>"
+                                                data-date-to="<?= $plan['date_to'] ?>"
+                                                data-remarks="<?= esc($plan['remarks']) ?>"
+                                                data-mtdp-status="<?= $plan['mtdp_status'] ?>"
+                                                data-mtdp-status-by="<?= $plan['mtdp_status_by'] ?>"
+                                                data-mtdp-status-at="<?= $plan['mtdp_status_at'] ?>"
+                                                data-mtdp-status-remarks="<?= esc($plan['mtdp_status_remarks']) ?>"
+                                                data-bs-toggle="modal" data-bs-target="#editMtdpPlanModal"
+                                                style="margin-right: 5px;">
+                                                <i class="fas fa-edit me-1"></i> Edit
+                                            </button>
 
-                                                <button type="button" class="btn btn-sm btn-<?= $plan['mtdp_status'] == 1 ? 'danger' : 'success' ?> toggle-status"
-                                                    data-id="<?= $plan['id'] ?>"
-                                                    data-mtdp-status="<?= $plan['mtdp_status'] ?>">
-                                                    <i class="fas fa-<?= $plan['mtdp_status'] == 1 ? 'ban' : 'check' ?>"></i>
-                                                    <?= $plan['mtdp_status'] == 1 ? 'Deactivate' : 'Activate' ?>
-                                                </button>
+                                            <button type="button" class="btn btn-outline-<?= $plan['mtdp_status'] == 1 ? 'secondary' : 'success' ?> btn-sm toggle-status"
+                                                data-id="<?= $plan['id'] ?>"
+                                                data-mtdp-status="<?= $plan['mtdp_status'] ?>"
+                                                style="margin-right: 5px;">
+                                                <i class="fas fa-<?= $plan['mtdp_status'] == 1 ? 'ban' : 'check' ?> me-1"></i>
+                                                <?= $plan['mtdp_status'] == 1 ? 'Deactivate' : 'Activate' ?>
+                                            </button>
 
-                                                <button type="button" class="btn btn-sm btn-danger delete-plan"
-                                                    data-id="<?= $plan['id'] ?>"
-                                                    data-title="<?= $plan['title'] ?>">
-                                                    <i class="fas fa-trash"></i> Delete
-                                                </button>
-                                            </div>
+                                            <button type="button" class="btn btn-outline-danger btn-sm delete-plan"
+                                                data-id="<?= $plan['id'] ?>"
+                                                data-title="<?= esc($plan['title']) ?>">
+                                                <i class="fas fa-trash me-1"></i> Delete
+                                            </button>
                                         </td>
                                     </tr>
                                 <?php endforeach; ?>

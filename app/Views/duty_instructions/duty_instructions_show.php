@@ -135,11 +135,20 @@
             </nav>
         </div>
         <div>
-            <a href="<?= base_url('duty-instructions/' . $duty_instruction['id'] . '/edit') ?>" 
-               class="btn btn-warning" 
+            <?php if (!isset($hasMyActivitiesLinks) || !$hasMyActivitiesLinks): ?>
+            <a href="<?= base_url('duty-instructions/' . $duty_instruction['id'] . '/edit') ?>"
+               class="btn btn-warning"
                style="margin-right: 5px;">
                 <i class="fas fa-edit me-1"></i> Edit
             </a>
+            <?php else: ?>
+            <button class="btn btn-secondary"
+                    title="Cannot edit - Duty instruction items are linked to My Activities"
+                    disabled
+                    style="margin-right: 5px;">
+                <i class="fas fa-edit me-1"></i> Edit
+            </button>
+            <?php endif; ?>
             <a href="<?= base_url('duty-instructions') ?>" class="btn btn-info">
                 <i class="fas fa-arrow-left me-1"></i> Back to List
             </a>
@@ -291,7 +300,7 @@
     <div class="card mt-4">
         <div class="card-header d-flex justify-content-between align-items-center">
             <h6 class="mb-0">Instruction Items</h6>
-            <button type="button" class="btn btn-primary" id="addItemBtn" style="margin-right: 5px;">
+            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addItemModal">
                 <i class="fas fa-plus me-1"></i> Add Item
             </button>
         </div>
@@ -307,38 +316,7 @@
                             <th>Actions</th>
                         </tr>
                     </thead>
-                    <tbody>
-                        <!-- Add Item Form Row (Initially Hidden) -->
-                        <tr id="addItemRow" style="display: none;">
-                            <td>
-                                <input type="text" class="form-control form-control-sm" id="newItemNumber"
-                                       placeholder="Item #" style="width: 80px; min-width: 60px;">
-                            </td>
-                            <td>
-                                <textarea class="form-control form-control-sm" id="newInstruction"
-                                          placeholder="Enter instruction" rows="2" required style="min-height: 60px;"></textarea>
-                            </td>
-                            <td>
-                                <select class="form-select form-select-sm" id="newStatus" style="min-width: 100px;">
-                                    <option value="active">Active</option>
-                                    <option value="inactive">Inactive</option>
-                                    <option value="completed">Completed</option>
-                                </select>
-                            </td>
-                            <td>
-                                <textarea class="form-control form-control-sm" id="newRemarks"
-                                          placeholder="Remarks" rows="2" style="min-height: 60px;"></textarea>
-                            </td>
-                            <td>
-                                <button type="button" class="btn btn-outline-success" id="saveItemBtn" style="margin-right: 5px;">
-                                    <i class="fas fa-save me-1"></i> Save
-                                </button>
-                                <button type="button" class="btn btn-outline-danger" id="cancelItemBtn">
-                                    <i class="fas fa-times me-1"></i> Cancel
-                                </button>
-                            </td>
-                        </tr>
-
+                    <tbody id="itemsTableBody">
                         <!-- Existing Items -->
                         <?php if (!empty($duty_items)): ?>
                             <?php foreach ($duty_items as $item): ?>
@@ -358,14 +336,32 @@
                                     </td>
                                     <td><?= esc($item['remarks'] ?? '-') ?></td>
                                     <td>
-                                        <button class="btn btn-outline-warning edit-item-btn"
-                                                data-item-id="<?= $item['id'] ?>" title="Edit Item" style="margin-right: 5px;">
-                                            <i class="fas fa-edit me-1"></i> Edit
+                                        <?php if (!isset($item['has_myactivities_links']) || !$item['has_myactivities_links']): ?>
+                                        <button class="btn btn-outline-warning btn-sm edit-item-btn"
+                                                data-item-id="<?= $item['id'] ?>"
+                                                data-item-number="<?= esc($item['instruction_number']) ?>"
+                                                data-instruction="<?= esc($item['instruction']) ?>"
+                                                data-status="<?= esc($item['status']) ?>"
+                                                data-remarks="<?= esc($item['remarks'] ?? '') ?>"
+                                                title="Edit Item">
+                                            <i class="fas fa-edit"></i> Edit
                                         </button>
-                                        <button class="btn btn-outline-danger delete-item-btn"
+                                        <button class="btn btn-outline-danger btn-sm delete-item-btn"
                                                 data-item-id="<?= $item['id'] ?>" title="Delete Item">
-                                            <i class="fas fa-trash me-1"></i> Delete
+                                            <i class="fas fa-trash"></i> Delete
                                         </button>
+                                        <?php else: ?>
+                                        <button class="btn btn-outline-secondary btn-sm"
+                                                title="Cannot edit - Item is linked to My Activities"
+                                                disabled>
+                                            <i class="fas fa-edit"></i> Edit
+                                        </button>
+                                        <button class="btn btn-outline-secondary btn-sm"
+                                                title="Cannot delete - Item is linked to My Activities"
+                                                disabled>
+                                            <i class="fas fa-trash"></i> Delete
+                                        </button>
+                                        <?php endif; ?>
                                     </td>
                                 </tr>
                             <?php endforeach; ?>
@@ -384,308 +380,315 @@
     </div>
 </div>
 
+<!-- Add Item Modal -->
+<div class="modal fade" id="addItemModal" tabindex="-1" aria-labelledby="addItemModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addItemModalLabel">Add New Instruction Item</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="addItemForm">
+                    <div class="alert alert-info">
+                        <strong>Adding item to:</strong> <?= esc($duty_instruction['duty_instruction_title']) ?>
+                        <br><small>Instruction Number: <?= esc($duty_instruction['duty_instruction_number']) ?></small>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-3">
+                            <div class="mb-3">
+                                <label for="addItemNumber" class="form-label">Item Number <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="addItemNumber" required>
+                                <div class="form-text">Sequential number</div>
+                            </div>
+                        </div>
+                        <div class="col-md-9">
+                            <div class="mb-3">
+                                <label for="addInstruction" class="form-label">Instruction <span class="text-danger">*</span></label>
+                                <textarea class="form-control" id="addInstruction" rows="3" required></textarea>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="addStatus" class="form-label">Status</label>
+                        <select class="form-select" id="addStatus">
+                            <option value="active" selected>Active</option>
+                            <option value="inactive">Inactive</option>
+                            <option value="completed">Completed</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="addRemarks" class="form-label">Remarks (Optional)</label>
+                        <textarea class="form-control" id="addRemarks" rows="2"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="saveNewItemBtn">
+                    <i class="fas fa-save me-1"></i> Save Item
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Item Modal -->
+<div class="modal fade" id="editItemModal" tabindex="-1" aria-labelledby="editItemModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editItemModalLabel">Edit Instruction Item</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="editItemForm">
+                    <input type="hidden" id="editItemId">
+
+                    <div class="row">
+                        <div class="col-md-3">
+                            <div class="mb-3">
+                                <label for="editItemNumber" class="form-label">Item Number <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="editItemNumber" required>
+                            </div>
+                        </div>
+                        <div class="col-md-9">
+                            <div class="mb-3">
+                                <label for="editInstruction" class="form-label">Instruction <span class="text-danger">*</span></label>
+                                <textarea class="form-control" id="editInstruction" rows="3" required></textarea>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="editStatus" class="form-label">Status</label>
+                        <select class="form-select" id="editStatus">
+                            <option value="active">Active</option>
+                            <option value="inactive">Inactive</option>
+                            <option value="completed">Completed</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="editRemarks" class="form-label">Remarks (Optional)</label>
+                        <textarea class="form-control" id="editRemarks" rows="2"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="saveEditItemBtn">
+                    <i class="fas fa-save me-1"></i> Update Item
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+<?= $this->endSection() ?>
+
+<?= $this->section('scripts') ?>
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    const addItemBtn = document.getElementById('addItemBtn');
-    const addItemRow = document.getElementById('addItemRow');
-    const saveItemBtn = document.getElementById('saveItemBtn');
-    const cancelItemBtn = document.getElementById('cancelItemBtn');
-    const noItemsRow = document.getElementById('noItemsRow');
+$(document).ready(function() {
+    const dutyInstructionId = <?= $duty_instruction['id'] ?>;
+    const csrfToken = '<?= csrf_hash() ?>';
+    const csrfName = '<?= csrf_token() ?>';
 
-    // Show add item form
-    addItemBtn.addEventListener('click', function() {
-        addItemRow.style.display = 'table-row';
-        addItemBtn.style.display = 'none';
+    // Initialize modals
+    const addItemModal = new bootstrap.Modal(document.getElementById('addItemModal'));
+    const editItemModal = new bootstrap.Modal(document.getElementById('editItemModal'));
 
-        // Auto-generate next item number
+    // When Add Item modal is shown, auto-generate next item number
+    $('#addItemModal').on('shown.bs.modal', function() {
         const existingItems = document.querySelectorAll('[data-item-id]');
         const nextNumber = existingItems.length + 1;
-        document.getElementById('newItemNumber').value = nextNumber;
-
-        // Focus on instruction field
-        document.getElementById('newInstruction').focus();
+        $('#addItemNumber').val(nextNumber);
+        $('#addInstruction').focus();
     });
 
-    // Cancel add item
-    cancelItemBtn.addEventListener('click', function() {
-        addItemRow.style.display = 'none';
-        addItemBtn.style.display = 'inline-block';
-        clearForm();
+    // Clear form when modal is hidden
+    $('#addItemModal').on('hidden.bs.modal', function() {
+        $('#addItemForm')[0].reset();
     });
 
-    // Save new item via AJAX
-    saveItemBtn.addEventListener('click', function() {
-        const instruction = document.getElementById('newInstruction').value.trim();
-        const itemNumber = document.getElementById('newItemNumber').value.trim();
-        const status = document.getElementById('newStatus').value;
-        const remarks = document.getElementById('newRemarks').value.trim();
+    // Save new item
+    $('#saveNewItemBtn').on('click', function() {
+        const itemNumber = $('#addItemNumber').val().trim();
+        const instruction = $('#addInstruction').val().trim();
+        const status = $('#addStatus').val();
+        const remarks = $('#addRemarks').val().trim();
 
-        if (!instruction || !itemNumber) {
-            alert('Please fill in the required fields (Item # and Instruction)');
+        // Validation
+        if (!itemNumber || !instruction) {
+            toastr.error('Please fill in the required fields (Item # and Instruction)');
             return;
         }
 
         // Show loading state
-        saveItemBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Saving...';
-        saveItemBtn.disabled = true;
+        const $btn = $(this);
+        const originalHtml = $btn.html();
+        $btn.html('<i class="fas fa-spinner fa-spin me-1"></i> Saving...').prop('disabled', true);
 
         // AJAX request
-        fetch('<?= base_url('duty-instructions/' . $duty_instruction['id'] . '/items/create') ?>', {
+        $.ajax({
+            url: `<?= base_url('duty-instructions/') ?>${dutyInstructionId}/items/create`,
             method: 'POST',
+            contentType: 'application/json',
             headers: {
-                'Content-Type': 'application/json',
                 'X-Requested-With': 'XMLHttpRequest',
-                'X-CSRF-TOKEN': '<?= csrf_hash() ?>'
+                'X-CSRF-TOKEN': csrfToken
             },
-            body: JSON.stringify({
+            data: JSON.stringify({
                 instruction_number: itemNumber,
                 instruction: instruction,
                 status: status,
                 remarks: remarks,
-                <?= csrf_token() ?>: '<?= csrf_hash() ?>'
-            })
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                // Show success message and reload page
-                showAlert('success', 'Instruction item added successfully!');
-                setTimeout(() => {
-                    window.location.reload();
-                }, 1500);
-            } else {
-                showAlert('danger', data.message || 'Failed to add instruction item');
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            showAlert('danger', 'An error occurred while adding the item');
-        })
-        .finally(() => {
-            // Reset button state
-            saveItemBtn.innerHTML = '<i class="fas fa-save me-1"></i> Save';
-            saveItemBtn.disabled = false;
-        });
-    });
-
-    // Edit item functionality
-    document.addEventListener('click', function(e) {
-        if (e.target.closest('.edit-item-btn')) {
-            const btn = e.target.closest('.edit-item-btn');
-            const itemId = btn.getAttribute('data-item-id');
-            const row = btn.closest('tr');
-
-            // Get current values
-            const itemNumber = row.cells[0].textContent.trim();
-            const instruction = row.cells[1].textContent.trim();
-            const currentStatus = row.cells[2].querySelector('.badge').textContent.toLowerCase().trim();
-            const remarks = row.cells[3].textContent.trim();
-
-            // Replace row content with edit form
-            row.innerHTML = `
-                <td>
-                    <input type="text" class="form-control form-control-sm" value="${escapeHtml(itemNumber)}"
-                           id="editItemNumber_${itemId}" style="width: 80px; min-width: 60px;">
-                </td>
-                <td>
-                    <textarea class="form-control form-control-sm" id="editInstruction_${itemId}"
-                              rows="2" required style="min-height: 60px;">${escapeHtml(instruction)}</textarea>
-                </td>
-                <td>
-                    <select class="form-select form-select-sm" id="editStatus_${itemId}" style="min-width: 100px;">
-                        <option value="active" ${currentStatus === 'active' ? 'selected' : ''}>Active</option>
-                        <option value="inactive" ${currentStatus === 'inactive' ? 'selected' : ''}>Inactive</option>
-                        <option value="completed" ${currentStatus === 'completed' ? 'selected' : ''}>Completed</option>
-                    </select>
-                </td>
-                <td>
-                    <textarea class="form-control form-control-sm" id="editRemarks_${itemId}"
-                              rows="2" style="min-height: 60px;">${escapeHtml(remarks === '-' ? '' : remarks)}</textarea>
-                </td>
-                <td>
-                    <button type="button" class="btn btn-outline-success save-edit-btn" data-item-id="${itemId}" style="margin-right: 5px;">
-                        <i class="fas fa-save me-1"></i> Save
-                    </button>
-                    <button type="button" class="btn btn-outline-danger cancel-edit-btn">
-                        <i class="fas fa-times me-1"></i> Cancel
-                    </button>
-                </td>
-            `;
-        }
-
-        // Save edit
-        if (e.target.closest('.save-edit-btn')) {
-            const btn = e.target.closest('.save-edit-btn');
-            const itemId = btn.getAttribute('data-item-id');
-
-            const itemNumber = document.getElementById(`editItemNumber_${itemId}`).value.trim();
-            const instruction = document.getElementById(`editInstruction_${itemId}`).value.trim();
-            const status = document.getElementById(`editStatus_${itemId}`).value;
-            const remarks = document.getElementById(`editRemarks_${itemId}`).value.trim();
-
-            if (!instruction || !itemNumber) {
-                alert('Please fill in the required fields (Item # and Instruction)');
-                return;
-            }
-
-            // Show loading state
-            btn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Saving...';
-            btn.disabled = true;
-
-            // AJAX request to update item
-            fetch(`<?= base_url('duty-instructions/items/') ?>${itemId}/update`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-Requested-With': 'XMLHttpRequest',
-                    'X-CSRF-TOKEN': '<?= csrf_hash() ?>'
-                },
-                body: JSON.stringify({
-                    instruction_number: itemNumber,
-                    instruction: instruction,
-                    status: status,
-                    remarks: remarks,
-                    <?= csrf_token() ?>: '<?= csrf_hash() ?>'
-                })
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    showAlert('success', 'Item updated successfully!');
+                [csrfName]: csrfToken
+            }),
+            success: function(response) {
+                if (response.success) {
+                    toastr.success('Instruction item added successfully!');
+                    addItemModal.hide();
                     setTimeout(() => {
                         window.location.reload();
                     }, 1500);
                 } else {
-                    showAlert('danger', data.message || 'Failed to update item');
+                    toastr.error(response.message || 'Failed to add instruction item');
                 }
-            })
-            .catch(error => {
+            },
+            error: function(xhr, status, error) {
                 console.error('Error:', error);
-                showAlert('danger', 'An error occurred while updating the item');
-            })
-            .finally(() => {
-                btn.innerHTML = '<i class="fas fa-save me-1"></i> Save';
-                btn.disabled = false;
-            });
-        }
-
-        // Cancel edit
-        if (e.target.closest('.cancel-edit-btn')) {
-            window.location.reload();
-        }
-
-        // Delete item
-        if (e.target.closest('.delete-item-btn')) {
-            const btn = e.target.closest('.delete-item-btn');
-            const itemId = btn.getAttribute('data-item-id');
-
-            if (confirm('Are you sure you want to delete this instruction item?')) {
-                // AJAX request to delete item
-                fetch(`<?= base_url('duty-instructions/items/') ?>${itemId}/delete`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-Requested-With': 'XMLHttpRequest',
-                        'X-CSRF-TOKEN': '<?= csrf_hash() ?>'
-                    },
-                    body: JSON.stringify({
-                        <?= csrf_token() ?>: '<?= csrf_hash() ?>'
-                    })
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        showAlert('success', 'Item deleted successfully!');
-                        setTimeout(() => {
-                            window.location.reload();
-                        }, 1500);
-                    } else {
-                        showAlert('danger', data.message || 'Failed to delete item');
-                    }
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    showAlert('danger', 'An error occurred while deleting the item');
-                });
+                toastr.error('An error occurred while adding the item');
+            },
+            complete: function() {
+                $btn.html(originalHtml).prop('disabled', false);
             }
-        }
+        });
     });
 
-    // Clear form fields
-    function clearForm() {
-        document.getElementById('newItemNumber').value = '';
-        document.getElementById('newInstruction').value = '';
-        document.getElementById('newStatus').value = 'active';
-        document.getElementById('newRemarks').value = '';
-    }
+    // Edit item button click
+    $(document).on('click', '.edit-item-btn', function() {
+        const $btn = $(this);
+        const itemId = $btn.data('item-id');
+        const itemNumber = $btn.data('item-number');
+        const instruction = $btn.data('instruction');
+        const status = $btn.data('status');
+        const remarks = $btn.data('remarks');
 
-    // Add new item row to table
-    function addItemToTable(item) {
-        const tbody = document.querySelector('#itemsTable tbody');
-        const statusClass = getStatusClass(item.status);
+        // Populate edit form
+        $('#editItemId').val(itemId);
+        $('#editItemNumber').val(itemNumber);
+        $('#editInstruction').val(instruction);
+        $('#editStatus').val(status);
+        $('#editRemarks').val(remarks);
 
-        const newRow = document.createElement('tr');
-        newRow.setAttribute('data-item-id', item.id);
-        newRow.innerHTML = `
-            <td><span class="badge bg-light text-dark">${escapeHtml(item.instruction_number)}</span></td>
-            <td>${escapeHtml(item.instruction)}</td>
-            <td><span class="badge ${statusClass}">${capitalizeFirst(item.status)}</span></td>
-            <td>${escapeHtml(item.remarks || '-')}</td>
-            <td>
-                <button class="btn btn-outline-warning edit-item-btn"
-                        data-item-id="${item.id}" title="Edit Item" style="margin-right: 5px;">
-                    <i class="fas fa-edit me-1"></i> Edit
-                </button>
-                <button class="btn btn-outline-danger delete-item-btn"
-                        data-item-id="${item.id}" title="Delete Item">
-                    <i class="fas fa-trash me-1"></i> Delete
-                </button>
-            </td>
-        `;
+        // Show modal
+        editItemModal.show();
+    });
 
-        // Insert before the add item row
-        tbody.insertBefore(newRow, addItemRow);
-    }
+    // Save edited item
+    $('#saveEditItemBtn').on('click', function() {
+        const itemId = $('#editItemId').val();
+        const itemNumber = $('#editItemNumber').val().trim();
+        const instruction = $('#editInstruction').val().trim();
+        const status = $('#editStatus').val();
+        const remarks = $('#editRemarks').val().trim();
 
-    // Helper functions
-    function getStatusClass(status) {
-        switch(status) {
-            case 'active': return 'bg-success';
-            case 'inactive': return 'bg-secondary';
-            case 'completed': return 'bg-primary';
-            default: return 'bg-secondary';
+        // Validation
+        if (!itemNumber || !instruction) {
+            toastr.error('Please fill in the required fields (Item # and Instruction)');
+            return;
         }
-    }
 
-    function capitalizeFirst(str) {
-        return str.charAt(0).toUpperCase() + str.slice(1);
-    }
+        // Show loading state
+        const $btn = $(this);
+        const originalHtml = $btn.html();
+        $btn.html('<i class="fas fa-spinner fa-spin me-1"></i> Updating...').prop('disabled', true);
 
-    function escapeHtml(text) {
-        const div = document.createElement('div');
-        div.textContent = text;
-        return div.innerHTML;
-    }
-
-    function showAlert(type, message) {
-        const alertDiv = document.createElement('div');
-        alertDiv.className = `alert alert-${type} alert-dismissible fade show`;
-        alertDiv.innerHTML = `
-            <i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-circle'} me-2"></i>${message}
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        `;
-
-        // Insert at the top of the card body
-        const cardBody = document.querySelector('.card-body');
-        cardBody.insertBefore(alertDiv, cardBody.firstChild);
-
-        // Auto-remove after 5 seconds
-        setTimeout(() => {
-            if (alertDiv.parentNode) {
-                alertDiv.remove();
+        // AJAX request
+        $.ajax({
+            url: `<?= base_url('duty-instructions/items/') ?>${itemId}/update`,
+            method: 'POST',
+            contentType: 'application/json',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-CSRF-TOKEN': csrfToken
+            },
+            data: JSON.stringify({
+                instruction_number: itemNumber,
+                instruction: instruction,
+                status: status,
+                remarks: remarks,
+                [csrfName]: csrfToken
+            }),
+            success: function(response) {
+                if (response.success) {
+                    toastr.success('Item updated successfully!');
+                    editItemModal.hide();
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 1500);
+                } else {
+                    toastr.error(response.message || 'Failed to update item');
+                }
+            },
+            error: function(xhr, status, error) {
+                console.error('Error:', error);
+                toastr.error('An error occurred while updating the item');
+            },
+            complete: function() {
+                $btn.html(originalHtml).prop('disabled', false);
             }
-        }, 5000);
-    }
+        });
+    });
+
+    // Delete item button click
+    $(document).on('click', '.delete-item-btn', function() {
+        const $btn = $(this);
+        const itemId = $btn.data('item-id');
+
+        if (!confirm('Are you sure you want to delete this instruction item?')) {
+            return;
+        }
+
+        // Show loading state
+        $btn.html('<i class="fas fa-spinner fa-spin"></i>').prop('disabled', true);
+
+        // AJAX request
+        $.ajax({
+            url: `<?= base_url('duty-instructions/items/') ?>${itemId}/delete`,
+            method: 'POST',
+            contentType: 'application/json',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-CSRF-TOKEN': csrfToken
+            },
+            data: JSON.stringify({
+                [csrfName]: csrfToken
+            }),
+            success: function(response) {
+                if (response.success) {
+                    toastr.success('Item deleted successfully!');
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 1500);
+                } else {
+                    toastr.error(response.message || 'Failed to delete item');
+                    $btn.html('<i class="fas fa-trash"></i> Delete').prop('disabled', false);
+                }
+            },
+            error: function(xhr, status, error) {
+                console.error('Error:', error);
+                toastr.error('An error occurred while deleting the item');
+                $btn.html('<i class="fas fa-trash"></i> Delete').prop('disabled', false);
+            }
+        });
+    });
 });
 </script>
 <?= $this->endSection() ?>

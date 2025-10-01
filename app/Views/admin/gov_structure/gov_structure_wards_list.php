@@ -18,20 +18,21 @@
     <div class="row">
         <div class="col-12">
             <div class="card">
-                <div class="card-header">
-                    <h3 class="card-title">Wards in <?= esc($llg['name']) ?> LLG</h3>
-                    <div class="card-tools">
-                        <div class="btn-group" role="group">
-                            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addWardModal">
-                                <i class="fas fa-plus"></i> Add Ward
-                            </button>
-                            <a href="<?= base_url('admin/gov-structure/llgs/'.$llg['id'].'/wards/csv-template') ?>" class="btn btn-success">
-                                <i class="fas fa-download"></i> Download CSV Template
-                            </a>
-                            <button type="button" class="btn btn-info" data-bs-toggle="modal" data-bs-target="#importWardModal">
-                                <i class="fas fa-upload"></i> Import CSV
-                            </button>
-                        </div>
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h3 class="card-title mb-0">Wards in <?= esc($llg['name']) ?> LLG</h3>
+                    <div>
+                        <a href="<?= base_url('admin/gov-structure/districts/'.$district['id'].'/llgs') ?>" class="btn btn-secondary me-2">
+                            <i class="fas fa-arrow-left"></i> Back to LLGs
+                        </a>
+                        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addWardModal">
+                            <i class="fas fa-plus"></i> Add Ward
+                        </button>
+                        <a href="<?= base_url('admin/gov-structure/llgs/'.$llg['id'].'/wards/csv-template') ?>" class="btn btn-success">
+                            <i class="fas fa-download"></i> Download CSV Template
+                        </a>
+                        <button type="button" class="btn btn-info" data-bs-toggle="modal" data-bs-target="#importWardModal">
+                            <i class="fas fa-upload"></i> Import CSV
+                        </button>
                     </div>
                 </div>
                 <div class="card-body">
@@ -62,21 +63,22 @@
                                         <td><?= $ward['map_center'] ?></td>
                                         <td><?= esc($ward['map_zoom']) ?></td>
                                         <td>
-                                            <div class="btn-group" role="group" aria-label="Ward actions">
-                                                <button type="button" class="btn btn-warning btn-sm edit-ward-btn"
-                                                        data-id="<?= $ward['id'] ?>"
-                                                        data-bs-toggle="modal"
-                                                        data-bs-target="#editWardModal">
-                                                    <i class="fas fa-edit"></i> Edit
-                                                </button>
-                                                <button type="button" class="btn btn-danger btn-sm delete-ward-btn"
-                                                        data-id="<?= $ward['id'] ?>"
-                                                        data-name="<?= esc($ward['name']) ?>"
-                                                        data-bs-toggle="modal"
-                                                        data-bs-target="#deleteWardModal">
-                                                    <i class="fas fa-trash"></i> Delete
-                                                </button>
-                                            </div>
+                                            <button type="button" class="btn btn-outline-warning edit-ward-btn"
+                                                    data-id="<?= $ward['id'] ?>"
+                                                    data-bs-toggle="modal"
+                                                    data-bs-target="#editWardModal"
+                                                    title="Edit"
+                                                    style="margin-right: 5px;">
+                                                <i class="fas fa-edit me-1"></i> Edit
+                                            </button>
+                                            <button type="button" class="btn btn-outline-danger delete-ward-btn"
+                                                    data-id="<?= $ward['id'] ?>"
+                                                    data-name="<?= esc($ward['name']) ?>"
+                                                    data-bs-toggle="modal"
+                                                    data-bs-target="#deleteWardModal"
+                                                    title="Delete">
+                                                <i class="fas fa-trash me-1"></i> Delete
+                                            </button>
                                         </td>
                                     </tr>
                                     <?php endforeach; ?>

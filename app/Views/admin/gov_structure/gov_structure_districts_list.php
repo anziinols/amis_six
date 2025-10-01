@@ -16,20 +16,21 @@
     <div class="row">
         <div class="col-12">
             <div class="card">
-                <div class="card-header">
-                    <h3 class="card-title">Districts in <?= esc($province['name']) ?></h3>
-                    <div class="card-tools">
-                        <div class="btn-group" role="group">
-                            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addDistrictModal">
-                                <i class="fas fa-plus"></i> Add District
-                            </button>
-                            <a href="<?= base_url('admin/gov-structure/provinces/'.$province['id'].'/districts/csv-template') ?>" class="btn btn-success">
-                                <i class="fas fa-download"></i> Download CSV Template
-                            </a>
-                            <button type="button" class="btn btn-info" data-bs-toggle="modal" data-bs-target="#importDistrictModal">
-                                <i class="fas fa-upload"></i> Import CSV
-                            </button>
-                        </div>
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h3 class="card-title mb-0">Districts in <?= esc($province['name']) ?></h3>
+                    <div>
+                        <a href="<?= base_url('admin/gov-structure/provinces') ?>" class="btn btn-secondary me-2">
+                            <i class="fas fa-arrow-left"></i> Back to Provinces
+                        </a>
+                        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addDistrictModal">
+                            <i class="fas fa-plus"></i> Add District
+                        </button>
+                        <a href="<?= base_url('admin/gov-structure/provinces/'.$province['id'].'/districts/csv-template') ?>" class="btn btn-success">
+                            <i class="fas fa-download"></i> Download CSV Template
+                        </a>
+                        <button type="button" class="btn btn-info" data-bs-toggle="modal" data-bs-target="#importDistrictModal">
+                            <i class="fas fa-upload"></i> Import CSV
+                        </button>
                     </div>
                 </div>
                 <div class="card-body">
@@ -60,31 +61,31 @@
                                         <td><?= $district['map_center'] ?></td>
                                         <td><?= esc($district['map_zoom']) ?></td>
                                         <td>
-                                            <div class="btn-group" role="group" aria-label="District actions">
-                                                <a href="<?= base_url('admin/gov-structure/districts/'.$district['id'].'/llgs') ?>" class="btn btn-info btn-sm">
-                                                    <i class="fas fa-eye"></i> View LLGs
-                                                </a>
-                                                <button type="button" class="btn btn-warning btn-sm edit-district-btn"
-                                                        data-id="<?= $district['id'] ?>"
-                                                        data-bs-toggle="modal"
-                                                        data-bs-target="#editDistrictModal">
-                                                    <i class="fas fa-edit"></i> Edit
-                                                </button>
-                                                <?php
-                                                // Consider fetching this count more efficiently if performance is an issue
-                                                $llgCount = model('GovStructureModel')->where('parent_id', $district['id'])->where('level', 'llg')->countAllResults();
-                                                $hasLlgs = $llgCount > 0;
-                                                ?>
-                                                <button type="button" class="btn btn-danger btn-sm delete-district-btn"
-                                                        data-id="<?= $district['id'] ?>"
-                                                        data-name="<?= esc($district['name']) ?>"
-                                                        data-bs-toggle="modal"
-                                                        data-bs-target="#deleteDistrictModal"
-                                                        <?= $hasLlgs ? 'disabled' : '' ?>
-                                                        title="<?= $hasLlgs ? 'Cannot delete district with LLGs' : 'Delete district' ?>">
-                                                    <i class="fas fa-trash"></i> Delete
-                                                </button>
-                                            </div>
+                                            <a href="<?= base_url('admin/gov-structure/districts/'.$district['id'].'/llgs') ?>" class="btn btn-outline-primary" title="View LLGs" style="margin-right: 5px;">
+                                                <i class="fas fa-eye me-1"></i> View LLGs
+                                            </a>
+                                            <button type="button" class="btn btn-outline-warning edit-district-btn"
+                                                    data-id="<?= $district['id'] ?>"
+                                                    data-bs-toggle="modal"
+                                                    data-bs-target="#editDistrictModal"
+                                                    title="Edit"
+                                                    style="margin-right: 5px;">
+                                                <i class="fas fa-edit me-1"></i> Edit
+                                            </button>
+                                            <?php
+                                            // Consider fetching this count more efficiently if performance is an issue
+                                            $llgCount = model('GovStructureModel')->where('parent_id', $district['id'])->where('level', 'llg')->countAllResults();
+                                            $hasLlgs = $llgCount > 0;
+                                            ?>
+                                            <button type="button" class="btn btn-outline-danger delete-district-btn"
+                                                    data-id="<?= $district['id'] ?>"
+                                                    data-name="<?= esc($district['name']) ?>"
+                                                    data-bs-toggle="modal"
+                                                    data-bs-target="#deleteDistrictModal"
+                                                    <?= $hasLlgs ? 'disabled' : '' ?>
+                                                    title="<?= $hasLlgs ? 'Cannot delete district with LLGs' : 'Delete district' ?>">
+                                                <i class="fas fa-trash me-1"></i> Delete
+                                            </button>
                                         </td>
                                     </tr>
                                     <?php endforeach; ?>

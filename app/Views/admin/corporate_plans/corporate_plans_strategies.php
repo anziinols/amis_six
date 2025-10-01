@@ -5,22 +5,36 @@ $this->section('content');
 ?>
 
 <div class="container-fluid">
-    <div class="card">
-        <div class="card-header d-flex justify-content-between align-items-center">
-            <h5 class="mb-0"><?= $title ?></h5>
-            <div>
-                <a href="<?= base_url('admin/corporate-plans/kras/' . $parentKra['parent_id']) ?>" class="btn btn-secondary mr-2">
-                    <i class="fas fa-arrow-left"></i> Back to KRAs
-                </a>
-                <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addStrategyModal">
-                    <i class="fas fa-plus"></i> Add Strategy
-                </button>
-            </div>
+    <div class="row mb-2">
+        <div class="col-12">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="<?= base_url('admin') ?>">Home</a></li>
+                    <li class="breadcrumb-item"><a href="<?= base_url('admin/corporate-plans') ?>">Corporate Plans</a></li>
+                    <li class="breadcrumb-item"><a href="<?= base_url('admin/corporate-plans/objectives/' . $corporatePlan['id']) ?>"><?= esc($corporatePlan['title']) ?></a></li>
+                    <li class="breadcrumb-item"><a href="<?= base_url('admin/corporate-plans/kras/' . $objective['id']) ?>"><?= esc($objective['title']) ?></a></li>
+                    <li class="breadcrumb-item active" aria-current="page">Strategies in <?= esc($parentKra['title']) ?></li>
+                </ol>
+            </nav>
         </div>
-        <div class="card-body">
+    </div>
 
-
-            <div class="table-responsive">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h3 class="card-title mb-0"><?= esc($title) ?></h3>
+                    <div>
+                        <a href="<?= base_url('admin/corporate-plans/kras/' . $parentKra['parent_id']) ?>" class="btn btn-secondary me-2">
+                            <i class="fas fa-arrow-left"></i> Back to KRAs
+                        </a>
+                        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addStrategyModal">
+                            <i class="fas fa-plus"></i> Add Strategy
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
                 <table class="table table-bordered table-striped" id="strategiesTable">
                     <thead>
                         <tr>
@@ -34,35 +48,36 @@ $this->section('content');
                     <tbody>
                         <?php foreach ($strategies as $strategy) : ?>
                             <tr>
-                                <td><?= $strategy['code'] ?></td>
-                                <td><?= $strategy['title'] ?></td>
-                                <td><?= $strategy['remarks'] ?></td>
+                                <td><?= esc($strategy['code']) ?></td>
+                                <td><?= esc($strategy['title']) ?></td>
+                                <td><?= esc($strategy['remarks']) ?></td>
                                 <td>
                                     <span class="badge bg-<?= $strategy['corp_plan_status'] == 1 ? 'success' : 'danger' ?>">
                                         <?= $strategy['corp_plan_status'] == 1 ? 'Active' : 'Inactive' ?>
                                     </span>
                                 </td>
                                 <td>
-                                    <div class="btn-group flex-wrap" role="group" aria-label="Strategy Actions">
-                                        <button type="button" class="btn btn-sm btn-warning edit-strategy"
-                                            data-id="<?= $strategy['id'] ?>"
-                                            data-code="<?= htmlspecialchars($strategy['code']) ?>"
-                                            data-title="<?= htmlspecialchars($strategy['title']) ?>"
-                                            data-remarks="<?= htmlspecialchars($strategy['remarks']) ?>"
-                                            data-bs-toggle="modal" data-bs-target="#editStrategyModal">
-                                            <i class="fas fa-edit"></i><span class="d-none d-md-inline"> Edit</span>
-                                        </button>
-                                        <button type="button" class="btn btn-sm btn-<?= $strategy['corp_plan_status'] == 1 ? 'danger' : 'success' ?> toggle-status"
-                                            data-id="<?= $strategy['id'] ?>">
-                                            <i class="fas fa-<?= $strategy['corp_plan_status'] == 1 ? 'ban' : 'check' ?>"></i>
-                                            <span class="d-none d-md-inline"> <?= $strategy['corp_plan_status'] == 1 ? 'Deactivate' : 'Activate' ?></span>
-                                        </button>
-                                    </div>
+                                    <button type="button" class="btn btn-outline-warning btn-sm edit-strategy"
+                                        data-id="<?= $strategy['id'] ?>"
+                                        data-code="<?= esc($strategy['code']) ?>"
+                                        data-title="<?= esc($strategy['title']) ?>"
+                                        data-remarks="<?= esc($strategy['remarks']) ?>"
+                                        data-bs-toggle="modal" data-bs-target="#editStrategyModal"
+                                        style="margin-right: 5px;">
+                                        <i class="fas fa-edit me-1"></i> Edit
+                                    </button>
+                                    <button type="button" class="btn btn-outline-<?= $strategy['corp_plan_status'] == 1 ? 'secondary' : 'success' ?> btn-sm toggle-status"
+                                        data-id="<?= $strategy['id'] ?>">
+                                        <i class="fas fa-<?= $strategy['corp_plan_status'] == 1 ? 'ban' : 'check' ?> me-1"></i>
+                                        <?= $strategy['corp_plan_status'] == 1 ? 'Deactivate' : 'Activate' ?>
+                                    </button>
                                 </td>
                             </tr>
                         <?php endforeach; ?>
                     </tbody>
                 </table>
+            </div>
+                </div>
             </div>
         </div>
     </div>
